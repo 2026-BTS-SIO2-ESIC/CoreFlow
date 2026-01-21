@@ -4,11 +4,17 @@ require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+app.use(express.json());
 
 // Middlewares
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Routes
+const authRoutes = require('./routes/authRoutes');
+app.use('/api/auth', authRoutes);
+
 
 // Route de test
 app.get('/', (req, res) => {
