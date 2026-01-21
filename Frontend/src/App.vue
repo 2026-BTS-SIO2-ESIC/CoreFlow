@@ -1,11 +1,17 @@
-<script setup></script>
+<script setup>
+// Rien à importer ici si on utilise le router pour afficher LoginView
+</script>
 
 <template>
-  <h1>You did it!</h1>
-  <p>
-    Visit <a href="https://vuejs.org/" target="_blank" rel="noopener">vuejs.org</a> to read the
-    documentation
-  </p>
+  <!-- Ici le router va afficher la vue actuelle, par défaut LoginView -->
+  <router-view />
+   <!-- Site en développement... -->
 </template>
 
-<style scoped></style>
+<style scoped>
+/* Style global minimal */
+body {
+  margin: 0;
+  font-family: Avenir, Helvetica, Arial, sans-serif;
+}
+</style>
