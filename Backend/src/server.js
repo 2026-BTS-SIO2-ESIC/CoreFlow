@@ -1,6 +1,6 @@
-const express = require('express');
-const cors = require('cors');
-require('dotenv').config();
+const express = require("express");
+const cors = require("cors");
+require("dotenv").config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -12,24 +12,28 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
-const authRoutes = require('./routes/authRoutes');
-app.use('/api/auth', authRoutes);
+const authRoutes = require("./routes/authRoutes");
+app.use("/api/auth", authRoutes);
 
+// Les route event sont construit ici puis utiliser
+var eventRouter = require("./routes/eventRoutes");
+// La route mis par defaut pour aceder au calls
+app.use("/event", eventRouter);
 
 // Route de test
-app.get('/', (req, res) => {
-  res.json({ 
-    message: 'Bienvenue sur l\'API CoreFlow !',
-    status: 'OK',
-    timestamp: new Date().toISOString()
+app.get("/", (req, res) => {
+  res.json({
+    message: "Bienvenue sur l'API CoreFlow !",
+    status: "OK",
+    timestamp: new Date().toISOString(),
   });
 });
 
 // Route de santé (health check)
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'healthy',
-    uptime: process.uptime()
+app.get("/api/health", (req, res) => {
+  res.json({
+    status: "healthy",
+    uptime: process.uptime(),
   });
 });
 

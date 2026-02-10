@@ -2,14 +2,12 @@ var express = require("express");
 var router = express.Router();
 
 var event_controller = require("../controllers/event_Controller");
-var event_user_controller = require("../controllers/event_userController");
 
 // EVENTS ROUTES
+// Apelle la fonction event_list dans ../controllers/event_Controller quand est appeler sur localhost:3000/event/list
+router.get("/list", event_controller.event_list);
+// Apelle la fonction event_create dans ../controllers/event_Controller quand est appeler sur localhost:3000/event/create
+router.post("/create", event_controller.event_create);
 
-// get all events
-router.get("/events", event_controller.event_list);
-// create an event
-router.post("/event", event_controller.event_create_post);
-
-// USER EVENTS ROUTES
-router.get("/events/users", event_user_controller.user_list);
+// export pour l'utiliser dans le ../server.js
+module.exports = router;
