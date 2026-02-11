@@ -5,33 +5,33 @@ var Event = require("../models/event");
 exports.event_list = function (req, res) {
   // utilise le model listAll dans ../models/event pour afficher tout les evenements dans la variable results
   Event.listAll((err, results) => {
-    // TODO : quand il y aura des filtre a gerer faudra implementer le mapping des champs afin d'avoir un code plus extansionelle
+    // TODO : quand il y aura des filtre a gerer faudra implementer le mapping des champs afin d'avoir un code plus extensible
 
-    // declaraison de a quoi doit ressembler le header
+    // déclaration de a quoi doit ressembler le header
     const header = req.headers["content-type"];
 
-    // verification du header, si il y a pas: erreur, si il y a mais c'es incorrect: erreur
+    // verification du header, si il y a pas: erreur, si il y a mais c'est incorrect: erreur
     if (!header || !header.includes("application/json")) {
       return res.status(415).json({
         error: {
           code: "INVALID_CONTENT_TYPE",
-          message: "Le header doit etre Content-Type: application/json",
+          message: "Le header doit être Content-Type: application/json",
         },
       });
     }
 
-    // Renvoie une erreure en cas d'une mauvaisse requette vers la DB
+    // Renvoie une erreur en cas d'une mauvaise requête vers la DB
     if (err) {
       return res.status(500).json({
         error: {
           error: "FETCH_FAILURE",
           message:
-            "Erreure lors de la recuperation de la liste des evenements, verifier le model sql",
+            "Erreur lors de la récupération de la liste des événements, vérifier le modèle sql",
           details: err.message,
         },
       });
     }
-    // Renvoi les evenement en cas de cusses
+    // Renvoie les événements en cas de succès
     res.status(200).json({
       message: results.length,
       event: results,
@@ -40,7 +40,7 @@ exports.event_list = function (req, res) {
 };
 
 exports.event_create = (req, res) => {
-  // Mapping de la requette afin d'avoir des champs correct, transforme le raw json dans les champs structurer pour le code
+  // Mapping de la requête afin d'avoir des champs corrects, transforme le raw json dans les champs structurés pour le code
   // Exemple au lieu de nom_createur => userName
   const event = {
     eventID: req.body.idEvenements,
@@ -63,7 +63,7 @@ exports.event_create = (req, res) => {
       error: {
         error: "INVALID_FIELDS",
         message:
-          "Erreur lors de la validation des champs json verifier que les  champs sont correct",
+          "Erreur lors de la validation des champs json vérifier que les champs sont corrects",
         details: err,
       },
     });
@@ -77,7 +77,7 @@ exports.event_create = (req, res) => {
         error: {
           error: "DUPLICATION_ERROR",
           message:
-            "Un evenement avec cet ID existe deja dans la base de donnes",
+            "Un evenement avec cet ID existe deja dans la base de données",
           detail: err.message,
         },
       });
@@ -85,7 +85,7 @@ exports.event_create = (req, res) => {
 
     //
     res.status(201).json({
-      message: "Evenements a été crees",
+      message: "L'événement a été créé",
       id: event.eventID,
     });
   });
@@ -115,17 +115,17 @@ const validateEvent = (event) => {
 
   // Vérification createdAt (doit être une date valide)
   if (!event.createdAt || isNaN(Date.parse(event.createdAt))) {
-    err.push("Champ date_creation est invalide, doit etre YYYY-MM-DD");
+    err.push("Champ date_creation est invalide, doit être YYYY-MM-DD");
   }
 
   // Vérification startDate (doit être une date valide)
   if (!event.startDate || isNaN(Date.parse(event.startDate))) {
-    err.push("Champ date_debut est invalide, doit etre YYYY-MM-D");
+    err.push("Champ date_debut est invalide, doit être YYYY-MM-DD");
   }
 
   // Vérification endDate (doit être une date valide)
   if (!event.endDate || isNaN(Date.parse(event.endDate))) {
-    err.push("Champ date_fin est invalide, doit etre YYYY-MM-D");
+    err.push("Champ date_fin est invalide, doit être YYYY-MM-DD");
   }
 
   // Vérification description (optionnel, mais si présent doit être une string)

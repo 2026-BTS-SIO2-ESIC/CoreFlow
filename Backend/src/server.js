@@ -17,7 +17,7 @@ app.use("/api/auth", authRoutes);
 
 // Les route event sont construit ici puis utiliser
 var eventRouter = require("./routes/eventRoutes");
-// La route mis par defaut pour aceder au calls
+// La route mis par defaut pour aceder au calls events
 app.use("/event", eventRouter);
 
 // Route de test
