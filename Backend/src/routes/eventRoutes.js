@@ -1,6 +1,7 @@
 var express = require("express");
 var router = express.Router();
 
+// Declare event_controller pour accéder aux fonctions dans le controller
 var event_controller = require("../controllers/event_Controller");
 
 // EVENTS ROUTES

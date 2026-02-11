@@ -1,23 +1,16 @@
-// Declare le model event pour
+// Declare le model event pour accéder aux fonctions dans le model
 var Event = require("../models/event");
 
-// declare et export event_list pour etre utiliser dans ../routes/eventRoutes.js
+// declare et export event_list pour etre appeler dans ../routes/eventRoutes.js
 exports.event_list = function (req, res) {
-  // utilise le model listAll dans ../models/event pour afficher tout les evenements dans la variable results
+  // utilise le model listAll qui vien de ../models/event.js pour afficher tout les evenements dans la variable results
+  //Ainsi declare err pour aficher les erreur rencontrer dans la DB
   Event.listAll((err, results) => {
     // TODO : quand il y aura des filtre a gerer faudra implementer le mapping des champs afin d'avoir un code plus extensible
 
-    // déclaration de a quoi doit ressembler le header
-    const header = req.headers["content-type"];
-
-    // verification du header, si il y a pas: erreur, si il y a mais c'est incorrect: erreur
-    if (!header || !header.includes("application/json")) {
-      return res.status(415).json({
-        error: {
-          code: "INVALID_CONTENT_TYPE",
-          message: "Le header doit être Content-Type: application/json",
-        },
-      });
+    // Verifie si le header est bien Content-Type: application/json
+    if (!verifyHeader(req, res)) {
+      return;
     }
 
     // Renvoie une erreur en cas d'une mauvaise requête vers la DB
@@ -40,6 +33,9 @@ exports.event_list = function (req, res) {
 };
 
 exports.event_create = (req, res) => {
+  if (!verifyHeader(req, res)) {
+    true;
+  }
   // Mapping de la requête afin d'avoir des champs corrects, transforme le raw json dans les champs structurés pour le code
   // Exemple au lieu de nom_createur => userName
   const event = {
@@ -55,8 +51,9 @@ exports.event_create = (req, res) => {
     type: req.body.type,
   };
 
-  // Declaraison de isValid bool avec une fonction validateEvent qui prend la requette comme variable
+  // Declaraison de isValid bool et err, avec une fonction validateEvent qui prend la requette nommé event, comme variable
   const { isValid, err } = validateEvent(event);
+  // Si false jette une erreur 400 mauvaise champs
   if (!isValid) {
     console.log(event);
     return res.status(400).json({
@@ -70,7 +67,6 @@ exports.event_create = (req, res) => {
   }
 
   // Appelle la fonction create de model Event, prend event comme parametre
-  //
   Event.create(event, (err) => {
     if (err) {
       return res.status(500).json({
@@ -114,18 +110,24 @@ const validateEvent = (event) => {
   }
 
   // Vérification createdAt (doit être une date valide)
-  if (!event.createdAt || isNaN(Date.parse(event.createdAt))) {
-    err.push("Champ date_creation est invalide, doit être YYYY-MM-DD");
+  if (event.createdAt && event.createdAt.trim() !== "") {
+    if (isNaN(Date.parse(event.createdAt))) {
+      err.push("Champ date_creation est invalide, doit être YYYY-MM-DD");
+    }
   }
 
   // Vérification startDate (doit être une date valide)
-  if (!event.startDate || isNaN(Date.parse(event.startDate))) {
-    err.push("Champ date_debut est invalide, doit être YYYY-MM-DD");
+  if (event.startDate && event.startDate.trim() !== "") {
+    if (isNaN(Date.parse(event.startDate))) {
+      err.push("Champ date_debut est invalide, doit être YYYY-MM-DD");
+    }
   }
 
-  // Vérification endDate (doit être une date valide)
-  if (!event.endDate || isNaN(Date.parse(event.endDate))) {
-    err.push("Champ date_fin est invalide, doit être YYYY-MM-DD");
+  // Vérification endDate (optionnel mais doit être valide si présent)
+  if (event.endDate && event.endDate.trim() !== "") {
+    if (isNaN(Date.parse(event.endDate))) {
+      err.push("Champ date_fin doit être au format YYYY-MM-DD");
+    }
   }
 
   // Vérification description (optionnel, mais si présent doit être une string)
@@ -136,23 +138,52 @@ const validateEvent = (event) => {
     err.push("Champ description doit être une chaîne de caractères");
   }
 
-  // Vérification userName (obligatoire)
-  if (!event.userName || typeof event.userName !== "string") {
-    err.push("Champ nom_createur est invalide");
+  // Vérification userName (optionel)
+  if (
+    event.userName !== undefined &&
+    event.userName !== null &&
+    typeof event.userName !== "string"
+  ) {
+    err.push("Champ nom_createur  doit etre une chaine ou null");
   }
 
-  // Vérification title (obligatoire)
-  if (!event.title || typeof event.title !== "string") {
-    err.push("Champ titre est invalide");
+  // Vérification title (optionel)
+  if (
+    event.title !== undefined &&
+    event.title !== null &&
+    typeof event.title !== "string"
+  ) {
+    err.push("Champ titre doit etre une chaine ou null");
   }
 
-  // Vérification type (obligatoire)
-  if (!event.type || typeof event.type !== "string") {
-    err.push("Champ type est invalide");
+  // Vérification type (optionel)
+  if (
+    event.type !== undefined &&
+    event.type !== null &&
+    typeof event.type !== "string"
+  ) {
+    err.push("Champ type doit etre une chaine ou null");
   }
 
   return {
     isValid: err.length === 0,
     err,
   };
+};
+
+const verifyHeader = (req, res) => {
+  // déclaration de ce que doit ressembler le header de la requette
+  const header = req.headers["content-type"];
+
+  // verification du header, si il y a pas: erreur, si il y a mais c'est incorrect: erreur 415
+  if (!header || !header.includes("application/json")) {
+    res.status(415).json({
+      error: {
+        code: "INVALID_CONTENT_TYPE",
+        message: "Le header doit être Content-Type: application/json",
+      },
+    });
+    return false; // IMPORTANT
+  }
+  return true;
 };
