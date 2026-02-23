@@ -23,18 +23,39 @@ exports.event_list = function (req, res) {
           details: err.message,
         },
       });
+    } 
+
+    if (!results || results.length === 0) {
+      return res.status(404).json({
+        message: "Aucun evenement trouvé",
+      });
     }
+
+     const now = new Date();
+
+    const eventsWithStatus = results.map((event) => {
+      const dateFin = event.date_fin
+        ? new Date(event.date_fin)
+        : null;
+
+      return {
+        ...event,
+        periode_evenement:
+          dateFin && dateFin < now ? "passee" : "a venir",
+      };
+    });
+
     // Renvoie les événements en cas de succès
     res.status(200).json({
-      message: results.length,
-      event: results,
+      message: eventsWithStatus.length,
+      event: eventsWithStatus,
     });
   });
 };
 
 exports.event_create = (req, res) => {
   if (!verifyHeader(req, res)) {
-    true;
+    return;
   }
   // Mapping de la requête afin d'avoir des champs corrects, transforme le raw json dans les champs structurés pour le code
   // Exemple au lieu de nom_createur => userName
@@ -90,6 +111,25 @@ exports.event_create = (req, res) => {
 // Validation des champs
 const validateEvent = (event) => {
   const err = [];
+
+  if (event.createdAt && event.createdAt.trim() !== "") {
+  if (isNaN(Date.parse(event.createdAt))) {
+    err.push("Champ date_creation est invalide, doit être YYYY-MM-DD");
+  }
+}
+
+
+  if (
+  event.startDate &&
+  event.endDate &&
+  !isNaN(Date.parse(event.startDate)) &&
+  !isNaN(Date.parse(event.endDate))
+) {
+  if (new Date(event.startDate) > new Date(event.endDate)) {
+    err.push("La date_debut ne peut pas être après date_fin");
+  }
+}
+
 
   // Vérification eventID
   if (event.eventID === undefined || !Number.isInteger(Number(event.eventID))) {
