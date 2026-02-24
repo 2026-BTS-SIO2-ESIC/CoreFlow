@@ -48,6 +48,38 @@ exports.event_list = function (req, res) {
   });
 };
 
+exports.event_list_one = function (req, res) {
+  // Utilise la model listById qui vien de ../model/event.js pour aficher un evenement selon son id
+  if (!verifyHeader(req, res)) {
+    return;
+  }
+  // recupere le Id depuis le url
+  const eventId = req.params.id;
+  Event.listById(eventId, (err, results) => {
+    if (err) {
+      return res.status(500).json({
+        error: {
+          error: "DB_ERROR",
+          message: "erreur lors de la recuperationde levenement par id",
+          detail: err.message,
+        },
+      });
+    } else if (results.length === 0) {
+      return res.status(404).json({
+        error: {
+          error: "NOT FOUND",
+          message: "levenement n'existe pas",
+        },
+      });
+    }
+    // Affiche la reponce
+    res.status(200).json({
+      message: results.length,
+      event: results,
+    });
+  });
+};
+
 exports.event_create = (req, res) => {
   const event = mapEventBody(req.body);
 

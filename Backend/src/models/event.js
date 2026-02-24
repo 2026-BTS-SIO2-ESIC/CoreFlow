@@ -12,6 +12,18 @@ const Event = {
     });
   },
 
+  listById: (eventId, callback) => {
+    const sql = "SELECT * FROM evenements WHERE idEvenements = ?";
+    db.query(sql, [eventId], (err, results) => {
+      if (err) {
+        console.error("DB ERROR :", err);
+        return callback(err, null);
+      }
+      console.log(results);
+      return callback(null, results);
+    });
+  },
+
   create: (event, callback) => {
     const sql = `
         INSERT INTO evenements (

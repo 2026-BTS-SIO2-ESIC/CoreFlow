@@ -7,7 +7,7 @@ const User_test = [
     role: "admin",
     nom: "Admin",
     prenom: "CoreFlow",
-    Departement: "Informatique"
+    Departement: "Informatique",
   },
   {
     id: 2,
@@ -16,7 +16,7 @@ const User_test = [
     role: "rh",
     nom: "RH",
     prenom: "CoreFlow",
-    Departement: "Ressources Humaines"
+    Departement: "Ressources Humaines",
   },
   {
     id: 3,
@@ -25,7 +25,7 @@ const User_test = [
     role: "manager",
     nom: "Manager",
     prenom: "CoreFlow",
-    Departement: "Direction"
+    Departement: "Direction",
   },
   {
     id: 4,
@@ -34,14 +34,14 @@ const User_test = [
     role: "employe",
     nom: "Employé",
     prenom: "CoreFlow",
-    Departement: "Employés"
-  }
+    Departement: "Employés",
+  },
 ];
 
 // Fonction pour générer un token factice
 const generateToken = (userId) => {
   const tokenData = { userId, timestamp: Date.now() };
-  return Buffer.from(JSON.stringify(tokenData)).toString('base64');
+  return Buffer.from(JSON.stringify(tokenData)).toString("base64");
 };
 
 // Connexion d'un utilisateur
@@ -52,12 +52,14 @@ exports.login = (req, res) => {
   if (!email || !password) {
     return res.status(400).json({
       success: false,
-      message: "Email et mot de passe requis"
+      message: "Email et mot de passe requis",
     });
   }
 
   // Recherche de l'utilisateur
-  const user = User_test.find(u => u.email === email && u.password === password);
+  const user = User_test.find(
+    (u) => u.email === email && u.password === password,
+  );
 
   if (user) {
     // Générer un token pour cet utilisateur
@@ -71,13 +73,13 @@ exports.login = (req, res) => {
       message: "Connexion réussie",
       data: {
         user: userWithoutPassword,
-        token: token
-      }
+        token: token,
+      },
     });
   } else {
     res.status(401).json({
       success: false,
-      message: "Email ou mot de passe incorrect"
+      message: "Email ou mot de passe incorrect",
     });
   }
 };
@@ -86,26 +88,26 @@ exports.login = (req, res) => {
 exports.getMe = (req, res) => {
   const authHeader = req.headers.authorization;
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({
       success: false,
-      message: "Token manquant"
+      message: "Token manquant",
     });
   }
 
-  const token = authHeader.replace('Bearer ', '');
+  const token = authHeader.replace("Bearer ", "");
 
   try {
     // Décoder le token
-    const decoded = JSON.parse(Buffer.from(token, 'base64').toString());
-    
+    const decoded = JSON.parse(Buffer.from(token, "base64").toString());
+
     // Trouver l'utilisateur
-    const user = User_test.find(u => u.id === decoded.userId);
+    const user = User_test.find((u) => u.id === decoded.userId);
 
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: "Utilisateur non trouvé"
+        message: "Utilisateur non trouvé",
       });
     }
 
@@ -114,13 +116,12 @@ exports.getMe = (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: userWithoutPassword
+      data: userWithoutPassword,
     });
-
   } catch (error) {
     res.status(401).json({
       success: false,
-      message: "Token invalide"
+      message: "Token invalide",
     });
   }
 };
@@ -129,6 +130,6 @@ exports.getMe = (req, res) => {
 exports.logout = (req, res) => {
   res.status(200).json({
     success: true,
-    message: "Déconnexion réussie"
+    message: "Déconnexion réussie",
   });
 };
