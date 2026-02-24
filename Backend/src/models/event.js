@@ -1,7 +1,9 @@
 const db = require("../config/database");
 
 const Event = {
+  // fonction listAll qui permet de recuperer tous les evenements de la base de donnees
   listAll: (callback) => {
+    // requette sql pour recuperer tous les evenements
     const sql = "SELECT * FROM evenements";
     db.query(sql, (err, results) => {
       if (err) {
@@ -12,19 +14,24 @@ const Event = {
     });
   },
 
+  // fonction listById qui pren comme valeur eventId a partir dans la fonction event_list_by_id
   listById: (eventId, callback) => {
+    // reauette sql qui selectionne lévenement a partir du id donner(eventId) dans la table evenements
     const sql = "SELECT * FROM evenements WHERE idEvenements = ?";
+    // execute la query en lui donnant la requette (sql) et le eventId comme parametre
     db.query(sql, [eventId], (err, results) => {
+      // en cas d'erreur renvoi l'erreur
       if (err) {
         console.error("DB ERROR :", err);
         return callback(err, null);
       }
-      console.log(results);
       return callback(null, results);
     });
   },
 
+  // fonction create aui crees une requette de Insertion dans la table evenement
   create: (event, callback) => {
+    // requette sql avec tout les champs de la table evenement
     const sql = `
         INSERT INTO evenements (
         date_creation, 
@@ -41,6 +48,7 @@ const Event = {
         inviter)
         VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
     `;
+    // execute la query en lui donnant la requette (sql) et les valeurs de l'evenement comme parametre
     db.query(
       sql,
       [
@@ -67,10 +75,13 @@ const Event = {
     );
   },
 
-  // Put query will change every values in the DB exept dates
+  // la fonction update qui rajoute les champs a modifier dans la table evenement
   update: (event, callback) => {
+    // requette sql qui remplace les valeurs de la table par les nouvelles valeurs
     let sql = "UPDATE evenements SET ";
+    // crees un tableau pour les valeurs a modifier
     let params = [];
+    // verification des champs si present et en cas si ils sont present rajoute ces champs dans le tableau params
     if (event.createdAt) {
       sql += "date_creation=?, ";
       params.push(event.createdAt);

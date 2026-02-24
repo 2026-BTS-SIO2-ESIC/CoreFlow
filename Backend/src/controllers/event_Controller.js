@@ -1,7 +1,7 @@
-// Declare le model event pour accéder aux fonctions dans le model
+// Déclare le modèle event pour accéder aux fonctions dans le modèle
 var Event = require("../models/event");
 
-// Maping des champs
+// Mapping des champs
 const mapEventBody = (body) => {
   return {
     eventID: body.idEvenements,
@@ -19,12 +19,12 @@ const mapEventBody = (body) => {
   };
 };
 
-// declare et export event_list pour etre appeler dans ../routes/eventRoutes.js
+// Déclare et exporte event_list pour être appelée dans ../routes/eventRoutes.js
 exports.event_list = function (req, res) {
-  // utilise le model listAll qui vien de ../models/event.js pour afficher tout les evenements dans la variable results
-  //Ainsi declare err pour aficher les erreur rencontrer dans la DB
+  // Utilise le modèle listAll qui vient de ../models/event.js pour afficher tous les événements dans la variable results
+  // Ainsi déclare err pour afficher les erreurs rencontrées dans la DB
   Event.listAll((err, results) => {
-    // Verifie si le header est bien Content-Type: application/json
+    // Vérifie si le header est bien Content-Type: application/json
     if (!verifyHeader(req, res)) {
       return;
     }
@@ -48,31 +48,34 @@ exports.event_list = function (req, res) {
   });
 };
 
-exports.event_list_one = function (req, res) {
-  // Utilise la model listById qui vien de ../model/event.js pour aficher un evenement selon son id
+exports.event_list_by_id = function (req, res) {
+  // Utilise le modèle listById qui vient de ../models/event.js pour afficher un événement selon son id
   if (!verifyHeader(req, res)) {
     return;
   }
-  // recupere le Id depuis le url
+  // Récupère l'id depuis le paramètre de l'URL a partir de la requette (req) et l'assigne a la variable eventId
   const eventId = req.params.id;
+  // Appelle la fonction listById du modèle Event et donne eventId comme parametre pour recuperer l'evenement
   Event.listById(eventId, (err, results) => {
+    // Vérification des erreurs
     if (err) {
       return res.status(500).json({
         error: {
           error: "DB_ERROR",
-          message: "erreur lors de la recuperationde levenement par id",
+          message: "Erreur lors de la récupération de l'événement par id",
           detail: err.message,
         },
       });
     } else if (results.length === 0) {
+      // En cas où l'événement n'existe pas, affiche une erreur 404
       return res.status(404).json({
         error: {
           error: "NOT FOUND",
-          message: "levenement n'existe pas",
+          message: "L'événement n'existe pas",
         },
       });
     }
-    // Affiche la reponce
+    // Affiche la réponse
     res.status(200).json({
       message: results.length,
       event: results,
@@ -83,7 +86,7 @@ exports.event_list_one = function (req, res) {
 exports.event_create = (req, res) => {
   const event = mapEventBody(req.body);
 
-  // Declaraison de isValid bool avec une fonction validateEvent qui prend la requette nomme event comme variable
+  // Déclaration de isValid bool avec une fonction validateEvent qui prend la requête nommée event comme variable
   const { isValid, err } = validateEvent(event);
   if (!isValid) {
     console.log(event);
@@ -97,14 +100,14 @@ exports.event_create = (req, res) => {
     });
   }
 
-  // Appelle la fonction create de model Event, prend event comme parametre
+  // Appelle la fonction create du modèle Event, prend event comme paramètre
   Event.create(event, (err) => {
     if (err) {
       return res.status(500).json({
         error: {
           error: "DUPLICATION_ERROR",
           message:
-            "Un evenement avec cet ID existe deja dans la base de données",
+            "Un événement avec cet ID existe déjà dans la base de données",
           detail: err.message,
         },
       });
@@ -119,9 +122,12 @@ exports.event_create = (req, res) => {
 };
 
 exports.event_update = (req, res) => {
+  // Récupère le body mappé par la fonction mapEventBody
   const event = mapEventBody(req.body);
+  // Vérifie les champs importants
   const { isValid, err } = validateUpdateEvent(event);
 
+  // En cas où les champs sont invalides renvoie une erreur 400
   if (!isValid) {
     console.log(event);
     return res.status(400).json({
@@ -131,19 +137,21 @@ exports.event_update = (req, res) => {
       },
     });
   }
+  // Appelle la fonction updateEvent du modèle Event
   Event.update(event, (err) => {
     if (err) {
       return res.status(500).json({
         error: {
           error: "DB_ERROR",
-          message: "Erreur lors de la modification de l'évenement",
+          message: "Erreur lors de la modification de l'événement",
           details: err.message,
         },
       });
     }
 
+    // En cas de succès renvoie le message de succès et l'id de l'événement modifié
     res.status(201).json({
-      message: "la modification avec cuccess",
+      message: "La modification avec succès",
       id: event.eventID,
     });
   });
@@ -169,14 +177,16 @@ const validateEvent = (event) => {
   }
 
   // Vérification createdAt (doit être une date valide)
-  // Date.parse transforme les charachters de Dates en nombre
+  // Date.parse transforme les caractères de dates en nombre
   // 2026-02-23 => 1771804800000
   if (!event.createdAt || isNaN(Date.parse(event.createdAt))) {
     err.push("Champ date_creation est invalide, doit être YYYY-MM-DD");
+    // Appelle la fonction timeVerify qui vérifie si la date de création est avant aujourd'hui
   } else if (!timeVerify(Date.parse(event.createdAt))) {
-    err.push("La date du debut ne peut pas etre avant aujourd'hui.");
+    err.push("La date de début ne peut pas être avant aujourd'hui.");
+    // Vérifie si la date de création est après la date de début
   } else if (Date.parse(event.createdAt) > Date.parse(event.startDate)) {
-    err.push("La date debut ne peut pas etre avant la date du creation");
+    err.push("La date de début ne peut pas être avant la date de création");
   }
   // Vérification startDate (doit être une date valide)
   if (!event.startDate || isNaN(Date.parse(event.startDate))) {
@@ -185,11 +195,12 @@ const validateEvent = (event) => {
   // Vérification endDate (doit être une date valide)
   if (!event.endDate || isNaN(Date.parse(event.endDate))) {
     err.push("Champ date_fin est invalide, doit être YYYY-MM-DD");
+    // Vérifie si la date de fin n'est pas avant la date de début
   } else if (event.endDate < event.startDate) {
-    err.push("la date fin ne peut pas etre avat la date du debut");
+    err.push("La date de fin ne peut pas être avant la date de début");
   }
 
-  // Vérification description (optionnel, mais si présent doit être une string)
+  // Vérification des autres champs
   if (
     event.description !== undefined &&
     typeof event.description !== "string"
@@ -209,10 +220,12 @@ const validateEvent = (event) => {
     err.push("Champ type est invalide");
   }
 
+  // Vérifie si le niveau est soit 1 ou 2
   if (event.level !== "1" && event.level !== "2") {
-    err.push("Champ niveau est invalide doit etre 1 ou 2");
+    err.push("Champ niveau est invalide doit être 1 ou 2");
   }
 
+  // Vérifie si le champ invited est présent
   if (!event.invited) {
     err.push("Champ inviter est invalide");
   }
@@ -223,28 +236,28 @@ const validateEvent = (event) => {
   };
 };
 
-// Valide les champ nessesaire pour modifier l'évenement
+// Valide les champs nécessaires pour modifier l'événement
 const validateUpdateEvent = (event) => {
   const err = [];
   // Vérification eventID
   if (event.eventID === undefined || !Number.isInteger(Number(event.eventID))) {
-    err.push("Champ idEvenements est invalide ou non ajouter");
+    err.push("Champ idEvenements est invalide ou non ajouté");
   }
   // Vérification serviceID
   if (
     event.serviceID === undefined ||
     !Number.isInteger(Number(event.serviceID))
   ) {
-    err.push("Champ idServices est invalide ou non ajouter");
+    err.push("Champ idServices est invalide ou non ajouté");
   }
   // Vérification userID
   if (event.userID != null) {
     err.push("Vous ne pouvez pas changer le idUtilisateurs");
   }
 
-  // Verification du niveau
+  // Vérification du niveau
   if (event.level !== "1" && event.level !== "2") {
-    err.push("Champ niveau est invalide doit etre 1 ou 2");
+    err.push("Champ niveau est invalide doit être 1 ou 2");
   }
 
   return {
@@ -253,12 +266,12 @@ const validateUpdateEvent = (event) => {
   };
 };
 
-// Verifie le header de la requette
+// Vérifie le header de la requête
 const verifyHeader = (req, res) => {
-  // Déclaration de ce que doit ressembler le header de la requette
+  // Déclaration de ce à quoi doit ressembler le header de la requête
   const header = req.headers["content-type"];
 
-  // Verification du header, si il y a pas: erreur, si il y a mais c'est incorrect: erreur 415
+  // Vérification du header, s'il n'y en a pas : erreur, s'il y en a un mais incorrect : erreur 415
   if (!header || !header.includes("application/json")) {
     res.status(415).json({
       error: {

@@ -12,7 +12,7 @@ router.post("/create", event_controller.event_create);
 // Appelee la fonction event_update dans ../controllers/evetController quand est appelé sur localhost:3000/event/update
 router.put("/update", event_controller.event_update);
 // Apelle la fonction list_one dans ../controllers/event_Controller quand est appele sur localhost:3000/event/list/:id
-router.get(`/list/:id`, event_controller.event_list_one);
+router.get(`/list/:id`, event_controller.event_list_by_id);
 
 // export pour l'utiliser dans le ../server.js
 module.exports = router;
