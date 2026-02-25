@@ -94,10 +94,7 @@ const Event = {
       sql += "description=? ,";
       params.push(event.description);
     }
-    if (event.userID) {
-      sql += "idUtilisateurs=?, ";
-      params.push(event.userID);
-    }
+
     if (event.userName) {
       sql += "nom_createur=?, ";
       params.push(event.userName);
@@ -119,16 +116,52 @@ const Event = {
       params.push(event.level);
     }
     sql = sql.slice(0, -2); // retire la derniere virgule
-    sql += " WHERE idEvenements=?";
-    params.push(event.eventID); // trouve le evenement a partir du id données dans la requette
+    sql += " WHERE idEvenements=? AND idUtilisateurs=?";
+    params.push(event.eventID, event.userID); // envoie les valeurs idEvenement et idUtilisateur données dans la requette a la sql
+
     db.query(sql, params, (err, results) => {
       if (err) {
         console.error("DB ERROR :", err);
         return callback(err, null);
       }
+      if (results.affectedRows === 0) {
+        const err = new Error("EVENT_NOT_OWNED");
+        err.code = "EVENT_NOT_OWNED";
+        return callback(err, null);
+      }
       return callback(null, results);
     });
   },
+
+  // A finir
+  checkIfUserExist: async (userMail) => {
+    let userExist = false;
+    let userMailList = [];
+    const userMailString = String(userMail);
+    const mails = userMailString.split(",").map((x) => x.trim());
+    for (const mail of mails) {
+      const sql = "SELECT mail FROM utilisateurs WHERE mail=?";
+      const [rows] = await db.promise().query(sql, [mail]);
+
+      if (rows.length > 0) {
+        userExist = true;
+        userMailList.push(mail);
+      } else {
+        console.error("user mail with mail: ", mail, "does not exist");
+        userExist = false;
+        return { userExist, mail: mail };
+      }
+    }
+    return { userExist, userMailList };
+  },
 };
+
+// TODO
+// const verifyUserEvent = (userId) => {
+//   const sql = `SELECT * FROM evenements WHERE idUtilisateur = ? AND idEvenements = ?`;
+// };
+// const verifyRole = (userId) => {
+//   const sql = `SELECT * FROM utilisateurs WHERE idUtilisateur = ?`;
+// };
 
 module.exports = Event;

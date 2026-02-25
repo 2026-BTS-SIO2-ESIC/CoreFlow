@@ -5,3 +5,7 @@ ADD column inviter TEXT,
 ALTER TABLE evenements 
 MODIFY date_debut DATETIME,
 MODIFY date_fin DATETIME;
+
+## si existe pas deja ##
+INSERT INTO `role` (`idRole`, `role`, `Description`) VALUES ('3', 'RH', NULL);
+INSERT INTO `role` (`idRole`, `role`, `Description`) VALUES ('4', 'Manager', NULL);

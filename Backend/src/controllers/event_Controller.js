@@ -1,6 +1,29 @@
 // Déclare le modèle event pour accéder aux fonctions dans le modèle
 var Event = require("../models/event");
 
+const logSuccess = (code, msg) => {
+  console.log(
+    "\x1b[32mSTATUS CODE:\x1b[0m[\x1b[32m" +
+      code +
+      "\x1b[0m]" +
+      "\n" +
+      "\x1b[32mSUCCESS:\x1b[0m",
+    msg,
+  );
+};
+
+const logError = (code, errorCode, msg) => {
+  console.error(
+    "\x1b[31mSTATUS CODE:\x1b[0m[\x1b[31m" +
+      code +
+      "\x1b[0m]" +
+      "\n" +
+      "\x1b[31mERROR [" +
+      errorCode +
+      "]:\x1b[0m",
+    msg,
+  );
+};
 // Mapping des champs
 const mapEventBody = (body) => {
   return {
@@ -31,6 +54,12 @@ exports.event_list = function (req, res) {
 
     // Renvoie une erreur en cas d'une mauvaise requête vers la DB
     if (err) {
+      logError(
+        500,
+        "FETCH_FAILURE",
+        "Erreur lors de la récupération de la liste des événements: " +
+          err.message,
+      );
       return res.status(500).json({
         error: {
           error: "FETCH_FAILURE",
@@ -41,6 +70,12 @@ exports.event_list = function (req, res) {
       });
     }
     // Renvoie les événements en cas de succès
+    logSuccess(
+      200,
+      "Liste des événements récupérée avec succès (" +
+        results.length +
+        " événement(s))",
+    );
     res.status(200).json({
       message: results.length,
       event: results,
@@ -59,6 +94,11 @@ exports.event_list_by_id = function (req, res) {
   Event.listById(eventId, (err, results) => {
     // Vérification des erreurs
     if (err) {
+      logError(
+        500,
+        "DB_ERROR",
+        "Erreur lors de la récupération de l'événement par id: " + err.message,
+      );
       return res.status(500).json({
         error: {
           error: "DB_ERROR",
@@ -68,6 +108,11 @@ exports.event_list_by_id = function (req, res) {
       });
     } else if (results.length === 0) {
       // En cas où l'événement n'existe pas, affiche une erreur 404
+      logError(
+        404,
+        "NOT FOUND",
+        "L'événement n'existe pas (ID: " + eventId + ")",
+      );
       return res.status(404).json({
         error: {
           error: "NOT FOUND",
@@ -76,6 +121,7 @@ exports.event_list_by_id = function (req, res) {
       });
     }
     // Affiche la réponse
+    logSuccess(200, "Événement récupéré par ID: " + eventId);
     res.status(200).json({
       message: results.length,
       event: results,
@@ -83,13 +129,18 @@ exports.event_list_by_id = function (req, res) {
   });
 };
 
-exports.event_create = (req, res) => {
+exports.event_create = async (req, res) => {
+  // recuprer le body mapper de la requette
   const event = mapEventBody(req.body);
 
-  // Déclaration de isValid bool avec une fonction validateEvent qui prend la requête nommée event comme variable
-  const { isValid, err } = validateEvent(event);
+  // Déclaration de isValid bool avec une fonction validateEvent qui prend le body mapper de la requette comme variable
+  const { isValid, err } = await validateEvent(event);
   if (!isValid) {
-    console.log(event);
+    logError(
+      400,
+      "INVALID_FIELDS",
+      "Erreur lors de la validation des champs JSON: " + JSON.stringify(err),
+    );
     return res.status(400).json({
       error: {
         error: "INVALID_FIELDS",
@@ -103,6 +154,11 @@ exports.event_create = (req, res) => {
   // Appelle la fonction create du modèle Event, prend event comme paramètre
   Event.create(event, (err) => {
     if (err) {
+      logError(
+        500,
+        "DUPLICATION_ERROR",
+        "Un événement avec cet ID existe déjà: " + event.eventID,
+      );
       return res.status(500).json({
         error: {
           error: "DUPLICATION_ERROR",
@@ -113,7 +169,11 @@ exports.event_create = (req, res) => {
       });
     }
 
-    //
+    // Redonne le message de success en quoi l'evenement a ete crees
+    logSuccess(
+      201,
+      "L'evenement crees avec success, ID evenement: " + event.eventID,
+    );
     res.status(201).json({
       message: "L'événement a été créé",
       id: event.eventID,
@@ -121,15 +181,19 @@ exports.event_create = (req, res) => {
   });
 };
 
-exports.event_update = (req, res) => {
+exports.event_update = async (req, res) => {
   // Récupère le body mappé par la fonction mapEventBody
   const event = mapEventBody(req.body);
   // Vérifie les champs importants
-  const { isValid, err } = validateUpdateEvent(event);
+  const { isValid, err } = await validateUpdateEvent(event);
 
   // En cas où les champs sont invalides renvoie une erreur 400
   if (!isValid) {
-    console.log(event);
+    logError(
+      400,
+      "INVALID_FIELD",
+      "Erreur lors de la validation (update): " + JSON.stringify(err),
+    );
     return res.status(400).json({
       error: {
         error: "INVALID_FIELD",
@@ -138,8 +202,27 @@ exports.event_update = (req, res) => {
     });
   }
   // Appelle la fonction updateEvent du modèle Event
-  Event.update(event, (err) => {
+  Event.update(event, (err, results) => {
+    if (err && err.code === "EVENT_NOT_OWNED") {
+      logError(
+        403,
+        "PERMISSION_ERROR",
+        "Droits insuffisants sur l'événement ID: " + event.eventID,
+      );
+      return res.status(403).json({
+        error: {
+          error: "PERMISSION_ERROR",
+          message: "Vous ne posseder pas les droit sur cette evenement",
+          details: err.message,
+        },
+      });
+    }
     if (err) {
+      logError(
+        500,
+        "DB_ERROR",
+        "Erreur lors de la modification de l'événement: " + err.message,
+      );
       return res.status(500).json({
         error: {
           error: "DB_ERROR",
@@ -150,6 +233,7 @@ exports.event_update = (req, res) => {
     }
 
     // En cas de succès renvoie le message de succès et l'id de l'événement modifié
+    logSuccess(201, "Événement modifié avec succès, ID: " + event.eventID);
     res.status(201).json({
       message: "La modification avec succès",
       id: event.eventID,
@@ -158,8 +242,17 @@ exports.event_update = (req, res) => {
 };
 
 // Validation des champs
-const validateEvent = (event) => {
+const validateEvent = async (event) => {
   const err = [];
+  // Vérifie si le champ invited est présent
+  if (event.invited === undefined) {
+    err.push("Champ inviter est invalide");
+  }
+  const { userExist, mail } = await Event.checkIfUserExist(event.invited);
+  if (!userExist) {
+    err.push("l'utilisateur " + mail + " n'existe pas");
+  }
+
   // Vérification eventID
   if (event.eventID === undefined || !Number.isInteger(Number(event.eventID))) {
     err.push("Champ idEvenements est invalide");
@@ -225,11 +318,6 @@ const validateEvent = (event) => {
     err.push("Champ niveau est invalide doit être 1 ou 2");
   }
 
-  // Vérifie si le champ invited est présent
-  if (!event.invited) {
-    err.push("Champ inviter est invalide");
-  }
-
   return {
     isValid: err.length === 0,
     err,
@@ -237,8 +325,18 @@ const validateEvent = (event) => {
 };
 
 // Valide les champs nécessaires pour modifier l'événement
-const validateUpdateEvent = (event) => {
+const validateUpdateEvent = async (event) => {
   const err = [];
+
+  // Vérifie si le champ invited est présent
+  if (event.invited === undefined) {
+    err.push("Champ inviter est invalide");
+  }
+  const { userExist, mail } = await Event.checkIfUserExist(event.invited);
+  if (!userExist) {
+    err.push("l'utilisateur " + mail + " n'existe pas");
+  }
+
   // Vérification eventID
   if (event.eventID === undefined || !Number.isInteger(Number(event.eventID))) {
     err.push("Champ idEvenements est invalide ou non ajouté");
@@ -250,12 +348,8 @@ const validateUpdateEvent = (event) => {
   ) {
     err.push("Champ idServices est invalide ou non ajouté");
   }
-  // Vérification userID
-  if (event.userID != null) {
-    err.push("Vous ne pouvez pas changer le idUtilisateurs");
-  }
 
-  // Vérification du niveau
+  // Vérification du niveau si 1 ou 2
   if (event.level !== "1" && event.level !== "2") {
     err.push("Champ niveau est invalide doit être 1 ou 2");
   }
@@ -273,6 +367,11 @@ const verifyHeader = (req, res) => {
 
   // Vérification du header, s'il n'y en a pas : erreur, s'il y en a un mais incorrect : erreur 415
   if (!header || !header.includes("application/json")) {
+    logError(
+      415,
+      "INVALID_CONTENT_TYPE",
+      "Le header doit être Content-Type: application/json",
+    );
     res.status(415).json({
       error: {
         code: "INVALID_CONTENT_TYPE",
