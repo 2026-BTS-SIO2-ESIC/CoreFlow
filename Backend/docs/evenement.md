@@ -92,16 +92,26 @@ Seuls certains champs sont obligatoires pour la mise à jour (par ex. `idEveneme
 
 ## 5. Tâches à faire / backlog
 
-- [x] Lier la table `roles` et `utilisateurs` via une foreign key et vérifier les droits lors de la création / mise à jour d’un événement.
-  - [ ] Règles de filtrage effectives pour chaque rôle (admin, employé, RH, manager).
+- [ ] verification des role pour chaque affichage d'evenement (admin, employé, RH, manager).
+  1. [ ] Admin voit tout les evenement.
+  2. [ ] Manager voit que les evenement qu'il a crees et les evenement ou il a ete inviter.
+  3. [ ] Employee et RH voit que les evenement ou il a ete inviter.
+
+- [ ] crees une route helper pour retrouver un utilisater
+  1. [ ] lancer une requette avec l'email de utilisateur avec ALIKE %emailMsg% dans la requette
+         2.1 [ ] sur front end recupere le resultat et rajouter dans le champ inviter
+
 - [x] Ajouter 2 niveaux d’événements (`niveau 1` et `niveau 2`).
-  - [ ] Afficher tous les événements de niveau 1 à tous les utilisateurs.
-  - [ ] Vérifier pour le niveau 2 : si `event.niveau == 2`, alors vérifier `event.idServices == user.idServices`.
+  - [x] niveau:1 Afficher l'événements pour tous les utilisateurs.
+  - [x] niveau:2 Afficher l'evenement a la fonction des roles.
+
 - [x] Ajouter la colonne `inviter` dans la table `evenements`.
   - [x] Vérifier que chaque utilisateur invité existe réellement.
+
 - [x] Ajouter une route `GET` pour afficher un événement unique (`list_one`).
-- [x] Ajouter une colonne d’heure dans la table `evenements` et vérifier la cohérence des temps.
+- [x] Modification des colonnes en DATETIME.
 - [x] Créer une route `PUT` pour que l’utilisateur puisse modifier ses propres événements.
+
 - [ ] Ajouter un filtre _à venir_ / _passé_ pour la route `GET /event/list`.
   - [ ] Vérifier les dates `date_debut` et `date_fin`, et distinguer les événements _à venir_ / _passés_.
 
@@ -110,3 +120,10 @@ Seuls certains champs sont obligatoires pour la mise à jour (par ex. `idEveneme
 ## 6. Idées futures
 
 - Suppression automatique des événements de niveau 2 après une certaine période.
+
+## Commande utile
+
+npm install --save-dev eslint
+npx eslint --init
+
+npx eslint

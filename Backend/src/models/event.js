@@ -2,15 +2,26 @@ const db = require("../config/database");
 
 const Event = {
   // fonction listAll qui permet de recuperer tous les evenements de la base de donnees
-  listAll: (callback) => {
+  listAll: (serviceID, callback) => {
+    console.log("service id :", serviceID);
     // requette sql pour recuperer tous les evenements
-    const sql = "SELECT * FROM evenements";
-    db.query(sql, (err, results) => {
+    const sql = "SELECT * FROM evenements WHERE niveau=1";
+    const secondSql =
+      "SELECT * FROM evenements WHERE niveau=2 AND idServices=?";
+
+    db.query(sql, (err, resultsOne) => {
       if (err) {
         console.error("DB ERROR :", err);
         return callback(err, null);
       }
-      return callback(null, results);
+      db.query(secondSql, [serviceID], (err, resultsTwo) => {
+        if (err) {
+          console.error("DB ERROR :", err);
+          return callback(err, null);
+        }
+        return callback(null, resultsOne, resultsTwo);
+      });
+      // return callback(null, resultsOne);
     });
   },
 
@@ -133,35 +144,39 @@ const Event = {
     });
   },
 
-  // A finir
+  // fonction qui lance  une requette pour verfier si utilisateurs dans champ inviter existe deans la DB
   checkIfUserExist: async (userMail) => {
+    // declaraison de la variable userExiste qui va aider a renvoyer l'erreure en cas si email existe pas
     let userExist = false;
+    // declaraison de la liste userMailList pour stocker les email des utilisateur apres que l'email a ete verifier
     let userMailList = [];
+    // Convertie le tableau de(s) email(s) en une chaine de charachter string
+    // ["mail1.com, mail2.com"] => "mail1.com, mail2.com"
     const userMailString = String(userMail);
+    // split: separe le userMailString en plusieure string grace a la virgule
+    // map((x)=>x.trim):  pour chaque element suprime les espaces
     const mails = userMailString.split(",").map((x) => x.trim());
+    // Boucle chaque mail dans mails pour verifier si existe dans la DB
     for (const mail of mails) {
+      // requette sql pour verifier si mail existe
       const sql = "SELECT mail FROM utilisateurs WHERE mail=?";
+      // stock le resultat obtenu dans tableau rows
       const [rows] = await db.promise().query(sql, [mail]);
-
+      // si trouve au moins 1 mail met userExiste en true et ajoute (push) le mail dans le userMailList
       if (rows.length > 0) {
         userExist = true;
         userMailList.push(mail);
       } else {
+        // Si trouve pas renvoi une erreure et met userExist en false
         console.error("user mail with mail: ", mail, "does not exist");
         userExist = false;
+        // renvoi user exist et mail qui n'a pas ete trouver
         return { userExist, mail: mail };
       }
     }
-    return { userExist, userMailList };
+    // en cas success renvoi userExiste et userMailList
+    return { userExist };
   },
 };
-
-// TODO
-// const verifyUserEvent = (userId) => {
-//   const sql = `SELECT * FROM evenements WHERE idUtilisateur = ? AND idEvenements = ?`;
-// };
-// const verifyRole = (userId) => {
-//   const sql = `SELECT * FROM utilisateurs WHERE idUtilisateur = ?`;
-// };
 
 module.exports = Event;

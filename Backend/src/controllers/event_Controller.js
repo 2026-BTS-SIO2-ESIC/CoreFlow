@@ -46,12 +46,12 @@ const mapEventBody = (body) => {
 exports.event_list = function (req, res) {
   // Utilise le modèle listAll qui vient de ../models/event.js pour afficher tous les événements dans la variable results
   // Ainsi déclare err pour afficher les erreurs rencontrées dans la DB
-  Event.listAll((err, results) => {
+  const serviceID = req.params.serviceID;
+  Event.listAll(serviceID, (err, resultsOne, resultsTwo) => {
     // Vérifie si le header est bien Content-Type: application/json
     if (!verifyHeader(req, res)) {
       return;
     }
-
     // Renvoie une erreur en cas d'une mauvaise requête vers la DB
     if (err) {
       logError(
@@ -73,12 +73,14 @@ exports.event_list = function (req, res) {
     logSuccess(
       200,
       "Liste des événements récupérée avec succès (" +
-        results.length +
-        " événement(s))",
+        resultsOne.length +
+        resultsTwo.length,
+      " événement(s))",
     );
     res.status(200).json({
-      message: results.length,
-      event: results,
+      message: resultsOne.length + resultsTwo.length,
+      eventLevelOne: resultsOne,
+      eventLevelTwo: resultsTwo,
     });
   });
 };
@@ -90,8 +92,10 @@ exports.event_list_by_id = function (req, res) {
   }
   // Récupère l'id depuis le paramètre de l'URL a partir de la requette (req) et l'assigne a la variable eventId
   const eventId = req.params.id;
+
   // Appelle la fonction listById du modèle Event et donne eventId comme parametre pour recuperer l'evenement
   Event.listById(eventId, (err, results) => {
+    console.log("has been executed");
     // Vérification des erreurs
     if (err) {
       logError(
@@ -155,9 +159,9 @@ exports.event_create = async (req, res) => {
   Event.create(event, (err) => {
     if (err) {
       logError(
-        500,
+        409,
         "DUPLICATION_ERROR",
-        "Un événement avec cet ID existe déjà: " + event.eventID,
+        "Un événement existe déjà avec cet ID : " + event.eventID,
       );
       return res.status(500).json({
         error: {
@@ -185,16 +189,16 @@ exports.event_update = async (req, res) => {
   // Récupère le body mappé par la fonction mapEventBody
   const event = mapEventBody(req.body);
   // Vérifie les champs importants
-  const { isValid, err } = await validateUpdateEvent(event);
+  const { isValid, err, codeError } = await validateUpdateEvent(event);
 
   // En cas où les champs sont invalides renvoie une erreur 400
   if (!isValid) {
     logError(
-      400,
+      codeError,
       "INVALID_FIELD",
       "Erreur lors de la validation (update): " + JSON.stringify(err),
     );
-    return res.status(400).json({
+    return res.status(codeError).json({
       error: {
         error: "INVALID_FIELD",
         message: err,
@@ -202,7 +206,7 @@ exports.event_update = async (req, res) => {
     });
   }
   // Appelle la fonction updateEvent du modèle Event
-  Event.update(event, (err, results) => {
+  Event.update(event, (err) => {
     if (err && err.code === "EVENT_NOT_OWNED") {
       logError(
         403,
@@ -327,14 +331,20 @@ const validateEvent = async (event) => {
 // Valide les champs nécessaires pour modifier l'événement
 const validateUpdateEvent = async (event) => {
   const err = [];
+  let codeError = 400;
 
+  if (event.createdAt) {
+    err.push("Vous ne povez pas changer la date de creation de l'evenement");
+  }
   // Vérifie si le champ invited est présent
   if (event.invited === undefined) {
     err.push("Champ inviter est invalide");
-  }
-  const { userExist, mail } = await Event.checkIfUserExist(event.invited);
-  if (!userExist) {
-    err.push("l'utilisateur " + mail + " n'existe pas");
+  } else {
+    const { userExist, mail } = await Event.checkIfUserExist(event.invited);
+    if (!userExist) {
+      err.push("l'utilisateur " + mail + " n'existe pas");
+      codeError = 404;
+    }
   }
 
   // Vérification eventID
@@ -357,6 +367,7 @@ const validateUpdateEvent = async (event) => {
   return {
     isValid: err.length === 0,
     err,
+    codeError,
   };
 };
 
