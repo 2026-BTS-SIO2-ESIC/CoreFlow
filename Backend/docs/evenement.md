@@ -93,9 +93,8 @@ Seuls certains champs sont obligatoires pour la mise à jour (par ex. `idEveneme
 ## 5. Tâches à faire / backlog
 
 - [ ] verification des role pour chaque affichage d'evenement (admin, employé, RH, manager).
-  1. [ ] Admin voit tout les evenement.
-  2. [ ] Manager voit que les evenement qu'il a crees et les evenement ou il a ete inviter.
-  3. [ ] Employee et RH voit que les evenement ou il a ete inviter.
+  1. [ ] ADMIN: Aficher tout les evenements
+  2. [ ] MANAGER, EMPLOYEE, RH: Aficher les evenement en fonctionde serviceID
 
 - [ ] crees une route helper pour retrouver un utilisater
   1. [ ] lancer une requette avec l'email de utilisateur avec ALIKE %emailMsg% dans la requette
@@ -113,7 +112,8 @@ Seuls certains champs sont obligatoires pour la mise à jour (par ex. `idEveneme
 - [x] Créer une route `PUT` pour que l’utilisateur puisse modifier ses propres événements.
 
 - [ ] Ajouter un filtre _à venir_ / _passé_ pour la route `GET /event/list`.
-  - [ ] Vérifier les dates `date_debut` et `date_fin`, et distinguer les événements _à venir_ / _passés_.
+  - [ ] Crees une route GET `/event/list/passed` qui va afficher les evenement ou les la date debut est deja passer
+  - [ ] Crees une route GET `/event/list/coming`, qui va afficher les evenement ou les date debut arrive
 
 ---
 
@@ -127,3 +127,9 @@ npm install --save-dev eslint
 npx eslint --init
 
 npx eslint
+
+## Avant de commencer, soyez sûr de valider ces étapes
+
+- [ ] Mettre à jour votre base de données (les modifications sont dans `Backend/migration-1.txt`)
+- [ ] Installer les dépendances avec `npm install`
+- [ ] Lancer le projet avec `npm run dev`
