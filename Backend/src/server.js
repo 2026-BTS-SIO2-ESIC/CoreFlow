@@ -15,6 +15,9 @@ app.use(express.urlencoded({ extended: true }));
 const authRoutes = require('./routes/authRoutes');
 app.use('/api/auth', authRoutes);
 
+const congesRoutes = require('./routes/congesRoutes');
+app.use('/api/conges', congesRoutes);
+
 
 // Route de test
 app.get('/', (req, res) => {
