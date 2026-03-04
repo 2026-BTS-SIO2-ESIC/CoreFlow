@@ -1,0 +1,19 @@
+const userRepository = require('../repositories/userRepository');
+
+const getAllUsers = async () => {
+  return await userRepository.getAllUsers();
+};
+
+const getAllUsersAdmin = async () => {
+  return await userRepository.getAllUsersAdmin();
+};
+
+const updatePassword = async (userId, oldPass, newPass) => {
+  const results = await userRepository.findPasswordById(userId);
+  if (results.length === 0) return { success: false, message: 'Utilisateur introuvable.' };
+  if (results[0].Password !== oldPass) return { success: false, message: 'Mot de passe actuel incorrect.' };
+  await userRepository.updatePasswordById(userId, newPass);
+  return { success: true };
+};
+
+module.exports = { getAllUsers, getAllUsersAdmin, updatePassword };

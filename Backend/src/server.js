@@ -1,41 +1,39 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config();
+
+const authRoutes = require('./routes/authRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-app.use(express.json());
 
-// Middlewares
+// Middlewares globaux
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
-const authRoutes = require('./routes/authRoutes');
 app.use('/api/auth', authRoutes);
-
+app.use('/api/utilisateurs', userRoutes);
 
 // Route de test
 app.get('/', (req, res) => {
-  res.json({ 
-    message: 'Bienvenue sur l\'API CoreFlow !',
+  res.json({
+    message: "Bienvenue sur l'API CoreFlow !",
     status: 'OK',
     timestamp: new Date().toISOString()
   });
 });
 
-// Route de santé (health check)
+// Route de santé
 app.get('/api/health', (req, res) => {
-  res.json({ 
+  res.json({
     status: 'healthy',
     uptime: process.uptime()
   });
 });
 
-// Démarrage du serveur
-app.listen(PORT, () => {
-  console.log(`Le Serveur de CoreFlow a démarré sur http://localhost:${PORT}`);
-});
+app.listen(PORT, () => console.log(`Serveur prêt sur le port ${PORT}`));
 
 module.exports = app;
