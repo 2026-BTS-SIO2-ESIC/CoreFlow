@@ -34,6 +34,16 @@
             <a href="#" class="nav-item">
                 <div class="nav-icon">
                     <svg viewBox="0 0 24 24">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                </div>
+                Documents
+            </a>
+
+            <a href="#" class="nav-item">
+                <div class="nav-icon">
+                    <svg viewBox="0 0 24 24">
                         <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                         <line x1="16" y1="2" x2="16" y2="6"></line>
                         <line x1="8" y1="2" x2="8" y2="6"></line>
@@ -56,7 +66,7 @@
                 Tickets & Support
             </a>
             <div v-if="user && (user.role === 'admin' || user.role === 'manager')">
-            <a href="#" class="nav-item">
+            <a @click="goToAdminPanel" class="nav-item">
                 <div class="nav-icon">
                     <svg viewBox="0 0 24 24">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -79,11 +89,11 @@
 
 
     <div v-if="user" class="user-info">
-      <h2>👤 Informations de connexion</h2>
+      <h2> Informations de connexion</h2>
       <p><strong>Nom :</strong> {{ user.prenom }} {{ user.nom }}</p>
       <p><strong>Email :</strong> {{ user.email }}</p>
       <p><strong>Rôle :</strong> {{ user.role }}</p>
-      <p><strong>Département :</strong> {{ user.Departement }}</p>
+      <p><strong>Département :</strong> {{ user.departement }}</p>
     </div>
 </div>
 
@@ -112,6 +122,9 @@ export default {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       this.$router.push('/login');
+    },
+    goToAdminPanel() {
+      this.$router.push('/admin/users');
     }
   }
 }
