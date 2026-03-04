@@ -358,21 +358,40 @@ export default {
     }
     await this.loadUsers();
   },
-  methods: {
+  methods:{
+  // Fonction helper pour récupérer le token
+  getAuthHeaders() {
+    const token = localStorage.getItem('token');
+    return {
+      'Authorization': `Bearer ${token}`
+    };
+  }, 
     async loadUsers() {
-      try {
-        const response = await fetch('http://localhost:3000/api/users');
-        const data = await response.json();
-        
-        if (data.success) {
-          this.users = data.data;
-          this.filteredUsers = data.data;
-        }
-      } catch (error) {
-        console.error('Erreur chargement utilisateurs:', error);
+  try {
+    const token = localStorage.getItem('token');
+    
+    const response = await fetch('http://localhost:3000/api/users', {
+      headers: {
+        'Authorization': `Bearer ${token}`
       }
-    },
-
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      this.users = data.data;
+      this.filteredUsers = data.data;
+    } else {
+      console.error('Erreur:', data.message);
+      if (response.status === 401) {
+        alert('Session expirée. Veuillez vous reconnecter.');
+        this.$router.push('/login');
+      }
+    }
+  } catch (error) {
+    console.error('Erreur chargement utilisateurs:', error);
+  }
+},
 
     filterUsers() {
       let filtered = [...this.users];
@@ -399,34 +418,37 @@ export default {
     },
 
     async createUser() {
-      this.loading = true;
-      this.errorMessage = null;
+  this.loading = true;
+  this.errorMessage = null;
 
-      try {
-        const response = await fetch('http://localhost:3000/api/users', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(this.formData)
-        });
+  try {
+    const token = localStorage.getItem('token');
+    
+    const response = await fetch('http://localhost:3000/api/users', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(this.formData)
+    });
 
-        const data = await response.json();
+    const data = await response.json();
 
-        if (data.success) {
-          await this.loadUsers();
-          this.closeModals();
-          alert('✅ Utilisateur créé avec succès !');
-        } else {
-          this.errorMessage = data.message;
-        }
-      } catch (error) {
-        console.error('Erreur création:', error);
-        this.errorMessage = 'Erreur lors de la création';
-      } finally {
-        this.loading = false;
-      }
-    },
+    if (data.success) {
+      await this.loadUsers();
+      this.closeModals();
+      alert('✅ Utilisateur créé avec succès !');
+    } else {
+      this.errorMessage = data.message;
+    }
+  } catch (error) {
+    console.error('Erreur création:', error);
+    this.errorMessage = 'Erreur lors de la création';
+  } finally {
+    this.loading = false;
+  }
+},
 
     editUser(user) {
       this.formData = {
@@ -444,54 +466,62 @@ export default {
     },
 
     async updateUser() {
-      this.loading = true;
-      this.errorMessage = null;
+  this.loading = true;
+  this.errorMessage = null;
 
-      try {
-        const response = await fetch(`http://localhost:3000/api/users/${this.formData.id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(this.formData)
-        });
+  try {
+    const token = localStorage.getItem('token');
+    
+    const response = await fetch(`http://localhost:3000/api/users/${this.formData.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(this.formData)
+    });
 
-        const data = await response.json();
+    const data = await response.json();
 
-        if (data.success) {
-          await this.loadUsers();
-          this.closeModals();
-          alert('✅ Utilisateur modifié avec succès !');
-        } else {
-          this.errorMessage = data.message;
-        }
-      } catch (error) {
-        console.error('Erreur modification:', error);
-        this.errorMessage = 'Erreur lors de la modification';
-      } finally {
-        this.loading = false;
-      }
-    },
+    if (data.success) {
+      await this.loadUsers();
+      this.closeModals();
+      alert('✅ Utilisateur modifié avec succès !');
+    } else {
+      this.errorMessage = data.message;
+    }
+  } catch (error) {
+    console.error('Erreur modification:', error);
+    this.errorMessage = 'Erreur lors de la modification';
+  } finally {
+    this.loading = false;
+  }
+},
 
     async toggleUserStatus(user) {
-      if (!confirm(`Voulez-vous vraiment ${user.est_actif ? 'désactiver' : 'activer'} ${user.prenom} ${user.nom} ?`)) {
-        return;
+  if (!confirm(`Voulez-vous vraiment ${user.est_actif ? 'désactiver' : 'activer'} ${user.prenom} ${user.nom} ?`)) {
+    return;
+  }
+
+  try {
+    const token = localStorage.getItem('token');
+    
+    const response = await fetch(`http://localhost:3000/api/users/${user.id}/toggle-status`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token}`
       }
+    });
 
-      try {
-        const response = await fetch(`http://localhost:3000/api/users/${user.id}/toggle-status`, {
-          method: 'PATCH'
-        });
+    const data = await response.json();
 
-        const data = await response.json();
-
-        if (data.success) {
-          await this.loadUsers();
-        }
-      } catch (error) {
-        console.error('Erreur toggle status:', error);
-      }
-    },
+    if (data.success) {
+      await this.loadUsers();
+    }
+  } catch (error) {
+    console.error('Erreur toggle status:', error);
+  }
+},
 
     confirmDelete(user) {
       if (user.id === 1) {
@@ -503,24 +533,29 @@ export default {
     },
 
     async deleteUser() {
-      try {
-        const response = await fetch(`http://localhost:3000/api/users/${this.userToDelete.id}`, {
-          method: 'DELETE'
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-          await this.loadUsers();
-          this.showDeleteModal = false;
-          this.userToDelete = null;
-          alert('✅ Utilisateur supprimé avec succès');
-        }
-      } catch (error) {
-        console.error('Erreur suppression:', error);
-        alert('❌ Erreur lors de la suppression');
+  try {
+    const token = localStorage.getItem('token');
+    
+    const response = await fetch(`http://localhost:3000/api/users/${this.userToDelete.id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
       }
-    },
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      await this.loadUsers();
+      this.showDeleteModal = false;
+      this.userToDelete = null;
+      alert('✅ Utilisateur supprimé avec succès');
+    }
+  } catch (error) {
+    console.error('Erreur suppression:', error);
+    alert('❌ Erreur lors de la suppression');
+  }
+},
 
     closeModals() {
       this.showCreateModal = false;
