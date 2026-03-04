@@ -7,7 +7,7 @@ const logSuccess = (code, msg) => {
       code +
       "\x1b[0m]" +
       "\n" +
-      "\x1b[32mREUSSI:\x1b[0m",
+      "\x1b[32mSUCCESS:\x1b[0m",
     msg,
   );
 };
