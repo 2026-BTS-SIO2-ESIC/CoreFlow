@@ -1,4 +1,4 @@
-# 🌿 Guide Git - CoreFlow
+-# 🌿 Guide Git - CoreFlow
 
 Guide simplifié pour utiliser Git sur le projet CoreFlow.
 
