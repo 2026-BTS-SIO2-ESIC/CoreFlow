@@ -1,0 +1,558 @@
+-- phpMyAdmin SQL Dump
+-- version 5.2.1
+-- https://www.phpmyadmin.net/
+--
+-- Hôte : 127.0.0.1:3306
+-- Généré le : jeu. 05 fév. 2026 à 14:16
+-- Version du serveur : 9.1.0
+-- Version de PHP : 8.3.14
+
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET time_zone = "+00:00";
+
+USE `core_flow`;
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
+
+--
+-- Base de données : `coreflow`
+--
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `congés`
+--
+
+DROP TABLE IF EXISTS `congés`;
+CREATE TABLE IF NOT EXISTS `congés` (
+  `idCongés` int NOT NULL,
+  `date` date DEFAULT NULL,
+  `date_debut` date DEFAULT NULL,
+  `date_fin` date DEFAULT NULL,
+  `statut` varchar(45) DEFAULT NULL,
+  PRIMARY KEY (`idCongés`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `demander`
+--
+
+DROP TABLE IF EXISTS `demander`;
+CREATE TABLE IF NOT EXISTS `demander` (
+  `idUtilisateurs` int NOT NULL,
+  `idServices` int NOT NULL,
+  `idCongés` int NOT NULL,
+  PRIMARY KEY (`idUtilisateurs`,`idServices`,`idCongés`),
+  KEY `fk_Utilisateurs_has_Congés_Congés1_idx` (`idCongés`),
+  KEY `fk_Utilisateurs_has_Congés_Utilisateurs1_idx` (`idUtilisateurs`,`idServices`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `documents`
+--
+
+DROP TABLE IF EXISTS `documents`;
+CREATE TABLE IF NOT EXISTS `documents` (
+  `idDocuments` int NOT NULL,
+  `titre` varchar(45) DEFAULT NULL,
+  `type` varchar(45) DEFAULT NULL,
+  `destinataire` varchar(45) DEFAULT NULL,
+  `description` varchar(45) DEFAULT NULL,
+  `idUtilisateurs` int NOT NULL,
+  `idServices` int NOT NULL,
+  PRIMARY KEY (`idDocuments`,`idUtilisateurs`,`idServices`),
+  KEY `fk_Documents_Utilisateurs1_idx` (`idUtilisateurs`,`idServices`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `evenements`
+--
+
+DROP TABLE IF EXISTS `evenements`;
+CREATE TABLE IF NOT EXISTS `evenements` (
+  `idEvenements` int NOT NULL,
+  `type` varchar(45) DEFAULT NULL,
+  `titre` varchar(45) DEFAULT NULL,
+  `nom_createur` varchar(45) DEFAULT NULL,
+  `description` varchar(45) DEFAULT NULL,
+  `date_creation` date DEFAULT NULL,
+  `date_debut` date DEFAULT NULL,
+  `date_fin` date DEFAULT NULL,
+  `idUtilisateurs` int NOT NULL,
+  `idServices` int NOT NULL,
+  PRIMARY KEY (`idEvenements`,`idUtilisateurs`,`idServices`),
+  KEY `fk_Evenements_Utilisateurs1_idx` (`idUtilisateurs`,`idServices`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+-- -------------------- phpMyAdmin SQL Dump
+-- version 5.2.1
+-- https://www.phpmyadmin.net/
+--
+-- Hôte : 127.0.0.1:3306
+-- Généré le : jeu. 05 fév. 2026 à 14:16
+-- Version du serveur : 9.1.0
+-- Version de PHP : 8.3.14
+
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET time_zone = "+00:00";
+
+-- Désactiver les vérifications pour éviter les erreurs de DROP TABLE
+SET FOREIGN_KEY_CHECKS = 0;
+
+USE core_flow;
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
+
+--
+-- Base de données : `core_flow`
+--
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `congés`
+--
+
+DROP TABLE IF EXISTS `congés`;
+CREATE TABLE IF NOT EXISTS `congés` (
+  `idCongés` int NOT NULL,
+  `date` date DEFAULT NULL,
+  `date_debut` date DEFAULT NULL,
+  `date_fin` date DEFAULT NULL,
+  `statut` varchar(45) DEFAULT NULL,
+  PRIMARY KEY (`idCongés`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `demander`
+--
+
+DROP TABLE IF EXISTS `demander`;
+CREATE TABLE IF NOT EXISTS `demander` (
+  `idUtilisateurs` int NOT NULL,
+  `idServices` int NOT NULL,
+  `idCongés` int NOT NULL,
+  PRIMARY KEY (`idUtilisateurs`,`idServices`,`idCongés`),
+  KEY `fk_Utilisateurs_has_Congés_Congés1_idx` (`idCongés`),
+  KEY `fk_Utilisateurs_has_Congés_Utilisateurs1_idx` (`idUtilisateurs`,`idServices`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `documents`
+--
+
+DROP TABLE IF EXISTS `documents`;
+CREATE TABLE IF NOT EXISTS `documents` (
+  `idDocuments` int NOT NULL,
+  `titre` varchar(45) DEFAULT NULL,
+  `type` varchar(45) DEFAULT NULL,
+  `destinataire` varchar(45) DEFAULT NULL,
+  `description` varchar(45) DEFAULT NULL,
+  `idUtilisateurs` int NOT NULL,
+  `idServices` int NOT NULL,
+  PRIMARY KEY (`idDocuments`,`idUtilisateurs`,`idServices`),
+  KEY `fk_Documents_Utilisateurs1_idx` (`idUtilisateurs`,`idServices`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `evenements`
+--
+
+DROP TABLE IF EXISTS `evenements`;
+CREATE TABLE IF NOT EXISTS `evenements` (
+  `idEvenements` int NOT NULL,
+  `type` varchar(45) DEFAULT NULL,
+  `titre` varchar(45) DEFAULT NULL,
+  `nom_createur` varchar(45) DEFAULT NULL,
+  `description` varchar(45) DEFAULT NULL,
+  `date_creation` date DEFAULT NULL,
+  `date_debut` date DEFAULT NULL,
+  `date_fin` date DEFAULT NULL,
+  `idUtilisateurs` int NOT NULL,
+  `idServices` int NOT NULL,
+  PRIMARY KEY (`idEvenements`,`idUtilisateurs`,`idServices`),
+  KEY `fk_Evenements_Utilisateurs1_idx` (`idUtilisateurs`,`idServices`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `posseder`
+--
+
+DROP TABLE IF EXISTS `posseder`;
+CREATE TABLE IF NOT EXISTS `posseder` (
+  `idRole` int NOT NULL,
+  `idUtilisateurs` int NOT NULL,
+  `idServices` int NOT NULL,
+  PRIMARY KEY (`idRole`,`idUtilisateurs`,`idServices`),
+  KEY `fk_Role_has_Utilisateurs_Utilisateurs1_idx` (`idUtilisateurs`,`idServices`),
+  KEY `fk_Role_has_Utilisateurs_Role1_idx` (`idRole`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `rediger`
+--
+
+DROP TABLE IF EXISTS `rediger`;
+CREATE TABLE IF NOT EXISTS `rediger` (
+  `Tickets_idTickets` int NOT NULL,
+  `Tickets_idServices` int NOT NULL,
+  `Tickets_Utilisateurs_idUtilisateurs` int NOT NULL,
+  `Tickets_Utilisateurs_idServices` int NOT NULL,
+  `Utilisateurs_idUtilisateurs` int NOT NULL,
+  `Utilisateurs_idServices` int NOT NULL,
+  PRIMARY KEY (`Tickets_idTickets`,`Tickets_idServices`,`Tickets_Utilisateurs_idUtilisateurs`,`Tickets_Utilisateurs_idServices`,`Utilisateurs_idUtilisateurs`,`Utilisateurs_idServices`),
+  KEY `fk_Tickets_has_Utilisateurs_Utilisateurs1_idx` (`Utilisateurs_idUtilisateurs`,`Utilisateurs_idServices`),
+  KEY `fk_Tickets_has_Utilisateurs_Tickets1_idx` (`Tickets_idTickets`,`Tickets_idServices`,`Tickets_Utilisateurs_idUtilisateurs`,`Tickets_Utilisateurs_idServices`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `role`
+--
+
+DROP TABLE IF EXISTS `role`;
+CREATE TABLE IF NOT EXISTS `role` (
+  `idRole` int NOT NULL,
+  `role` varchar(45) DEFAULT NULL,
+  `Description` varchar(45) DEFAULT NULL,
+  PRIMARY KEY (`idRole`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+--
+-- Déchargement des données de la table `role`
+--
+
+INSERT INTO `role` (`idRole`, `role`, `Description`) VALUES
+(1, 'Admin', NULL),
+(2, 'Employé', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `services`
+--
+
+DROP TABLE IF EXISTS `services`;
+CREATE TABLE IF NOT EXISTS `services` (
+  `idServices` int NOT NULL,
+  `nom_service` varchar(45) DEFAULT NULL,
+  `membres` varchar(45) DEFAULT NULL,
+  `chef_service` varchar(45) DEFAULT NULL,
+  `description` varchar(45) DEFAULT NULL,
+  PRIMARY KEY (`idServices`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+--
+-- Déchargement des données de la table `services`
+--
+
+INSERT INTO `services` (`idServices`, `nom_service`, `membres`, `chef_service`, `description`) VALUES
+(1, 'Ressources Humaines', NULL, NULL, NULL),
+(2, 'Informatique', NULL, NULL, NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `tickets`
+--
+
+DROP TABLE IF EXISTS `tickets`;
+CREATE TABLE IF NOT EXISTS `tickets` (
+  `idTickets` int NOT NULL,
+  `categorie` varchar(45) DEFAULT NULL,
+  `titre` varchar(45) DEFAULT NULL,
+  `description` varchar(45) DEFAULT NULL,
+  `piece_jointe` varchar(45) DEFAULT NULL,
+  `statut` varchar(45) DEFAULT NULL,
+  `idServices` int NOT NULL,
+  `Utilisateurs_idUtilisateurs` int NOT NULL,
+  `Utilisateurs_idServices` int NOT NULL,
+  PRIMARY KEY (`idTickets`,`idServices`,`Utilisateurs_idUtilisateurs`,`Utilisateurs_idServices`),
+  KEY `fk_Tickets_Services_idx` (`idServices`),
+  KEY `fk_Tickets_Utilisateurs1_idx` (`Utilisateurs_idUtilisateurs`,`Utilisateurs_idServices`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `utilisateurs`
+--
+
+DROP TABLE IF EXISTS `utilisateurs`;
+CREATE TABLE IF NOT EXISTS `utilisateurs` (
+  `idUtilisateurs` int NOT NULL AUTO_INCREMENT,
+  `Password` varchar(45) DEFAULT NULL,
+  `Nom` varchar(45) DEFAULT NULL,
+  `Preonom` varchar(45) DEFAULT NULL,
+  `mail` varchar(45) DEFAULT NULL,
+  `solde_congés` double DEFAULT NULL,
+  `adresse` varchar(45) DEFAULT NULL,
+  `date_création` date DEFAULT NULL,
+  `idServices` int NOT NULL,
+  PRIMARY KEY (`idUtilisateurs`,`idServices`),
+  UNIQUE KEY `mail_UNIQUE` (`mail`),
+  KEY `fk_Utilisateurs_Services1_idx` (`idServices`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+--
+-- Contraintes pour les tables déchargées
+--
+
+--
+-- Contraintes pour la table `demander`
+--
+ALTER TABLE `demander`
+  ADD CONSTRAINT `fk_Utilisateurs_has_Congés_Congés1` FOREIGN KEY (`idCongés`) REFERENCES `congés` (`idCongés`),
+  ADD CONSTRAINT `fk_Utilisateurs_has_Congés_Utilisateurs1` FOREIGN KEY (`idUtilisateurs`,`idServices`) REFERENCES `utilisateurs` (`idUtilisateurs`, `idServices`);
+
+--
+-- Contraintes pour la table `documents`
+--
+ALTER TABLE `documents`
+  ADD CONSTRAINT `fk_Documents_Utilisateurs1` FOREIGN KEY (`idUtilisateurs`,`idServices`) REFERENCES `utilisateurs` (`idUtilisateurs`, `idServices`);
+
+--
+-- Contraintes pour la table `evenements`
+--
+ALTER TABLE `evenements`
+  ADD CONSTRAINT `fk_Evenements_Utilisateurs1` FOREIGN KEY (`idUtilisateurs`,`idServices`) REFERENCES `utilisateurs` (`idUtilisateurs`, `idServices`);
+
+--
+-- Contraintes pour la table `posseder`
+--
+ALTER TABLE `posseder`
+  ADD CONSTRAINT `fk_Role_has_Utilisateurs_Role1` FOREIGN KEY (`idRole`) REFERENCES `role` (`idRole`),
+  ADD CONSTRAINT `fk_Role_has_Utilisateurs_Utilisateurs1` FOREIGN KEY (`idUtilisateurs`,`idServices`) REFERENCES `utilisateurs` (`idUtilisateurs`, `idServices`);
+
+--
+-- Contraintes pour la table `rediger`
+--
+ALTER TABLE `rediger`
+  ADD CONSTRAINT `fk_Tickets_has_Utilisateurs_Tickets1` FOREIGN KEY (`Tickets_idTickets`,`Tickets_idServices`,`Tickets_Utilisateurs_idUtilisateurs`,`Tickets_Utilisateurs_idServices`) REFERENCES `tickets` (`idTickets`, `idServices`, `Utilisateurs_idUtilisateurs`, `Utilisateurs_idServices`),
+  ADD CONSTRAINT `fk_Tickets_has_Utilisateurs_Utilisateurs1` FOREIGN KEY (`Utilisateurs_idUtilisateurs`,`Utilisateurs_idServices`) REFERENCES `utilisateurs` (`idUtilisateurs`, `idServices`);
+
+--
+-- Contraintes pour la table `tickets`
+--
+ALTER TABLE `tickets`
+  ADD CONSTRAINT `fk_Tickets_Services` FOREIGN KEY (`idServices`) REFERENCES `services` (`idServices`),
+  ADD CONSTRAINT `fk_Tickets_Utilisateurs1` FOREIGN KEY (`Utilisateurs_idUtilisateurs`,`Utilisateurs_idServices`) REFERENCES `utilisateurs` (`idUtilisateurs`, `idServices`);
+
+--
+-- Contraintes pour la table `utilisateurs`
+--
+ALTER TABLE `utilisateurs`
+  ADD CONSTRAINT `fk_Utilisateurs_Services1` FOREIGN KEY (`idServices`) REFERENCES `services` (`idServices`);
+
+-- Réactiver les vérifications après l'importation
+SET FOREIGN_KEY_CHECKS = 1;
+
+COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;--------------------------------------
+
+--
+-- Structure de la table `posseder`
+--
+
+DROP TABLE IF EXISTS `posseder`;
+CREATE TABLE IF NOT EXISTS `posseder` (
+  `idRole` int NOT NULL,
+  `idUtilisateurs` int NOT NULL,
+  `idServices` int NOT NULL,
+  PRIMARY KEY (`idRole`,`idUtilisateurs`,`idServices`),
+  KEY `fk_Role_has_Utilisateurs_Utilisateurs1_idx` (`idUtilisateurs`,`idServices`),
+  KEY `fk_Role_has_Utilisateurs_Role1_idx` (`idRole`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `rediger`
+--
+
+DROP TABLE IF EXISTS `rediger`;
+CREATE TABLE IF NOT EXISTS `rediger` (
+  `Tickets_idTickets` int NOT NULL,
+  `Tickets_idServices` int NOT NULL,
+  `Tickets_Utilisateurs_idUtilisateurs` int NOT NULL,
+  `Tickets_Utilisateurs_idServices` int NOT NULL,
+  `Utilisateurs_idUtilisateurs` int NOT NULL,
+  `Utilisateurs_idServices` int NOT NULL,
+  PRIMARY KEY (`Tickets_idTickets`,`Tickets_idServices`,`Tickets_Utilisateurs_idUtilisateurs`,`Tickets_Utilisateurs_idServices`,`Utilisateurs_idUtilisateurs`,`Utilisateurs_idServices`),
+  KEY `fk_Tickets_has_Utilisateurs_Utilisateurs1_idx` (`Utilisateurs_idUtilisateurs`,`Utilisateurs_idServices`),
+  KEY `fk_Tickets_has_Utilisateurs_Tickets1_idx` (`Tickets_idTickets`,`Tickets_idServices`,`Tickets_Utilisateurs_idUtilisateurs`,`Tickets_Utilisateurs_idServices`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `role`
+--
+
+DROP TABLE IF EXISTS `role`;
+CREATE TABLE IF NOT EXISTS `role` (
+  `idRole` int NOT NULL,
+  `role` varchar(45) DEFAULT NULL,
+  `Description` varchar(45) DEFAULT NULL,
+  PRIMARY KEY (`idRole`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+--
+-- Déchargement des données de la table `role`
+--
+
+INSERT INTO `role` (`idRole`, `role`, `Description`) VALUES
+(1, 'Admin', NULL),
+(2, 'Employé', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `services`
+--
+
+DROP TABLE IF EXISTS `services`;
+CREATE TABLE IF NOT EXISTS `services` (
+  `idServices` int NOT NULL,
+  `nom_service` varchar(45) DEFAULT NULL,
+  `membres` varchar(45) DEFAULT NULL,
+  `chef_service` varchar(45) DEFAULT NULL,
+  `description` varchar(45) DEFAULT NULL,
+  PRIMARY KEY (`idServices`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+--
+-- Déchargement des données de la table `services`
+--
+
+INSERT INTO `services` (`idServices`, `nom_service`, `membres`, `chef_service`, `description`) VALUES
+(1, 'Ressources Humaines', NULL, NULL, NULL),
+(2, 'Informatique', NULL, NULL, NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `tickets`
+--
+
+DROP TABLE IF EXISTS `tickets`;
+CREATE TABLE IF NOT EXISTS `tickets` (
+  `idTickets` int NOT NULL,
+  `categorie` varchar(45) DEFAULT NULL,
+  `titre` varchar(45) DEFAULT NULL,
+  `description` varchar(45) DEFAULT NULL,
+  `piece_jointe` varchar(45) DEFAULT NULL,
+  `statut` varchar(45) DEFAULT NULL,
+  `idServices` int NOT NULL,
+  `Utilisateurs_idUtilisateurs` int NOT NULL,
+  `Utilisateurs_idServices` int NOT NULL,
+  PRIMARY KEY (`idTickets`,`idServices`,`Utilisateurs_idUtilisateurs`,`Utilisateurs_idServices`),
+  KEY `fk_Tickets_Services_idx` (`idServices`),
+  KEY `fk_Tickets_Utilisateurs1_idx` (`Utilisateurs_idUtilisateurs`,`Utilisateurs_idServices`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `utilisateurs`
+--
+
+DROP TABLE IF EXISTS `utilisateurs`;
+CREATE TABLE IF NOT EXISTS `utilisateurs` (
+  `idUtilisateurs` int NOT NULL AUTO_INCREMENT,
+  `Password` varchar(45) DEFAULT NULL,
+  `Nom` varchar(45) DEFAULT NULL,
+  `Prenom` varchar(45) DEFAULT NULL,
+  `mail` varchar(45) DEFAULT NULL,
+  `solde_congés` double DEFAULT NULL,
+  `adresse` varchar(45) DEFAULT NULL,
+  `date_création` date DEFAULT NULL,
+  `idServices` int NOT NULL,
+  PRIMARY KEY (`idUtilisateurs`,`idServices`),
+  UNIQUE KEY `mail_UNIQUE` (`mail`),
+  KEY `fk_Utilisateurs_Services1_idx` (`idServices`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+
+--
+-- Contraintes pour les tables déchargées
+--
+
+--
+-- Contraintes pour la table `demander`
+--
+ALTER TABLE `demander`
+  ADD CONSTRAINT `fk_Utilisateurs_has_Congés_Congés1` FOREIGN KEY (`idCongés`) REFERENCES `congés` (`idCongés`),
+  ADD CONSTRAINT `fk_Utilisateurs_has_Congés_Utilisateurs1` FOREIGN KEY (`idUtilisateurs`,`idServices`) REFERENCES `utilisateurs` (`idUtilisateurs`, `idServices`);
+
+--
+-- Contraintes pour la table `documents`
+--
+ALTER TABLE `documents`
+  ADD CONSTRAINT `fk_Documents_Utilisateurs1` FOREIGN KEY (`idUtilisateurs`,`idServices`) REFERENCES `utilisateurs` (`idUtilisateurs`, `idServices`);
+
+--
+-- Contraintes pour la table `evenements`
+--
+ALTER TABLE `evenements`
+  ADD CONSTRAINT `fk_Evenements_Utilisateurs1` FOREIGN KEY (`idUtilisateurs`,`idServices`) REFERENCES `utilisateurs` (`idUtilisateurs`, `idServices`);
+
+--
+-- Contraintes pour la table `posseder`
+--
+ALTER TABLE `posseder`
+  ADD CONSTRAINT `fk_Role_has_Utilisateurs_Role1` FOREIGN KEY (`idRole`) REFERENCES `role` (`idRole`),
+  ADD CONSTRAINT `fk_Role_has_Utilisateurs_Utilisateurs1` FOREIGN KEY (`idUtilisateurs`,`idServices`) REFERENCES `utilisateurs` (`idUtilisateurs`, `idServices`);
+
+--
+-- Contraintes pour la table `rediger`
+--
+ALTER TABLE `rediger`
+  ADD CONSTRAINT `fk_Tickets_has_Utilisateurs_Tickets1` FOREIGN KEY (`Tickets_idTickets`,`Tickets_idServices`,`Tickets_Utilisateurs_idUtilisateurs`,`Tickets_Utilisateurs_idServices`) REFERENCES `tickets` (`idTickets`, `idServices`, `Utilisateurs_idUtilisateurs`, `Utilisateurs_idServices`),
+  ADD CONSTRAINT `fk_Tickets_has_Utilisateurs_Utilisateurs1` FOREIGN KEY (`Utilisateurs_idUtilisateurs`,`Utilisateurs_idServices`) REFERENCES `utilisateurs` (`idUtilisateurs`, `idServices`);
+
+--
+-- Contraintes pour la table `tickets`
+--
+ALTER TABLE `tickets`
+  ADD CONSTRAINT `fk_Tickets_Services` FOREIGN KEY (`idServices`) REFERENCES `services` (`idServices`),
+  ADD CONSTRAINT `fk_Tickets_Utilisateurs1` FOREIGN KEY (`Utilisateurs_idUtilisateurs`,`Utilisateurs_idServices`) REFERENCES `utilisateurs` (`idUtilisateurs`, `idServices`);
+
+--
+-- Contraintes pour la table `utilisateurs`
+--
+ALTER TABLE `utilisateurs`
+  ADD CONSTRAINT `fk_Utilisateurs_Services1` FOREIGN KEY (`idServices`) REFERENCES `services` (`idServices`);
+COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;

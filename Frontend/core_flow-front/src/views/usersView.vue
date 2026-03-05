@@ -50,10 +50,10 @@ onMounted(() => { //lorsque le composant est monté, exécute la fonction fetchU
             </tr>
         </thead>
         <tbody>
-            <tr v-for="user in users" :key="user.id"> <!-- Parcourt la liste des utilisateurs et affiche une ligne pour chaque utilisateur -->
-                <td>{{ user.id }}</td> <!-- Affiche l'ID de l'utilisateur -->
+            <tr v-for="user in users" :key="user.idUtilisateur"> <!-- Parcourt la liste des utilisateurs et affiche une ligne pour chaque utilisateur -->
+                <td>{{ user.idUtilisateur }}</td> <!-- Affiche l'ID de l'utilisateur -->
                 <td>{{ user.Nom }}</td> <!-- Affiche le nom de l'utilisateur -->
-                <td>{{ user.Email }}</td> <!-- Affiche l'email de l'utilisateur -->
+                <td>{{ user.mail }}</td> <!-- Affiche l'email de l'utilisateur -->
             </tr>
         </tbody>
     </table>
