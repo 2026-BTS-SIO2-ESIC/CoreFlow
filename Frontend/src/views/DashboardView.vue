@@ -46,7 +46,7 @@
       <div class="user-profile">
         <div v-if="loading" class="user-loading">Chargement...</div>
         <div v-else-if="user">
-          <div class="user-name">{{ user.Nom }} {{ user.Preonom }}</div>
+          <div class="user-name">{{ user.nom }} {{ user.prenom }}</div>
           <div class="user-role">{{ user.role }}</div>
         </div>
         <button @click="logout" class="btn-logout">Déconnexion</button>
@@ -60,8 +60,8 @@
         <div v-if="loading" class="header-loading">Chargement...</div>
         <div v-else class="header-content">
           <div class="header-left">
-            <h1>Bonjour, {{ user?.Preonom || 'Bienvenue' }} 👋</h1>
-            <p class="header-subtitle">{{ currentDate }} — {{ user?.nom_service || 'CoreFlow' }}</p>
+            <h1>Bonjour, {{ user?.prenom || 'Bienvenue' }} 👋</h1>
+            <p class="header-subtitle">{{ currentDate }} — {{ user?.departement || 'CoreFlow' }}</p>
           </div>
           <div class="header-right" v-if="user">
             <div class="header-badge">{{ user.role }}</div>
@@ -84,7 +84,7 @@
           <span class="icon">💻</span>
           <div class="stat-info">
             <label>Mon Service</label>
-            <p>{{ user?.nom_service || 'Non défini' }}</p>
+            <p>{{ user?.departement || 'Non défini' }}</p>
           </div>
         </div>
         <div class="stat-card">
@@ -111,8 +111,8 @@
           <div class="profile-security-card">
             <h3>🛡️ Profil & Sécurité</h3>
             <div class="secure-info">
-              <p><strong>Mail :</strong> {{ user?.mail || '—' }}</p>
-              <p><strong>Service :</strong> {{ user?.nom_service || '—' }}</p>
+              <p><strong>Mail :</strong> {{ user?.email || '—' }}</p>
+              <p><strong>Service :</strong> {{ user?.departement || '—' }}</p>
               <p><strong>Rôle :</strong> {{ user?.role || '—' }}</p>
             </div>
             <button @click="openPasswordModal" class="btn-password">Modifier mon mot de passe</button>

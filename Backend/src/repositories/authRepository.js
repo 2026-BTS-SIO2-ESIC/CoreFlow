@@ -3,12 +3,9 @@ const db = require('../config/db');
 const findUserByEmailAndPassword = (email, password) => {
   return new Promise((resolve, reject) => {
     const sql = `
-      SELECT u.*, s.nom_service, r.role
+      SELECT u.*
       FROM utilisateurs u
-      LEFT JOIN services s ON u.idServices = s.idServices
-      LEFT JOIN posseder p ON u.idUtilisateurs = p.idUtilisateurs AND u.idServices = p.idServices
-      LEFT JOIN role r ON p.idRole = r.idRole
-      WHERE u.mail = ? AND u.Password = ?
+      WHERE u.email = ? AND u.password = ?
     `;
     db.query(sql, [email, password], (err, results) => {
       if (err) return reject(err);
@@ -20,12 +17,9 @@ const findUserByEmailAndPassword = (email, password) => {
 const findUserById = (id) => {
   return new Promise((resolve, reject) => { // new Promise pour gérer les opérations asynchrones de la base de données on peut aussi utiliser async/await dans le service et promisify la fonction db.query
     const sql = `
-      SELECT u.*, s.nom_service, r.role
+      SELECT u.*
       FROM utilisateurs u
-      LEFT JOIN services s ON u.idServices = s.idServices
-      LEFT JOIN posseder p ON u.idUtilisateurs = p.idUtilisateurs AND u.idServices = p.idServices
-      LEFT JOIN role r ON p.idRole = r.idRole
-      WHERE u.idUtilisateurs = ?
+      WHERE u.id = ?
     `;
     db.query(sql, [id], (err, results) => {
       if (err) return reject(err);
