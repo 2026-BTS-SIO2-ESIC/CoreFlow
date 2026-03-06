@@ -24,30 +24,43 @@ const logError = (code, errorCode, msg) => {
     msg,
   );
 };
-// Mapping des champs
+// Mapping des champs (nouvelle structure table evenements)
 const mapEventBody = (body) => {
   return {
-    eventID: body.idEvenements,
-    serviceID: body.idServices,
-    userID: body.idUtilisateurs,
-    createdAt: body.date_creation,
-    startDate: body.date_debut,
-    endDate: body.date_fin,
+    id: body.id,
+    titre: body.titre,
     description: body.description,
-    userName: body.nom_createur,
-    title: body.titre,
-    type: body.type,
-    level: body.niveau,
-    invited: body.inviter,
+    typeEvenement: body.type_evenement,
+    dateDebut: body.date_debut,
+    dateFin: body.date_fin,
+    lieu: body.lieu,
+    organisateurId: body.organisateur_id,
+    estObligatoire: body.est_obligatoire,
+    nbPlacesMax: body.nb_places_max,
+    inviter: body.inviter,
+    statut: body.statut,
+    createdAt: body.created_at,
+    updatedAt: body.updated_at,
+    niveau: body.niveau,
   };
 };
 
 // Déclare et exporte event_list pour être appelée dans ../routes/eventRoutes.js
-exports.event_list = function (req, res) {
+exports.event_list = async function (req, res) {
   // Utilise le modèle listAll qui vient de ../models/event.js pour afficher tous les événements dans la variable results
   // Ainsi déclare err pour afficher les erreurs rencontrées dans la DB
-  const serviceID = req.params.serviceID;
-  Event.listAll(serviceID, (err, resultsOne, resultsTwo) => {
+  const invitedEmail = req.params.invitedEmail;
+  // const { userExist } = await Event.checkIfUserExist(invitedEmail);
+  // if (!userExist) {
+  //   return res.status(404).json({
+  //     error: {
+  //       error: "NOT FOUND",
+  //       message: "L'utilisateur n'existe pas",
+  //     },
+  //   });
+  // }
+
+  Event.listAll(invitedEmail, (err, resultsOne, resultsTwo) => {
     // Vérifie si le header est bien Content-Type: application/json
     if (!verifyHeader(req, res)) {
       return;
@@ -138,6 +151,10 @@ exports.event_create = async (req, res) => {
   const event = mapEventBody(req.body);
 
   // Déclaration de isValid bool avec une fonction validateEvent qui prend le body mapper de la requette comme variable
+  // Générer created_at et updated_at si non fournis
+  if (!event.createdAt) event.createdAt = new Date().toISOString().slice(0, 19).replace("T", " ");
+  if (!event.updatedAt) event.updatedAt = new Date().toISOString().slice(0, 19).replace("T", " ");
+
   const { isValid, err } = await validateEvent(event);
   if (!isValid) {
     logError(
@@ -156,31 +173,30 @@ exports.event_create = async (req, res) => {
   }
 
   // Appelle la fonction create du modèle Event, prend event comme paramètre
-  Event.create(event, (err) => {
+  Event.create(event, (err, results) => {
     if (err) {
       logError(
-        409,
-        "DUPLICATION_ERROR",
-        "Un événement existe déjà avec cet ID : " + event.eventID,
+        500,
+        "DB_ERROR",
+        "Erreur lors de la création de l'événement: " + err.message,
       );
       return res.status(500).json({
         error: {
-          error: "DUPLICATION_ERROR",
-          message:
-            "Un événement avec cet ID existe déjà dans la base de données",
+          error: "DB_ERROR",
+          message: "Erreur lors de la création de l'événement",
           detail: err.message,
         },
       });
     }
 
-    // Redonne le message de success en quoi l'evenement a ete crees
+    const insertId = results?.insertId;
     logSuccess(
       201,
-      "L'evenement crees avec success, ID evenement: " + event.eventID,
+      "L'événement créé avec succès, ID: " + insertId,
     );
     res.status(201).json({
       message: "L'événement a été créé",
-      id: event.eventID,
+      id: insertId,
     });
   });
 };
@@ -188,6 +204,8 @@ exports.event_create = async (req, res) => {
 exports.event_update = async (req, res) => {
   // Récupère le body mappé par la fonction mapEventBody
   const event = mapEventBody(req.body);
+  // Mise à jour de updated_at
+  event.updatedAt = new Date().toISOString().slice(0, 19).replace("T", " ");
   // Vérifie les champs importants
   const { isValid, err, codeError } = await validateUpdateEvent(event);
 
@@ -207,16 +225,26 @@ exports.event_update = async (req, res) => {
   }
   // Appelle la fonction updateEvent du modèle Event
   Event.update(event, (err) => {
+    if (err && err.code === "EVENT_NOT_FOUND") {
+      logError(404, "NOT_FOUND", "Événement introuvable (ID: " + event.id + ")");
+      return res.status(404).json({
+        error: {
+          error: "NOT_FOUND",
+          message: "L'événement n'existe pas",
+          details: err.message,
+        },
+      });
+    }
     if (err && err.code === "EVENT_NOT_OWNED") {
       logError(
         403,
         "PERMISSION_ERROR",
-        "Droits insuffisants sur l'événement ID: " + event.eventID,
+        "Droits insuffisants sur l'événement ID: " + event.id,
       );
       return res.status(403).json({
         error: {
           error: "PERMISSION_ERROR",
-          message: "Vous ne posseder pas les droit sur cette evenement",
+          message: "Vous ne possédez pas les droits sur cet événement",
           details: err.message,
         },
       });
@@ -236,90 +264,85 @@ exports.event_update = async (req, res) => {
       });
     }
 
-    // En cas de succès renvoie le message de succès et l'id de l'événement modifié
-    logSuccess(201, "Événement modifié avec succès, ID: " + event.eventID);
+    logSuccess(201, "Événement modifié avec succès, ID: " + event.id);
     res.status(201).json({
-      message: "La modification avec succès",
-      id: event.eventID,
+      message: "La modification a réussi",
+      id: event.id,
     });
   });
 };
 
-// Validation des champs
+// Validation des champs (create)
 const validateEvent = async (event) => {
   const err = [];
-  // Vérifie si le champ invited est présent
-  if (event.invited === undefined) {
-    err.push("Champ inviter est invalide");
-  }
-  const { userExist, mail } = await Event.checkIfUserExist(event.invited);
-  if (!userExist) {
-    err.push("l'utilisateur " + mail + " n'existe pas");
+
+  // Vérification organisateur_id (obligatoire)
+  if (event.organisateurId === undefined || !Number.isInteger(Number(event.organisateurId))) {
+    err.push("Champ organisateur_id est invalide ou requis");
   }
 
-  // Vérification eventID
-  if (event.eventID === undefined || !Number.isInteger(Number(event.eventID))) {
-    err.push("Champ idEvenements est invalide");
-  }
-  // Vérification serviceID
-  if (
-    event.serviceID === undefined ||
-    !Number.isInteger(Number(event.serviceID))
-  ) {
-    err.push("Champ idServices est invalide");
-  }
-  // Vérification userID
-  if (event.userID === undefined || !Number.isInteger(Number(event.userID))) {
-    err.push("Champ idUtilisateurs est invalide");
+  // Vérification inviter (requis si niveau=2)
+  if (event.inviter !== undefined && event.inviter !== null && event.inviter !== "") {
+    const { userExist, mail } = await Event.checkIfUserExist(event.inviter);
+    if (!userExist) {
+      err.push("L'utilisateur " + mail + " n'existe pas");
+    }
   }
 
-  // Vérification createdAt (doit être une date valide)
-  // Date.parse transforme les caractères de dates en nombre
-  // 2026-02-23 => 1771804800000
-  if (!event.createdAt || isNaN(Date.parse(event.createdAt))) {
-    err.push("Champ date_creation est invalide, doit être YYYY-MM-DD");
-    // Appelle la fonction timeVerify qui vérifie si la date de création est avant aujourd'hui
-  } else if (!timeVerify(Date.parse(event.createdAt))) {
-    err.push("La date de début ne peut pas être avant aujourd'hui.");
-    // Vérifie si la date de création est après la date de début
-  } else if (Date.parse(event.createdAt) > Date.parse(event.startDate)) {
-    err.push("La date de début ne peut pas être avant la date de création");
+  // Vérification date_debut
+  if (!event.dateDebut || isNaN(Date.parse(event.dateDebut))) {
+    err.push("Champ date_debut est invalide, doit être une date valide (YYYY-MM-DD)");
+  } else if (!timeVerify(Date.parse(event.dateDebut))) {
+    err.push("La date de début ne peut pas être avant aujourd'hui");
   }
-  // Vérification startDate (doit être une date valide)
-  if (!event.startDate || isNaN(Date.parse(event.startDate))) {
-    err.push("Champ date_debut est invalide, doit être YYYY-MM-DD");
-  }
-  // Vérification endDate (doit être une date valide)
-  if (!event.endDate || isNaN(Date.parse(event.endDate))) {
-    err.push("Champ date_fin est invalide, doit être YYYY-MM-DD");
-    // Vérifie si la date de fin n'est pas avant la date de début
-  } else if (event.endDate < event.startDate) {
+
+  // Vérification date_fin
+  if (!event.dateFin || isNaN(Date.parse(event.dateFin))) {
+    err.push("Champ date_fin est invalide, doit être une date valide (YYYY-MM-DD)");
+  } else if (event.dateDebut && event.dateFin < event.dateDebut) {
     err.push("La date de fin ne peut pas être avant la date de début");
   }
 
-  // Vérification des autres champs
-  if (
-    event.description !== undefined &&
-    typeof event.description !== "string"
-  ) {
+  // Vérification description
+  if (event.description !== undefined && typeof event.description !== "string") {
     err.push("Champ description doit être une chaîne de caractères");
   }
-  // Vérification userName (obligatoire)
-  if (!event.userName || typeof event.userName !== "string") {
-    err.push("Champ nom_createur est invalide");
-  }
-  // Vérification title (obligatoire)
-  if (!event.title || typeof event.title !== "string") {
-    err.push("Champ titre est invalide");
-  }
-  // Vérification type (obligatoire)
-  if (!event.type || typeof event.type !== "string") {
-    err.push("Champ type est invalide");
+
+  // Vérification titre (obligatoire)
+  if (!event.titre || typeof event.titre !== "string") {
+    err.push("Champ titre est invalide ou requis");
   }
 
-  // Vérifie si le niveau est soit 1 ou 2
-  if (event.level !== "1" && event.level !== "2") {
-    err.push("Champ niveau est invalide doit être 1 ou 2");
+  // Vérification type_evenement (obligatoire)
+  if (!event.typeEvenement || typeof event.typeEvenement !== "string") {
+    err.push("Champ type_evenement est invalide ou requis");
+  }
+
+  // Vérification niveau (1 ou 2)
+  if (event.niveau !== "1" && event.niveau !== "2") {
+    err.push("Champ niveau est invalide, doit être 1 ou 2");
+  }
+
+  // Vérification nb_places_max si fourni
+  if (event.nbPlacesMax !== undefined && event.nbPlacesMax !== null) {
+    if (!Number.isInteger(Number(event.nbPlacesMax)) || Number(event.nbPlacesMax) < 0) {
+      err.push("Champ nb_places_max doit être un entier positif");
+    }
+  }
+
+  //available status 'planifie','en_cours','termine','annule' 
+  if (event.statut !== undefined && event.statut !== null) {
+    if (event.statut !== "planifie" && event.statut !== "en_cours" && event.statut !== "termine" && event.statut !== "annule") {
+      err.push("Champ statut est invalide, doit être planifie, en_cours, termine ou annule");
+    }
+  }
+
+  // Vérification est_obligatoire si fourni (booléen 0/1)
+  if (event.estObligatoire !== undefined && event.estObligatoire !== null) {
+    const v = Number(event.estObligatoire);
+    if (v !== 0 && v !== 1) {
+      err.push("Champ est_obligatoire doit être 0 ou 1");
+    }
   }
 
   return {
@@ -333,35 +356,34 @@ const validateUpdateEvent = async (event) => {
   const err = [];
   let codeError = 400;
 
-  if (event.createdAt) {
-    err.push("Vous ne povez pas changer la date de creation de l'evenement");
+  // Vérification id (obligatoire pour update)
+  if (event.id === undefined || !Number.isInteger(Number(event.id))) {
+    err.push("Champ id est invalide ou requis pour la mise à jour");
   }
-  // Vérifie si le champ invited est présent
-  if (event.invited === undefined) {
-    err.push("Champ inviter est invalide");
-  } else {
-    const { userExist, mail } = await Event.checkIfUserExist(event.invited);
+
+  // Vérification organisateur_id (obligatoire pour vérifier la propriété)
+  if (event.organisateurId === undefined || !Number.isInteger(Number(event.organisateurId))) {
+    err.push("Champ organisateur_id est invalide ou requis pour la mise à jour");
+  }
+
+  // Vérification inviter si fourni
+  if (event.inviter !== undefined && event.inviter !== null && event.inviter !== "") {
+    const { userExist, mail } = await Event.checkIfUserExist(event.inviter);
     if (!userExist) {
-      err.push("l'utilisateur " + mail + " n'existe pas");
+      err.push("L'utilisateur " + mail + " n'existe pas");
       codeError = 404;
     }
   }
 
-  // Vérification eventID
-  if (event.eventID === undefined || !Number.isInteger(Number(event.eventID))) {
-    err.push("Champ idEvenements est invalide ou non ajouté");
+  if (event.statut !== undefined && event.statut !== null) {
+    if (event.statut !== "planifie" && event.statut !== "en_cours" && event.statut !== "termine" && event.statut !== "annule") {
+      err.push("Champ statut est invalide, doit être planifie, en_cours, termine ou annule");
+    }
   }
-  // Vérification serviceID
-  if (
-    event.serviceID === undefined ||
-    !Number.isInteger(Number(event.serviceID))
-  ) {
-    err.push("Champ idServices est invalide ou non ajouté");
-  }
-
-  // Vérification du niveau si 1 ou 2
-  if (event.level !== "1" && event.level !== "2") {
-    err.push("Champ niveau est invalide doit être 1 ou 2");
+  
+  // Vérification niveau si fourni
+  if (event.niveau !== undefined && event.niveau !== "1" && event.niveau !== "2") {
+    err.push("Champ niveau est invalide, doit être 1 ou 2");
   }
 
   return {
@@ -396,5 +418,5 @@ const verifyHeader = (req, res) => {
 
 const timeVerify = (time) => {
   const today = Date.now();
-  return time >= today;
+  return time <= today;
 };

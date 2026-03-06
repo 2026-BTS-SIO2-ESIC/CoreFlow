@@ -2,19 +2,19 @@ const db = require("../config/database");
 
 const Event = {
   // fonction listAll qui permet de recuperer tous les evenements de la base de donnees
-  listAll: (serviceID, callback) => {
-    console.log("service id :", serviceID);
+  listAll: (invitedEmail, callback) => {
+    console.log("inviter email:", invitedEmail);
     // requette sql pour recuperer tous les evenements
     const sql = "SELECT * FROM evenements WHERE niveau=1";
     const secondSql =
-      "SELECT * FROM evenements WHERE niveau=2 AND idServices=?";
+      "SELECT * FROM evenements WHERE niveau=2 AND inviter=?";
 
     db.query(sql, (err, resultsOne) => {
       if (err) {
         console.error("DB ERROR :", err);
         return callback(err, null);
       }
-      db.query(secondSql, [serviceID], (err, resultsTwo) => {
+      db.query(secondSql, [invitedEmail], (err, resultsTwo) => {
         if (err) {
           console.error("DB ERROR :", err);
           return callback(err, null);
@@ -27,8 +27,8 @@ const Event = {
 
   // fonction listById qui pren comme valeur eventId a partir dans la fonction event_list_by_id
   listById: (eventId, callback) => {
-    // reauette sql qui selectionne lévenement a partir du id donner(eventId) dans la table evenements
-    const sql = "SELECT * FROM evenements WHERE idEvenements = ?";
+    // requette sql qui selectionne l'evenement a partir du id donner(eventId) dans la table evenements
+    const sql = "SELECT * FROM evenements WHERE id = ?";
     // execute la query en lui donnant la requette (sql) et le eventId comme parametre
     db.query(sql, [eventId], (err, results) => {
       // en cas d'erreur renvoi l'erreur
@@ -40,41 +40,45 @@ const Event = {
     });
   },
 
-  // fonction create aui crees une requette de Insertion dans la table evenement
+  // fonction create qui cree une requette d'Insertion dans la table evenements
   create: (event, callback) => {
-    // requette sql avec tout les champs de la table evenement
+    // requette sql avec tous les champs de la table evenements
     const sql = `
         INSERT INTO evenements (
-        date_creation, 
+        titre, 
+        description, 
+        type_evenement, 
         date_debut, 
         date_fin, 
-        description, 
-        idEvenements, 
-        idServices, 
-        idUtilisateurs, 
-        nom_createur,
-        titre, 
-        \`type\`,
-        niveau,
-        inviter)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+        lieu, 
+        organisateur_id, 
+        est_obligatoire, 
+        nb_places_max, 
+        inviter, 
+        statut, 
+        created_at, 
+        updated_at, 
+        niveau)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     `;
     // execute la query en lui donnant la requette (sql) et les valeurs de l'evenement comme parametre
     db.query(
       sql,
       [
-        event.createdAt,
-        event.startDate,
-        event.endDate,
+        event.titre,
         event.description,
-        event.eventID,
-        event.serviceID,
-        event.userID,
-        event.userName,
-        event.title,
-        event.type,
-        event.level,
-        event.invited,
+        event.typeEvenement,
+        event.dateDebut,
+        event.dateFin,
+        event.lieu ?? null,
+        event.organisateurId,
+        event.estObligatoire ?? null,
+        event.nbPlacesMax ?? null,
+        event.inviter ?? null,
+        event.statut ?? null,
+        event.createdAt,
+        event.updatedAt,
+        event.niveau,
       ],
       (err, results) => {
         if (err) {
@@ -86,61 +90,94 @@ const Event = {
     );
   },
 
-  // la fonction update qui rajoute les champs a modifier dans la table evenement
+  // la fonction update qui rajoute les champs a modifier dans la table evenements
   update: (event, callback) => {
     // requette sql qui remplace les valeurs de la table par les nouvelles valeurs
     let sql = "UPDATE evenements SET ";
-    // crees un tableau pour les valeurs a modifier
     let params = [];
-    // verification des champs si present et en cas si ils sont present rajoute ces champs dans le tableau params
-    if (event.createdAt) {
-      sql += "date_creation=?, ";
-      params.push(event.createdAt);
+    if (event.titre) {
+      sql += "titre=?, ";
+      params.push(event.titre);
     }
-    if (event.startDate) {
-      sql += "date_debut=?, ";
-      params.push(event.startDate);
-    }
-    if (event.description) {
-      sql += "description=? ,";
+    if (event.description !== undefined) {
+      sql += "description=?, ";
       params.push(event.description);
     }
-
-    if (event.userName) {
-      sql += "nom_createur=?, ";
-      params.push(event.userName);
+    if (event.typeEvenement) {
+      sql += "type_evenement=?, ";
+      params.push(event.typeEvenement);
     }
-    if (event.title) {
-      sql += "titre=?, ";
-      params.push(event.title);
+    if (event.dateDebut) {
+      sql += "date_debut=?, ";
+      params.push(event.dateDebut);
     }
-    if (event.type) {
-      sql += "`type`=?, ";
-      params.push(event.type);
+    if (event.dateFin) {
+      sql += "date_fin=?, ";
+      params.push(event.dateFin);
     }
-    if (event.invited) {
+    if (event.lieu !== undefined) {
+      sql += "lieu=?, ";
+      params.push(event.lieu);
+    }
+    if (event.estObligatoire !== undefined) {
+      sql += "est_obligatoire=?, ";
+      params.push(event.estObligatoire);
+    }
+    if (event.nbPlacesMax !== undefined) {
+      sql += "nb_places_max=?, ";
+      params.push(event.nbPlacesMax);
+    }
+    if (event.inviter !== undefined) {
       sql += "inviter=?, ";
-      params.push(event.invited);
+      params.push(event.inviter);
     }
-    if (event.level) {
+    if (event.statut !== undefined) {
+      sql += "statut=?, ";
+      params.push(event.statut);
+    }
+    if (event.updatedAt) {
+      sql += "updated_at=?, ";
+      params.push(event.updatedAt);
+    }
+    if (event.niveau) {
       sql += "niveau=?, ";
-      params.push(event.level);
+      params.push(event.niveau);
     }
-    sql = sql.slice(0, -2); // retire la derniere virgule
-    sql += " WHERE idEvenements=? AND idUtilisateurs=?";
-    params.push(event.eventID, event.userID); // envoie les valeurs idEvenement et idUtilisateur données dans la requette a la sql
+    if (params.length === 0) {
+      const err = new Error("Aucun champ à modifier");
+      err.code = "NO_FIELDS_TO_UPDATE";
+      return callback(err, null);
+    }
 
-    db.query(sql, params, (err, results) => {
+    // Vérifier si l'événement existe, puis exécuter l'UPDATE
+    const sql_exist = "SELECT * FROM evenements WHERE id=?";
+    db.query(sql_exist, [event.id], (err, existResults) => {
       if (err) {
         console.error("DB ERROR :", err);
         return callback(err, null);
       }
-      if (results.affectedRows === 0) {
-        const err = new Error("EVENT_NOT_OWNED");
-        err.code = "EVENT_NOT_OWNED";
-        return callback(err, null);
+      if (existResults.length === 0) {
+        const errNotFound = new Error("EVENT_NOT_FOUND");
+        errNotFound.code = "EVENT_NOT_FOUND";
+        return callback(errNotFound, null);
       }
-      return callback(null, results);
+
+      sql = sql.slice(0, -2);
+      sql += " WHERE id=? AND organisateur_id=?";
+      const updateParams = [...params, event.id, event.organisateurId];
+
+      db.query(sql, updateParams, (err, results) => {
+        if (err) {
+          console.error("DB ERROR :", err);
+          return callback(err, null);
+        }
+        if (results.affectedRows === 0) {
+          const errOwned = new Error("EVENT_NOT_OWNED");
+          errOwned.code = "EVENT_NOT_OWNED";
+          return callback(errOwned, null);
+        }
+        return callback(null, results);
+      });
     });
   },
 
@@ -159,7 +196,7 @@ const Event = {
     // Boucle chaque mail dans mails pour verifier si existe dans la DB
     for (const mail of mails) {
       // requette sql pour verifier si mail existe
-      const sql = "SELECT mail FROM utilisateurs WHERE mail=?";
+      const sql = "SELECT email FROM utilisateurs WHERE email=?";
       // stock le resultat obtenu dans tableau rows
       const [rows] = await db.promise().query(sql, [mail]);
       // si trouve au moins 1 mail met userExiste en true et ajoute (push) le mail dans le userMailList
@@ -168,7 +205,7 @@ const Event = {
         userMailList.push(mail);
       } else {
         // Si trouve pas renvoi une erreure et met userExist en false
-        console.error("user mail with mail: ", mail, "does not exist");
+        console.error("user email with email: ", mail, "does not exist");
         userExist = false;
         // renvoi user exist et mail qui n'a pas ete trouver
         return { userExist, mail: mail };

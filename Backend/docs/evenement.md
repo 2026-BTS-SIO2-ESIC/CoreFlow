@@ -36,7 +36,7 @@ Ce document décrit les routes de l’API `event` et donne des exemples d’util
   "titre": "Un meeting",
   "type": "meeting",
   "niveau": "1",
-  "inviter": ["1", "2"]
+  "inviter": ["", "2"]
 }
 ```
 

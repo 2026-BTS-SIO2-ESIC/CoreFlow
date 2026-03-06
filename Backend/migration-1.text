@@ -1,6 +1,6 @@
-ALTER TABLE evenements 
-ADD column niveau ENUMN('1','2') NOT NULL,
-ADD column inviter TEXT,
+ALTER TABLE evenements
+ADD COLUMN niveau ENUM('1','2') NOT NULL,
+ADD COLUMN inviter TEXT;
 
 ALTER TABLE evenements 
 MODIFY date_debut DATETIME,
