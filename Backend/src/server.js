@@ -11,6 +11,7 @@ const { notFound, errorHandler } = require('./middlewares/errorMiddleware');
 // Import des routes structurées
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
+const eventRoutes = require('./routes/eventRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -26,6 +27,8 @@ app.use(express.urlencoded({ extended: true }));
 // --- ROUTES STRUCTURÉES ---
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/events', eventRoutes);
+
 
 // --- ROUTES DE TEST & INFO ---
 app.get('/', (req, res) => {
@@ -62,15 +65,13 @@ app.get('/api/db-test', async (req, res) => {
 });
 
 // Liste des événements à venir
-app.get('/api/events', async (req, res) => {
-  try {
-    const [rows] = await db.query('SELECT id, Titre, Description, Date_debut, Date_fin, Lieu, organisateur_id FROM evenements WHERE Date_debut >= NOW() ORDER BY Date_debut ASC');
-    res.json(rows);
-  } catch (error) {
-    console.error('Erreur lors de la récupération des événements:', error);
-    res.status(500).json({ error: 'Erreur lors de la récupération des événements' });
-  }
-});
+//app.get('', async (req, res) => {try {
+    //const [rows] = await db.query('SELECT id, Titre, Description, Date_debut, Date_fin, Lieu, organisateur_id FROM evenements WHERE Date_debut >= NOW() ORDER BY Date_debut ASC');res.json(rows);
+  //} catch (error) {
+   // console.error('Erreur lors de la récupération des événements:', error);
+    //res.status(500).json({ error: 'Erreur lors de la récupération des événements' });
+  //}
+//});
 
 // Liste des événements passés
 app.get('/api/P-events', async (req, res) => {
