@@ -1,10 +1,13 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
+const { testConnection } = require('./config/database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-app.use(express.json());
+
+// Test de connexion à la BDD au démarrage
+testConnection();
 
 // Middlewares
 app.use(cors());
@@ -13,8 +16,10 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 const authRoutes = require('./routes/authRoutes');
-app.use('/api/auth', authRoutes);
+const userRoutes = require('./routes/userRoutes');
 
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 
 // Route de test
 app.get('/', (req, res) => {
@@ -32,6 +37,11 @@ app.get('/api/health', (req, res) => {
     uptime: process.uptime()
   });
 });
+
+// Middleware de gestion d'erreurs (TOUJOURS EN DERNIER)
+const { notFound, errorHandler } = require('./middlewares/errorMiddleware');
+app.use(notFound);
+app.use(errorHandler);
 
 // Démarrage du serveur
 app.listen(PORT, () => {
