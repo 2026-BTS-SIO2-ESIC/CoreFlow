@@ -2,27 +2,39 @@ const db = require("../config/database");
 
 const Event = {
   // fonction listAll qui permet de recuperer tous les evenements de la base de donnees
-  listAll: (invitedEmail, callback) => {
+  listAll: (invitedEmail, userRole, callback) => {
     console.log("inviter email:", invitedEmail);
     // requette sql pour recuperer tous les evenements
+    const adminsql = "SELECT * FROM evenements;"  // pour admin
+
     const sql = "SELECT * FROM evenements WHERE niveau=1";
     const secondSql =
       "SELECT * FROM evenements WHERE niveau=2 AND inviter=?";
 
-    db.query(sql, (err, resultsOne) => {
-      if (err) {
-        console.error("DB ERROR :", err);
-        return callback(err, null);
+      if (userRole === "admin"){
+        db.query(adminsql, (err, resultsAdmin)=>{
+          if (err) {
+            console.error("DB ERROR :", err);
+            return callback(err, null);
+          }
+          return callback(null,resultsAdmin)
+        })
+      }else{
+        db.query(sql, (err, resultsOne) => {
+          if (err) {
+            console.error("DB ERROR :", err);
+            return callback(err, null);
+          }
+          db.query(secondSql, [invitedEmail], (err, resultsTwo) => {
+            if (err) {
+              console.error("DB ERROR :", err);
+              return callback(err, null);
+            }
+            return callback(null, resultsOne, resultsTwo);
+          });
+          // return callback(null, resultsOne);
+        });
       }
-      db.query(secondSql, [invitedEmail], (err, resultsTwo) => {
-        if (err) {
-          console.error("DB ERROR :", err);
-          return callback(err, null);
-        }
-        return callback(null, resultsOne, resultsTwo);
-      });
-      // return callback(null, resultsOne);
-    });
   },
 
   // fonction listById qui pren comme valeur eventId a partir dans la fonction event_list_by_id

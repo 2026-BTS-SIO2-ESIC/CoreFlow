@@ -50,17 +50,9 @@ exports.event_list = async function (req, res) {
   // Utilise le modèle listAll qui vient de ../models/event.js pour afficher tous les événements dans la variable results
   // Ainsi déclare err pour afficher les erreurs rencontrées dans la DB
   const invitedEmail = req.params.invitedEmail;
-  // const { userExist } = await Event.checkIfUserExist(invitedEmail);
-  // if (!userExist) {
-  //   return res.status(404).json({
-  //     error: {
-  //       error: "NOT FOUND",
-  //       message: "L'utilisateur n'existe pas",
-  //     },
-  //   });
-  // }
+  const userRole = req.params.userRole;
 
-  Event.listAll(invitedEmail, (err, resultsOne, resultsTwo) => {
+  Event.listAll(invitedEmail, userRole,(err, resultsAdmin, resultsOne, resultsTwo) => {
     // Vérifie si le header est bien Content-Type: application/json
     if (!verifyHeader(req, res)) {
       return;
@@ -82,7 +74,20 @@ exports.event_list = async function (req, res) {
         },
       });
     }
-    // Renvoie les événements en cas de succès
+    console.log("result admin", resultsAdmin);
+    if (resultsAdmin != null){
+      logSuccess(
+        200,
+        "Liste des événements récupérée avec succès (" +
+          resultsAdmin.length,
+        " événement(s))",
+      );
+      res.status(200).json({
+        message: resultsAdmin.length,
+        eventAdmin: resultsAdmin,
+      });
+    }else{
+      // Renvoie les événements en cas de succès
     logSuccess(
       200,
       "Liste des événements récupérée avec succès (" +
@@ -95,6 +100,9 @@ exports.event_list = async function (req, res) {
       eventLevelOne: resultsOne,
       eventLevelTwo: resultsTwo,
     });
+    }
+    
+    
   });
 };
 
@@ -149,6 +157,16 @@ exports.event_list_by_id = function (req, res) {
 exports.event_create = async (req, res) => {
   // recuprer le body mapper de la requette
   const event = mapEventBody(req.body);
+
+  const userRole = req.params.userRole;
+  if(userRole !== "manager"){
+    return res.status(403).json({
+      error: {
+        error: "PERMISSION_DENIED",
+        message:"Vous n'avez pas les droits pour crees une evenement"
+      }
+    })
+  }
 
   // Déclaration de isValid bool avec une fonction validateEvent qui prend le body mapper de la requette comme variable
   // Générer created_at et updated_at si non fournis
