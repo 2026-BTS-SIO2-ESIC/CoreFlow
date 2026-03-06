@@ -1,10 +1,11 @@
+const bcrypt = require('bcrypt'); // à ajouter en haut du fichier
 const { pool } = require('../config/database');
+
 
 // Login
 exports.login = async (req, res) => {
   const { email, password } = req.body;
 
-  // Validation basique
   if (!email || !password) {
     return res.status(400).json({
       success: false,
@@ -13,7 +14,6 @@ exports.login = async (req, res) => {
   }
 
   try {
-    // Chercher l'utilisateur dans la base de données
     const [users] = await pool.query(
       'SELECT * FROM utilisateurs WHERE email = ?',
       [email]
@@ -28,8 +28,9 @@ exports.login = async (req, res) => {
 
     const user = users[0];
 
-    // Vérifier le mot de passe (en clair pour le dev, à hasher en prod)
-    if (user.password !== password) {
+    // Vérification bcrypt
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch) {
       return res.status(401).json({
         success: false,
         message: 'Email ou mot de passe incorrect'
