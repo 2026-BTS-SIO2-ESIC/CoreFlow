@@ -112,7 +112,7 @@ DROP TABLE IF EXISTS `conges`;
 CREATE TABLE `conges` (
   `id`                     INT  NOT NULL AUTO_INCREMENT,
   `user_id`                INT  NOT NULL,
-  `type_conge`             ENUM('conge_paye','rtt','maladie','sans_solde') NOT NULL DEFAULT 'conge_paye',
+  `type_conge`             VARCHAR(50) DEFAULT 'rtt',
   `date_debut`             DATE NOT NULL,
   `date_fin`               DATE NOT NULL,
   `nb_jours`               INT  NOT NULL,
@@ -229,12 +229,14 @@ CREATE TABLE `documents` (
   `taille`       INT          DEFAULT NULL,
   `description`  TEXT         DEFAULT NULL,
   `auteur_id`    INT          NOT NULL,
-  `est_public`   TINYINT(1)   DEFAULT '0',
+  `cible_role`   VARCHAR(50)  DEFAULT 'tous',
+  `service_id`   VARCHAR(100) DEFAULT NULL,
   `created_at`   TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
   `updated_at`   TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_auteur`    (`auteur_id`),
-  KEY `idx_est_public`(`est_public`)
+  KEY `idx_cible_role` (`cible_role`),
+  KEY `idx_service`   (`service_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
