@@ -88,7 +88,7 @@ const Event = {
         event.organisateurId,
         event.estObligatoire ?? null,
         event.nbPlacesMax ?? null,
-        event.statut ?? null,
+        event.status ?? null,
         event.createdAt,
         event.updatedAt,
         event.niveau,
@@ -106,6 +106,11 @@ const Event = {
           const err = new Error("USER_NOT_FOUND");
           return callback(err, null);
         }
+        if (userIdsList.length === 0) {
+          return callback(null, { eventId, participationIds: [] });
+        }
+        const participationIds = [];
+        let completed = 0;
         for (const userId of userIdsList) {
           db.query(
             sqlParticipation,
@@ -117,12 +122,16 @@ const Event = {
               event.createdAt, //created_at
               event.updatedAt ?? null, //updated_at
             ],
-            async (err, results) => {
+            (err, resultsParticipations) => {
               if (err) {
                 console.error("DB ERROR :", err);
                 return callback(err, null);
               }
-              return callback(null, results);
+              participationIds.push(resultsParticipations.insertId);
+              completed++;
+              if (completed === userIdsList.length) {
+                return callback(null, { eventId, participationIds });
+              }
             },
           );
         }
@@ -135,6 +144,13 @@ const Event = {
     // requette sql qui remplace les valeurs de la table par les nouvelles valeurs
     let sql = "UPDATE evenements SET ";
     let params = [];
+
+    let sqlParticipations = "UPDATE participations SET ";
+    const sqlcheckParticipations =
+      "SELECT * FROM participations WHERE evenement_id=?";
+    let participationsParams = [];
+
+    // Pour table evenements
     if (event.titre) {
       sql += "titre=?, ";
       params.push(event.titre);
@@ -171,9 +187,9 @@ const Event = {
       sql += "inviter=?, ";
       params.push(event.inviter);
     }
-    if (event.statut !== undefined) {
+    if (event.status !== undefined) {
       sql += "statut=?, ";
-      params.push(event.statut);
+      params.push(event.status);
     }
     if (event.updatedAt) {
       sql += "updated_at=?, ";
@@ -182,6 +198,16 @@ const Event = {
     if (event.niveau) {
       sql += "niveau=?, ";
       params.push(event.niveau);
+    }
+
+    // Pour table participations
+    if (event.statusParticipation !== undefined) {
+      sqlParticipations += "statut=?, ";
+      participationsParams.push(event.statusParticipation);
+    }
+    if (event.commentaire) {
+      sqlParticipations += "commentaire=?, ";
+      participationsParams.push(event.commentaire);
     }
     if (params.length === 0) {
       const err = new Error("Aucun champ à modifier");
@@ -204,9 +230,15 @@ const Event = {
 
       sql = sql.slice(0, -2);
       sql += " WHERE id=? AND organisateur_id=?";
-      const updateParams = [...params, event.id, event.organisateurId];
+      sqlParticipations = sqlParticipations.slice(0, -2);
+      sqlParticipations += " WHERE evenement_id=?";
 
-      db.query(sql, updateParams, (err, results) => {
+      const updateParams = [...params, event.id, event.organisateurId];
+      const updateParticipationsParams = [...participationsParams, event.id];
+
+      console.log(sqlParticipations, updateParticipationsParams);
+
+      db.query(sql, updateParams, async (err, results) => {
         if (err) {
           console.error("DB ERROR :", err);
           return callback(err, null);
@@ -216,7 +248,24 @@ const Event = {
           errOwned.code = "EVENT_NOT_OWNED";
           return callback(errOwned, null);
         }
-        return callback(null, results);
+        db.query(
+          sqlParticipations,
+          updateParticipationsParams,
+          (err, resultsParticipations) => {
+            if (err) {
+              console.error("DB ERROR :", err);
+              return callback(err, null);
+            }
+            if (resultsParticipations.affectedRows === 0) {
+              const errParticipationsNotFound = new Error(
+                "PARTICIPATIONS_NOT_FOUND",
+              );
+              errParticipationsNotFound.code = "PARTICIPATIONS_NOT_FOUND";
+              return callback(errParticipationsNotFound, null);
+            }
+            return callback(null, results);
+          },
+        );
       });
     });
   },

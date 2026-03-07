@@ -37,7 +37,8 @@ const mapEventBody = (body) => {
     organisateurId: body.organisateur_id,
     estObligatoire: body.est_obligatoire,
     nbPlacesMax: body.nb_places_max,
-    statut: body.statut,
+    status: body.statut,
+    statusParticipation: body.statut_participation,
     createdAt: body.created_at,
     updatedAt: body.updated_at,
     niveau: body.niveau,
@@ -212,11 +213,16 @@ exports.event_create = async (req, res) => {
       });
     }
 
-    const insertId = results?.insertId;
-    logSuccess(201, "L'événement créé avec succès, ID: " + insertId);
+    const { eventId, participationIds } = results;
+    logSuccess(201, "Événement créé avec succès, ID: " + eventId);
+    logSuccess(
+      201,
+      "Participations créées avec succès, IDs: " + participationIds.join(", "),
+    );
     res.status(201).json({
-      message: "L'événement a été créé",
-      id: insertId,
+      message: "L'événement et les participations ont été créés avec succès",
+      id: eventId,
+      participationIds,
     });
   });
 };
@@ -372,12 +378,12 @@ const validateEvent = async (event) => {
   }
 
   //available status 'planifie','en_cours','termine','annule'
-  if (event.statut !== undefined && event.statut !== null) {
+  if (event.status !== undefined && event.status !== null) {
     if (
-      event.statut !== "planifie" &&
-      event.statut !== "en_cours" &&
-      event.statut !== "termine" &&
-      event.statut !== "annule"
+      event.status !== "planifie" &&
+      event.status !== "en_cours" &&
+      event.status !== "termine" &&
+      event.status !== "annule"
     ) {
       err.push(
         "Champ statut est invalide, doit être planifie, en_cours, termine ou annule",
