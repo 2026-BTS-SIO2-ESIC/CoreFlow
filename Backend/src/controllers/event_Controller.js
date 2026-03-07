@@ -60,9 +60,6 @@ exports.event_list = async function (req, res) {
     userRole,
     (err, resultsAdmin, resultsOne, resultsTwo) => {
       // Vérifie si le header est bien Content-Type: application/json
-      if (!verifyHeader(req, res)) {
-        return;
-      }
       // Renvoie une erreur en cas d'une mauvaise requête vers la DB
       if (err) {
         logError(
@@ -110,17 +107,62 @@ exports.event_list = async function (req, res) {
   );
 };
 
+exports.user_list_by_email = function (req, res) {
+  // Utilise le modèle listByEmail qui vient de ../models/event.js pour afficher les utilisateurs selon email donner dans la requette
+  // Récupère l'id depuis le paramètre de l'URL a partir de la requette (req) et l'assigne a la variable eventId
+
+  // Appelle la fonction listById du modèle Event et donne eventId comme parametre pour recuperer l'evenement
+  Event.listByEmail(req.body.email, async (err, resultsUserIds) => {
+    // Vérification des erreurs
+    if (err) {
+      logError(
+        500,
+        "DB_ERROR",
+        "Erreur lors de la récupération des utilisateurs par email: " +
+          err.message,
+      );
+      return res.status(500).json({
+        error: {
+          error: "DB_ERROR",
+          message: "Erreur lors de la récupération des utilisateurs par email",
+          detail: err.message,
+        },
+      });
+    } else if (resultsUserIds.length === 0) {
+      // En cas où l'événement n'existe pas, affiche une erreur 404
+      logError(
+        404,
+        "NOT FOUND",
+        "Aucun utilisateurs existe avec les charactères donnés (email: " +
+          req.body.email +
+          ")",
+      );
+      return res.status(404).json({
+        error: {
+          error: "NOT FOUND",
+          message:
+            "Aucun utilisateurs existe avec les charactères donnés (email: " +
+            req.body.email +
+            ")",
+        },
+      });
+    }
+    // Affiche la réponse
+    logSuccess(200, "Utilisateurs récupérés par email: " + req.body.email);
+    res.status(200).json({
+      message: resultsUserIds.length,
+      usersInfos: resultsUserIds,
+    });
+  });
+};
+
 exports.event_list_by_id = function (req, res) {
-  // Utilise le modèle listById qui vient de ../models/event.js pour afficher un événement selon son id
-  if (!verifyHeader(req, res)) {
-    return;
-  }
+  // Utilise le modèle listById qui vient de ../models/event.js pour afficher un evenement selon id donner dans la requette
   // Récupère l'id depuis le paramètre de l'URL a partir de la requette (req) et l'assigne a la variable eventId
   const eventId = req.params.id;
 
   // Appelle la fonction listById du modèle Event et donne eventId comme parametre pour recuperer l'evenement
   Event.listById(eventId, (err, results) => {
-    console.log("has been executed");
     // Vérification des erreurs
     if (err) {
       logError(
@@ -465,29 +507,6 @@ const validateUpdateEvent = async (event) => {
     err,
     codeError,
   };
-};
-
-// Vérifie le header de la requête
-const verifyHeader = (req, res) => {
-  // Déclaration de ce à quoi doit ressembler le header de la requête
-  const header = req.headers["content-type"];
-
-  // Vérification du header, s'il n'y en a pas : erreur, s'il y en a un mais incorrect : erreur 415
-  if (!header || !header.includes("application/json")) {
-    logError(
-      415,
-      "INVALID_CONTENT_TYPE",
-      "Le header doit être Content-Type: application/json",
-    );
-    res.status(415).json({
-      error: {
-        code: "INVALID_CONTENT_TYPE",
-        message: "Le header doit être Content-Type: application/json",
-      },
-    });
-    return false;
-  }
-  return true;
 };
 
 const timeVerify = (time) => {

@@ -51,6 +51,20 @@ const Event = {
     });
   },
 
+  // fonction listByEmail qui prend comme valeur des emails dans la fonction event_list_by_email
+  listByEmail: async (email, callback) => {
+    // requette sql qui selectionne les utilisateurs a partir du email donner(email) dans la table utilisateurs
+    const sql = "SELECT id, email FROM utilisateurs WHERE email LIKE ?";
+    const pattern = "%" + email + "%";
+    db.query(sql, [pattern], (err, results) => {
+      if (err) {
+        console.error("DB_ERROR:", err);
+        return callback(err, null);
+      }
+      return callback(null, results);
+    });
+  },
+
   // fonction create qui cree une requette d'Insertion dans la table evenements
   create: async (event, callback) => {
     // requette sql avec tous les champs de la table evenements
