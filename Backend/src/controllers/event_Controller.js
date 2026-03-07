@@ -37,11 +37,13 @@ const mapEventBody = (body) => {
     organisateurId: body.organisateur_id,
     estObligatoire: body.est_obligatoire,
     nbPlacesMax: body.nb_places_max,
-    inviter: body.inviter,
     statut: body.statut,
     createdAt: body.created_at,
     updatedAt: body.updated_at,
     niveau: body.niveau,
+
+    inviter: body.inviter,
+    commentaire: body.commentaire,
   };
 };
 
@@ -52,58 +54,59 @@ exports.event_list = async function (req, res) {
   const invitedEmail = req.params.invitedEmail;
   const userRole = req.params.userRole;
 
-  Event.listAll(invitedEmail, userRole,(err, resultsAdmin, resultsOne, resultsTwo) => {
-    // Vérifie si le header est bien Content-Type: application/json
-    if (!verifyHeader(req, res)) {
-      return;
-    }
-    // Renvoie une erreur en cas d'une mauvaise requête vers la DB
-    if (err) {
-      logError(
-        500,
-        "FETCH_FAILURE",
-        "Erreur lors de la récupération de la liste des événements: " +
-          err.message,
-      );
-      return res.status(500).json({
-        error: {
-          error: "FETCH_FAILURE",
-          message:
-            "Erreur lors de la récupération de la liste des événements, vérifier le modèle sql",
-          details: err.message,
-        },
-      });
-    }
-    console.log("result admin", resultsAdmin);
-    if (resultsAdmin != null){
-      logSuccess(
-        200,
-        "Liste des événements récupérée avec succès (" +
-          resultsAdmin.length,
-        " événement(s))",
-      );
-      res.status(200).json({
-        message: resultsAdmin.length,
-        eventAdmin: resultsAdmin,
-      });
-    }else{
-      // Renvoie les événements en cas de succès
-    logSuccess(
-      200,
-      "Liste des événements récupérée avec succès (" +
-        resultsOne.length +
-        resultsTwo.length,
-      " événement(s))",
-    );
-    res.status(200).json({
-      message: resultsOne.length + resultsTwo.length,
-      eventLevelOne: resultsOne,
-      eventLevelTwo: resultsTwo,
-    });
-    }
-    
-    
-  });
+  Event.listAll(
+    invitedEmail,
+    userRole,
+    (err, resultsAdmin, resultsOne, resultsTwo) => {
+      // Vérifie si le header est bien Content-Type: application/json
+      if (!verifyHeader(req, res)) {
+        return;
+      }
+      // Renvoie une erreur en cas d'une mauvaise requête vers la DB
+      if (err) {
+        logError(
+          500,
+          "FETCH_FAILURE",
+          "Erreur lors de la récupération de la liste des événements: " +
+            err.message,
+        );
+        return res.status(500).json({
+          error: {
+            error: "FETCH_FAILURE",
+            message:
+              "Erreur lors de la récupération de la liste des événements, vérifier le modèle sql",
+            details: err.message,
+          },
+        });
+      }
+      console.log("result admin", resultsAdmin);
+      if (resultsAdmin != null) {
+        logSuccess(
+          200,
+          "Liste des événements récupérée avec succès (" + resultsAdmin.length,
+          " événement(s))",
+        );
+        res.status(200).json({
+          message: resultsAdmin.length,
+          eventAdmin: resultsAdmin,
+        });
+      } else {
+        // Renvoie les événements en cas de succès
+        logSuccess(
+          200,
+          "Liste des événements récupérée avec succès (" +
+            resultsOne.length +
+            resultsTwo.length,
+          " événement(s))",
+        );
+        res.status(200).json({
+          message: resultsOne.length + resultsTwo.length,
+          eventLevelOne: resultsOne,
+          eventLevelTwo: resultsTwo,
+        });
+      }
+    },
+  );
 };
 
 exports.event_list_by_id = function (req, res) {
@@ -159,19 +162,21 @@ exports.event_create = async (req, res) => {
   const event = mapEventBody(req.body);
 
   const userRole = req.params.userRole;
-  if(userRole !== "manager"){
+  if (userRole !== "manager") {
     return res.status(403).json({
       error: {
         error: "PERMISSION_DENIED",
-        message:"Vous n'avez pas les droits pour crees une evenement"
-      }
-    })
+        message: "Vous n'avez pas les droits pour crees une evenement",
+      },
+    });
   }
 
   // Déclaration de isValid bool avec une fonction validateEvent qui prend le body mapper de la requette comme variable
   // Générer created_at et updated_at si non fournis
-  if (!event.createdAt) event.createdAt = new Date().toISOString().slice(0, 19).replace("T", " ");
-  if (!event.updatedAt) event.updatedAt = new Date().toISOString().slice(0, 19).replace("T", " ");
+  if (!event.createdAt)
+    event.createdAt = new Date().toISOString().slice(0, 19).replace("T", " ");
+  if (!event.updatedAt)
+    event.updatedAt = new Date().toISOString().slice(0, 19).replace("T", " ");
 
   const { isValid, err } = await validateEvent(event);
   if (!isValid) {
@@ -208,10 +213,7 @@ exports.event_create = async (req, res) => {
     }
 
     const insertId = results?.insertId;
-    logSuccess(
-      201,
-      "L'événement créé avec succès, ID: " + insertId,
-    );
+    logSuccess(201, "L'événement créé avec succès, ID: " + insertId);
     res.status(201).json({
       message: "L'événement a été créé",
       id: insertId,
@@ -244,7 +246,11 @@ exports.event_update = async (req, res) => {
   // Appelle la fonction updateEvent du modèle Event
   Event.update(event, (err) => {
     if (err && err.code === "EVENT_NOT_FOUND") {
-      logError(404, "NOT_FOUND", "Événement introuvable (ID: " + event.id + ")");
+      logError(
+        404,
+        "NOT_FOUND",
+        "Événement introuvable (ID: " + event.id + ")",
+      );
       return res.status(404).json({
         error: {
           error: "NOT_FOUND",
@@ -295,12 +301,19 @@ const validateEvent = async (event) => {
   const err = [];
 
   // Vérification organisateur_id (obligatoire)
-  if (event.organisateurId === undefined || !Number.isInteger(Number(event.organisateurId))) {
+  if (
+    event.organisateurId === undefined ||
+    !Number.isInteger(Number(event.organisateurId))
+  ) {
     err.push("Champ organisateur_id est invalide ou requis");
   }
 
   // Vérification inviter (requis si niveau=2)
-  if (event.inviter !== undefined && event.inviter !== null && event.inviter !== "") {
+  if (
+    event.inviter !== undefined &&
+    event.inviter !== null &&
+    event.inviter !== ""
+  ) {
     const { userExist, mail } = await Event.checkIfUserExist(event.inviter);
     if (!userExist) {
       err.push("L'utilisateur " + mail + " n'existe pas");
@@ -309,20 +322,27 @@ const validateEvent = async (event) => {
 
   // Vérification date_debut
   if (!event.dateDebut || isNaN(Date.parse(event.dateDebut))) {
-    err.push("Champ date_debut est invalide, doit être une date valide (YYYY-MM-DD)");
+    err.push(
+      "Champ date_debut est invalide, doit être une date valide (YYYY-MM-DD)",
+    );
   } else if (!timeVerify(Date.parse(event.dateDebut))) {
     err.push("La date de début ne peut pas être avant aujourd'hui");
   }
 
   // Vérification date_fin
   if (!event.dateFin || isNaN(Date.parse(event.dateFin))) {
-    err.push("Champ date_fin est invalide, doit être une date valide (YYYY-MM-DD)");
+    err.push(
+      "Champ date_fin est invalide, doit être une date valide (YYYY-MM-DD)",
+    );
   } else if (event.dateDebut && event.dateFin < event.dateDebut) {
     err.push("La date de fin ne peut pas être avant la date de début");
   }
 
   // Vérification description
-  if (event.description !== undefined && typeof event.description !== "string") {
+  if (
+    event.description !== undefined &&
+    typeof event.description !== "string"
+  ) {
     err.push("Champ description doit être une chaîne de caractères");
   }
 
@@ -343,15 +363,25 @@ const validateEvent = async (event) => {
 
   // Vérification nb_places_max si fourni
   if (event.nbPlacesMax !== undefined && event.nbPlacesMax !== null) {
-    if (!Number.isInteger(Number(event.nbPlacesMax)) || Number(event.nbPlacesMax) < 0) {
+    if (
+      !Number.isInteger(Number(event.nbPlacesMax)) ||
+      Number(event.nbPlacesMax) < 0
+    ) {
       err.push("Champ nb_places_max doit être un entier positif");
     }
   }
 
-  //available status 'planifie','en_cours','termine','annule' 
+  //available status 'planifie','en_cours','termine','annule'
   if (event.statut !== undefined && event.statut !== null) {
-    if (event.statut !== "planifie" && event.statut !== "en_cours" && event.statut !== "termine" && event.statut !== "annule") {
-      err.push("Champ statut est invalide, doit être planifie, en_cours, termine ou annule");
+    if (
+      event.statut !== "planifie" &&
+      event.statut !== "en_cours" &&
+      event.statut !== "termine" &&
+      event.statut !== "annule"
+    ) {
+      err.push(
+        "Champ statut est invalide, doit être planifie, en_cours, termine ou annule",
+      );
     }
   }
 
@@ -380,12 +410,21 @@ const validateUpdateEvent = async (event) => {
   }
 
   // Vérification organisateur_id (obligatoire pour vérifier la propriété)
-  if (event.organisateurId === undefined || !Number.isInteger(Number(event.organisateurId))) {
-    err.push("Champ organisateur_id est invalide ou requis pour la mise à jour");
+  if (
+    event.organisateurId === undefined ||
+    !Number.isInteger(Number(event.organisateurId))
+  ) {
+    err.push(
+      "Champ organisateur_id est invalide ou requis pour la mise à jour",
+    );
   }
 
   // Vérification inviter si fourni
-  if (event.inviter !== undefined && event.inviter !== null && event.inviter !== "") {
+  if (
+    event.inviter !== undefined &&
+    event.inviter !== null &&
+    event.inviter !== ""
+  ) {
     const { userExist, mail } = await Event.checkIfUserExist(event.inviter);
     if (!userExist) {
       err.push("L'utilisateur " + mail + " n'existe pas");
@@ -394,13 +433,24 @@ const validateUpdateEvent = async (event) => {
   }
 
   if (event.statut !== undefined && event.statut !== null) {
-    if (event.statut !== "planifie" && event.statut !== "en_cours" && event.statut !== "termine" && event.statut !== "annule") {
-      err.push("Champ statut est invalide, doit être planifie, en_cours, termine ou annule");
+    if (
+      event.statut !== "planifie" &&
+      event.statut !== "en_cours" &&
+      event.statut !== "termine" &&
+      event.statut !== "annule"
+    ) {
+      err.push(
+        "Champ statut est invalide, doit être planifie, en_cours, termine ou annule",
+      );
     }
   }
-  
+
   // Vérification niveau si fourni
-  if (event.niveau !== undefined && event.niveau !== "1" && event.niveau !== "2") {
+  if (
+    event.niveau !== undefined &&
+    event.niveau !== "1" &&
+    event.niveau !== "2"
+  ) {
     err.push("Champ niveau est invalide, doit être 1 ou 2");
   }
 
