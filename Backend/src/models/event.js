@@ -104,7 +104,7 @@ const Event = {
     const checkUser = "SELECT role FROM utilisateurs WHERE id=?";
     const [checkUserRole] = await db
       .promise()
-      .query(checkUser, [event.organisateurId]);
+      .query(checkUser, [event.organizerId]);
     if (
       checkUserRole[0].role !== "manager" &&
       checkUserRole[0].role !== "admin"
@@ -118,19 +118,19 @@ const Event = {
     db.query(
       sql,
       [
-        event.titre,
+        event.title,
         event.description,
-        event.typeEvenement,
-        event.dateDebut,
-        event.dateFin,
-        event.lieu ?? null,
-        event.organisateurId,
-        event.estObligatoire ?? null,
-        event.nbPlacesMax ?? null,
+        event.eventType,
+        event.startDate,
+        event.endDate,
+        event.location ?? null,
+        event.organizerId,
+        event.isRequired ?? null,
+        event.maxPlaces ?? null,
         event.status ?? null,
         event.createdAt,
         event.updatedAt,
-        event.niveau,
+        event.level,
       ],
       async (err, results) => {
         if (err) {
@@ -139,7 +139,7 @@ const Event = {
         }
         const eventId = results.insertId; // insertId est le dernier id inserer dans la table evenement
         const { userExist, _, userIdsList } = await Event.checkIfUserExist(
-          event.inviter,
+          event.invited,
         );
         if (userExist === false) {
           const err = new Error("USER_NOT_FOUND");
@@ -156,7 +156,7 @@ const Event = {
             [
               eventId,
               userId, // user_id
-              event.commentaire ?? null, // commentaire
+              event.comment ?? null, // comment
               "en_attente", //statut
               event.createdAt, //created_at
               event.updatedAt ?? null, //updated_at
@@ -190,41 +190,41 @@ const Event = {
     let participationsParams = [];
 
     // Pour table evenements
-    if (event.titre) {
+    if (event.title) {
       sql += "titre=?, ";
-      params.push(event.titre);
+      params.push(event.title);
     }
     if (event.description !== undefined) {
       sql += "description=?, ";
       params.push(event.description);
     }
-    if (event.typeEvenement) {
+    if (event.eventType) {
       sql += "type_evenement=?, ";
-      params.push(event.typeEvenement);
+      params.push(event.eventType);
     }
-    if (event.dateDebut) {
+    if (event.startDate) {
       sql += "date_debut=?, ";
-      params.push(event.dateDebut);
+      params.push(event.startDate);
     }
-    if (event.dateFin) {
+    if (event.endDate) {
       sql += "date_fin=?, ";
-      params.push(event.dateFin);
+      params.push(event.endDate);
     }
-    if (event.lieu !== undefined) {
+    if (event.location !== undefined) {
       sql += "lieu=?, ";
-      params.push(event.lieu);
+      params.push(event.location);
     }
-    if (event.estObligatoire !== undefined) {
+    if (event.isRequired !== undefined) {
       sql += "est_obligatoire=?, ";
-      params.push(event.estObligatoire);
+      params.push(event.isRequired);
     }
-    if (event.nbPlacesMax !== undefined) {
+    if (event.maxPlaces !== undefined) {
       sql += "nb_places_max=?, ";
-      params.push(event.nbPlacesMax);
+      params.push(event.maxPlaces);
     }
-    if (event.inviter !== undefined) {
+    if (event.invited !== undefined) {
       sql += "inviter=?, ";
-      params.push(event.inviter);
+      params.push(event.invited);
     }
     if (event.status !== undefined) {
       sql += "statut=?, ";
@@ -234,9 +234,9 @@ const Event = {
       sql += "updated_at=?, ";
       params.push(event.updatedAt);
     }
-    if (event.niveau) {
+    if (event.level) {
       sql += "niveau=?, ";
-      params.push(event.niveau);
+      params.push(event.level);
     }
 
     // Pour table participations
@@ -244,9 +244,9 @@ const Event = {
       sqlParticipations += "statut=?, ";
       participationsParams.push(event.statusParticipation);
     }
-    if (event.commentaire) {
+    if (event.comment) {
       sqlParticipations += "commentaire=?, ";
-      participationsParams.push(event.commentaire);
+      participationsParams.push(event.comment);
     }
     if (params.length === 0) {
       const err = new Error("Aucun champ à modifier");
@@ -272,7 +272,7 @@ const Event = {
       sqlParticipations = sqlParticipations.slice(0, -2);
       sqlParticipations += " WHERE evenement_id=?";
 
-      const updateParams = [...params, event.id, event.organisateurId];
+      const updateParams = [...params, event.id, event.organizerId];
       const updateParticipationsParams = [...participationsParams, event.id];
 
       console.log(sqlParticipations, updateParticipationsParams);

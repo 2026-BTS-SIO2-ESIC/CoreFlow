@@ -28,23 +28,23 @@ const logError = (code, errorCode, msg) => {
 const mapEventBody = (body) => {
   return {
     id: body.id,
-    titre: body.titre,
+    title: body.titre,
     description: body.description,
-    typeEvenement: body.type_evenement,
-    dateDebut: body.date_debut,
-    dateFin: body.date_fin,
-    lieu: body.lieu,
-    organisateurId: body.organisateur_id,
-    estObligatoire: body.est_obligatoire,
-    nbPlacesMax: body.nb_places_max,
+    eventType: body.type_evenement,
+    startDate: body.date_debut,
+    endDate: body.date_fin,
+    location: body.lieu,
+    organizerId: body.organisateur_id,
+    isRequired: body.est_obligatoire,
+    maxPlaces: body.nb_places_max,
     status: body.statut,
     statusParticipation: body.statut_participation,
     createdAt: body.created_at,
     updatedAt: body.updated_at,
-    niveau: body.niveau,
-
-    inviter: body.inviter,
-    commentaire: body.commentaire,
+    level: body.niveau,
+    invited: body.inviter,
+    department: body.department,
+    comment: body.commentaire,
   };
 };
 
@@ -353,39 +353,39 @@ const validateEvent = async (event) => {
 
   // Vérification organisateur_id (obligatoire)
   if (
-    event.organisateurId === undefined ||
-    !Number.isInteger(Number(event.organisateurId))
+    event.organizerId === undefined ||
+    !Number.isInteger(Number(event.organizerId))
   ) {
     err.push("Champ organisateur_id est invalide ou requis");
   }
 
   // Vérification inviter (requis si niveau=2)
   if (
-    event.inviter !== undefined &&
-    event.inviter !== null &&
-    event.inviter !== ""
+    event.invited !== undefined &&
+    event.invited !== null &&
+    event.invited !== ""
   ) {
-    const { userExist, mail } = await Event.checkIfUserExist(event.inviter);
+    const { userExist, mail } = await Event.checkIfUserExist(event.invited);
     if (!userExist) {
       err.push("L'utilisateur " + mail + " n'existe pas");
     }
   }
 
   // Vérification date_debut
-  if (!event.dateDebut || isNaN(Date.parse(event.dateDebut))) {
+  if (!event.startDate || isNaN(Date.parse(event.startDate))) {
     err.push(
       "Champ date_debut est invalide, doit être une date valide (YYYY-MM-DD)",
     );
-  } else if (!timeVerify(Date.parse(event.dateDebut))) {
+  } else if (!timeVerify(Date.parse(event.startDate))) {
     err.push("La date de début ne peut pas être avant aujourd'hui");
   }
 
   // Vérification date_fin
-  if (!event.dateFin || isNaN(Date.parse(event.dateFin))) {
+  if (!event.endDate || isNaN(Date.parse(event.endDate))) {
     err.push(
       "Champ date_fin est invalide, doit être une date valide (YYYY-MM-DD)",
     );
-  } else if (event.dateDebut && event.dateFin < event.dateDebut) {
+  } else if (event.startDate && event.endDate < event.startDate) {
     err.push("La date de fin ne peut pas être avant la date de début");
   }
 
@@ -398,25 +398,25 @@ const validateEvent = async (event) => {
   }
 
   // Vérification titre (obligatoire)
-  if (!event.titre || typeof event.titre !== "string") {
+  if (!event.title || typeof event.title !== "string") {
     err.push("Champ titre est invalide ou requis");
   }
 
   // Vérification type_evenement (obligatoire)
-  if (!event.typeEvenement || typeof event.typeEvenement !== "string") {
+  if (!event.eventType || typeof event.eventType !== "string") {
     err.push("Champ type_evenement est invalide ou requis");
   }
 
   // Vérification niveau (1 ou 2)
-  if (event.niveau !== "1" && event.niveau !== "2") {
+  if (event.level !== "1" && event.level !== "2") {
     err.push("Champ niveau est invalide, doit être 1 ou 2");
   }
 
   // Vérification nb_places_max si fourni
-  if (event.nbPlacesMax !== undefined && event.nbPlacesMax !== null) {
+  if (event.maxPlaces !== undefined && event.maxPlaces !== null) {
     if (
-      !Number.isInteger(Number(event.nbPlacesMax)) ||
-      Number(event.nbPlacesMax) < 0
+      !Number.isInteger(Number(event.maxPlaces)) ||
+      Number(event.maxPlaces) < 0
     ) {
       err.push("Champ nb_places_max doit être un entier positif");
     }
@@ -437,8 +437,8 @@ const validateEvent = async (event) => {
   }
 
   // Vérification est_obligatoire si fourni (booléen 0/1)
-  if (event.estObligatoire !== undefined && event.estObligatoire !== null) {
-    const v = Number(event.estObligatoire);
+  if (event.isRequired !== undefined && event.isRequired !== null) {
+    const v = Number(event.isRequired);
     if (v !== 0 && v !== 1) {
       err.push("Champ est_obligatoire doit être 0 ou 1");
     }
@@ -462,8 +462,8 @@ const validateUpdateEvent = async (event) => {
 
   // Vérification organisateur_id (obligatoire pour vérifier la propriété)
   if (
-    event.organisateurId === undefined ||
-    !Number.isInteger(Number(event.organisateurId))
+    event.organizerId === undefined ||
+    !Number.isInteger(Number(event.organizerId))
   ) {
     err.push(
       "Champ organisateur_id est invalide ou requis pour la mise à jour",
@@ -472,23 +472,23 @@ const validateUpdateEvent = async (event) => {
 
   // Vérification inviter si fourni
   if (
-    event.inviter !== undefined &&
-    event.inviter !== null &&
-    event.inviter !== ""
+    event.invited !== undefined &&
+    event.invited !== null &&
+    event.invited !== ""
   ) {
-    const { userExist, mail } = await Event.checkIfUserExist(event.inviter);
+    const { userExist, mail } = await Event.checkIfUserExist(event.invited);
     if (!userExist) {
       err.push("L'utilisateur " + mail + " n'existe pas");
       codeError = 404;
     }
   }
 
-  if (event.statut !== undefined && event.statut !== null) {
+  if (event.status !== undefined && event.status !== null) {
     if (
-      event.statut !== "planifie" &&
-      event.statut !== "en_cours" &&
-      event.statut !== "termine" &&
-      event.statut !== "annule"
+      event.status !== "planifie" &&
+      event.status !== "en_cours" &&
+      event.status !== "termine" &&
+      event.status !== "annule"
     ) {
       err.push(
         "Champ statut est invalide, doit être planifie, en_cours, termine ou annule",
@@ -498,9 +498,9 @@ const validateUpdateEvent = async (event) => {
 
   // Vérification niveau si fourni
   if (
-    event.niveau !== undefined &&
-    event.niveau !== "1" &&
-    event.niveau !== "2"
+    event.level !== undefined &&
+    event.level !== "1" &&
+    event.level !== "2"
   ) {
     err.push("Champ niveau est invalide, doit être 1 ou 2");
   }
