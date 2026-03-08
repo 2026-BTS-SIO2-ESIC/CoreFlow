@@ -7,7 +7,7 @@ var event_controller = require("../controllers/event_Controller");
 // EVENTS ROUTES
 // Appelle la fonction event_list dans ../controllers/event_Controller quand est appelé sur localhost:3000/event/list
 router.get(
-  "/list/invitedEmail/:invitedEmail/:userRole",
+  "/list/participation/:user_id/:userRole",
   event_controller.event_list,
 );
 // Appelle la fonction event_create dans ../controllers/event_Controller quand est appelé sur localhost:3000/event/create

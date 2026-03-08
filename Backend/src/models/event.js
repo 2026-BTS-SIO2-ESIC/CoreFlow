@@ -2,13 +2,14 @@ const db = require("../config/database");
 
 const Event = {
   // fonction listAll qui permet de recuperer tous les evenements de la base de donnees
-  listAll: (invitedEmail, userRole, callback) => {
-    console.log("inviter email:", invitedEmail);
+  listAll: (userId, userRole, callback) => {
     // requette sql pour recuperer tous les evenements
     const adminsql = "SELECT * FROM evenements;"; // pour admin
 
     const sql = "SELECT * FROM evenements WHERE niveau=1";
-    const secondSql = "SELECT * FROM evenements WHERE niveau=2 AND inviter=?";
+    const eventIdsSql =
+      "SELECT evenement_id FROM participations WHERE user_id=?";
+    const secondSql = "SELECT * FROM evenements WHERE niveau=2 AND id=?";
 
     if (userRole === "admin") {
       db.query(adminsql, (err, resultsAdmin) => {
@@ -16,22 +17,34 @@ const Event = {
           console.error("DB ERROR :", err);
           return callback(err, null);
         }
-        return callback(null, resultsAdmin);
+        return callback(null, resultsAdmin, null, null);
       });
     } else {
-      db.query(sql, (err, resultsOne) => {
+      db.query(sql, (err, resultsLvlOne) => {
         if (err) {
           console.error("DB ERROR :", err);
           return callback(err, null);
         }
-        db.query(secondSql, [invitedEmail], (err, resultsTwo) => {
+        db.query(eventIdsSql, [userId], (err, resultsEventIds) => {
           if (err) {
-            console.error("DB ERROR :", err);
-            return callback(err, null);
+            console.error("DB_ERROR :", err);
+            return callback(err, null, null, null);
           }
-          return callback(null, resultsOne, resultsTwo);
+
+          db.query(
+            secondSql,
+            [resultsEventIds[0].evenement_id],
+            (err, resultsLvlTwo) => {
+              if (err) {
+                console.error("DB ERROR :", err);
+                return callback(err, null, null, null);
+              }
+              console.log("resultsLvlTwo", resultsLvlTwo);
+              console.log("resultsLvlOne", resultsLvlOne);
+              return callback(null, null, resultsLvlOne, resultsLvlTwo);
+            },
+          );
         });
-        // return callback(null, resultsOne);
       });
     }
   },
@@ -88,6 +101,18 @@ const Event = {
 
     const sqlParticipation =
       "INSERT INTO participations (evenement_id, user_id, commentaire, statut, created_at, updated_at) VALUES(?,?,?,?,?,?)";
+    const checkUser = "SELECT role FROM utilisateurs WHERE id=?";
+    const [checkUserRole] = await db
+      .promise()
+      .query(checkUser, [event.organisateurId]);
+    if (
+      checkUserRole[0].role !== "manager" &&
+      checkUserRole[0].role !== "admin"
+    ) {
+      const err = new Error("USER_NOT_AUTHORIZED");
+      err.code = "USER_NOT_AUTHORIZED";
+      return callback(err, null);
+    }
 
     // execute la query en lui donnant la requette (sql) et les valeurs de l'evenement comme parametre
     db.query(

@@ -52,13 +52,13 @@ const mapEventBody = (body) => {
 exports.event_list = async function (req, res) {
   // Utilise le modèle listAll qui vient de ../models/event.js pour afficher tous les événements dans la variable results
   // Ainsi déclare err pour afficher les erreurs rencontrées dans la DB
-  const invitedEmail = req.params.invitedEmail;
+  const userId = req.params.user_id;
   const userRole = req.params.userRole;
 
   Event.listAll(
-    invitedEmail,
+    userId,
     userRole,
-    (err, resultsAdmin, resultsOne, resultsTwo) => {
+    (err, resultsAdmin, resultsLvlOne, resultsLvlTwo) => {
       // Vérifie si le header est bien Content-Type: application/json
       // Renvoie une erreur en cas d'une mauvaise requête vers la DB
       if (err) {
@@ -78,11 +78,14 @@ exports.event_list = async function (req, res) {
         });
       }
       console.log("result admin", resultsAdmin);
+      console.log("result lvl two", resultsLvlTwo);
+      console.log("result lvl one", resultsLvlOne);
       if (resultsAdmin != null) {
         logSuccess(
           200,
-          "Liste des événements récupérée avec succès (" + resultsAdmin.length,
-          " événement(s))",
+          "Liste des événements récupérée avec succès (" +
+            resultsAdmin.length +
+            " événement(s))",
         );
         res.status(200).json({
           message: resultsAdmin.length,
@@ -93,14 +96,14 @@ exports.event_list = async function (req, res) {
         logSuccess(
           200,
           "Liste des événements récupérée avec succès (" +
-            resultsOne.length +
-            resultsTwo.length,
+            resultsLvlOne.length +
+            resultsLvlTwo.length,
           " événement(s))",
         );
         res.status(200).json({
-          message: resultsOne.length + resultsTwo.length,
-          eventLevelOne: resultsOne,
-          eventLevelTwo: resultsTwo,
+          message: resultsLvlOne.length + resultsLvlTwo.length,
+          eventLevelOne: resultsLvlOne,
+          eventLevelTwo: resultsLvlTwo,
         });
       }
     },
