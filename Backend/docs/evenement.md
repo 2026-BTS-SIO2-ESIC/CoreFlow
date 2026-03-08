@@ -4,10 +4,23 @@ Ce document décrit les routes de l'API `event` et donne des exemples d'utilisat
 
 ---
 
+## Authentification (token obligatoire)
+
+**Toutes les routes `event` nécessitent une authentification par token.** Obtenez d'abord un token via `POST /api/auth/login`, puis incluez-le dans chaque requête :
+
+- **Header** : `Authorization: Bearer <votre_token>`
+
+Exemple dans Postman : ajoutez le header `Authorization` avec la valeur `Bearer eyJ1c2VySWQiOjF9` (remplacez par votre token).
+
+Sans token valide, vous obtiendrez `401 Token d'authentification manquant` ou `401 Token invalide`.
+
+---
+
 ## 1. Liste des événements (par participation et rôle)
 
 - **Méthode** : `GET`
 - **URL** : `http://localhost:3000/event/list/participation/:user_id/:userRole`
+- **Headers** : `Authorization: Bearer <token>`
 
 **Paramètres URL** : `user_id` (ID de l'utilisateur), `userRole` (`admin`, `manager`, etc.)
 
@@ -21,7 +34,7 @@ Ce document décrit les routes de l'API `event` et donne des exemples d'utilisat
 
 - **Méthode** : `POST`
 - **URL** : `http://localhost:3000/event/create/:userRole`
-- **Headers** : `Content-Type: application/json`
+- **Headers** : `Content-Type: application/json`, `Authorization: Bearer <token>`
 
 **Comment utiliser** : Le paramètre `userRole` doit être `manager`. Corps JSON avec les champs de l'événement.
 
@@ -50,6 +63,7 @@ Ce document décrit les routes de l'API `event` et donne des exemples d'utilisat
 
 - **Méthode** : `GET`
 - **URL** : `http://localhost:3000/event/list/:id`
+- **Headers** : `Authorization: Bearer <token>`
 
 **Comment utiliser** : Remplacez `:id` par l'ID de l'événement. Ex. `GET http://localhost:3000/event/list/42`
 
@@ -61,7 +75,7 @@ Ce document décrit les routes de l'API `event` et donne des exemples d'utilisat
 
 - **Méthode** : `POST`
 - **URL** : `http://localhost:3000/event/user_list_by_email`
-- **Headers** : `Content-Type: application/json`
+- **Headers** : `Content-Type: application/json`, `Authorization: Bearer <token>`
 
 **Comment utiliser** : Pour l'autocomplétion du champ inviter. Envoie une chaîne partielle d'email, la requête SQL utilise `LIKE %valeur%`.
 
@@ -75,7 +89,7 @@ Ce document décrit les routes de l'API `event` et donne des exemples d'utilisat
 
 - **Méthode** : `PUT`
 - **URL** : `http://localhost:3000/event/update`
-- **Headers** : `Content-Type: application/json`
+- **Headers** : `Content-Type: application/json`, `Authorization: Bearer <token>`
 
 **Comment utiliser** : Envoyez `id` et `organisateur_id` obligatoirement, plus les champs à modifier.
 
