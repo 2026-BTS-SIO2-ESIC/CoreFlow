@@ -1,29 +1,32 @@
-const mysql = require("mysql2");
+const mysql = require("mysql2/promise");
+const mysqlCallback = require("mysql2");
 
-const pool = mysql.createPool({
+const poolConfig = {
   host: process.env.DB_HOST || "localhost",
   port: process.env.DB_PORT || 3306,
   user: process.env.DB_USER || "root",
-  password: process.env.DB_PASSWORD || "", // Vide par défaut sur WAMP
+  password: process.env.DB_PASSWORD || "",
   database: process.env.DB_NAME || "coreflow",
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-});
+};
+
+const pool = mysql.createPool(poolConfig);
+const db = mysqlCallback.createPool(poolConfig);
 
 // Fonction de test de connexion
 async function testConnection() {
-  return new Promise((resolve) => {
-    pool.getConnection((err, connection) => {
-      if (err) {
-        console.error("❌ Erreur connexion MySQL:", err.message);
-        return resolve(false);
-      }
-      console.log("✅ Connexion MySQL réussie !");
-      connection.release();
-      resolve(true);
-    });
-  });
+  try {
+    const connection = await pool.getConnection();
+    console.log("✅ Connexion MySQL réussie !");
+    connection.release();
+    return true;
+  } catch (error) {
+    console.error("❌ Erreur connexion MySQL:", error.message);
+    return false;
+  }
 }
-
-module.exports = { pool, testConnection, query: pool.query.bind(pool) };
+// db pour features evenements
+// pool pour features auth
+module.exports = { pool, db, testConnection };

@@ -1,5 +1,4 @@
-const { pool } = require("../config/database");
-const db = pool;
+const { db } = require("../config/database");
 
 const Event = {
   // fonction listAll qui permet de recuperer tous les evenements de la base de donnees
@@ -144,7 +143,7 @@ const Event = {
         const eventId = results.insertId; // insertId est le dernier id inserer dans la table evenement
 
         // recupere la liste des userIds des invites et verifie si les emails existent dans la DB
-        const { userExist, _, userIdsList } = await Event.checkIfUserExist(
+        const { userExist, userIdsList } = await Event.checkIfUserExist(
           event.invited,
         );
         // requette sql pour recuperer les ids des utilisateurs du meme departement

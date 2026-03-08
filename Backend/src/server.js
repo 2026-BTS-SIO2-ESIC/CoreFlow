@@ -15,9 +15,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Les route event sont construit ici puis utiliser
-var eventRouter = require("./routes/eventRoutes");
+const eventRouter = require("./routes/eventRoutes");
 // La route mis par defaut pour aceder au calls events
-app.use("/event", eventRouter);
+app.use("/api/event", eventRouter);
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 

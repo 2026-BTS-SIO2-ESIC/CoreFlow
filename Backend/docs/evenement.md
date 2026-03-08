@@ -141,6 +141,5 @@ npx eslint
 
 ## Avant de commencer
 
-- [ ] Mettre à jour la base de données (`Backend/migration-1.txt`)
 - [ ] `npm install`
 - [ ] `npm run dev`
