@@ -1,6 +1,9 @@
 -- ============================================================
 -- CoreFlow - Base de données unifiée pour l'équipe
--- Version : 1.0 | Date : 2026-03-06
+-- Version : 1.3 | Date : 2026-03-08
+-- Changelog v1.1 : table documents - remplacement est_public par cible_role + ajout service_id
+-- Changelog v1.2 : table conges - simplification type_conge en VARCHAR DEFAULT rtt
+-- Changelog v1.3 : vrais hash bcrypt intégrés directement dans le SQL
 -- À importer par tous les membres de l'équipe
 -- Commande : mysql -u root -p coreflow < coreflow_database.sql
 -- ============================================================
@@ -45,14 +48,13 @@ CREATE TABLE `utilisateurs` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Données de test standardisées
--- IMPORTANT : Les mots de passe ci-dessous sont en clair pour les tests.
--- En production, ils doivent être hashés (bcrypt) côté Node.js.
 -- Mots de passe : Admin -> @dmiN1234 | RH -> Rh_1234 | Manager -> Manager_1234 | Employé -> Employe_1234
+-- Les hash bcrypt sont déjà intégrés, plus besoin de lancer hash-passwords.js
 INSERT INTO `utilisateurs` (`id`, `email`, `password`, `nom`, `prenom`, `role`, `departement`, `poste`, `telephone`, `date_embauche`, `est_actif`) VALUES
-(1, 'admin@coreflow.fr',   '$2b$10$adminHashPlaceholder000000000000000000000000000000000000', 'Admin',  'CoreFlow', 'admin',   'Informatique',       'Administrateur Système', '01 23 45 67 89', '2024-01-01', 1),
-(2, 'rh@coreflow.fr',      '$2b$10$rhHashPlaceholder0000000000000000000000000000000000000000', 'Martin', 'Marie',    'rh',      'Ressources Humaines', 'Responsable RH',         '01 23 45 67 90', '2024-02-01', 1),
-(3, 'manager@coreflow.fr', '$2b$10$managerHashPlaceholder00000000000000000000000000000000000', 'Dubois', 'Pierre',   'manager', 'IT',                  'Manager IT',             '01 23 45 67 91', '2024-03-01', 1),
-(4, 'employe@coreflow.fr', '$2b$10$employeHashPlaceholder00000000000000000000000000000000000', 'Durand', 'Sophie',   'employe', 'Commercial',          'Commerciale',            '01 23 45 67 92', '2024-04-01', 1);
+(1, 'admin@coreflow.fr',   '$2b$10$QJd3Cz3FnyoHsArcDyBLY.L0XATHRJMIrwNXGVAwznO3tf3fa5XSK', 'Admin',  'CoreFlow', 'admin',   'Informatique',       'Administrateur Système', '01 23 45 67 89', '2024-01-01', 1),
+(2, 'rh@coreflow.fr',      '$2b$10$RCMVhX6SDQwErhXJ/BcqJ.Qx/XKl5hbYJ1ngIkaPL4hnVIHOhixqG', 'Martin', 'Marie',    'rh',      'Ressources Humaines', 'Responsable RH',         '01 23 45 67 90', '2024-02-01', 1),
+(3, 'manager@coreflow.fr', '$2b$10$BMQGxHBEiVSVJJ3riMQy2.Iu8eo/zIZud1q8/C9u6LtYXxPokOvMO', 'Dubois', 'Pierre',   'manager', 'IT',                  'Manager IT',             '01 23 45 67 91', '2024-03-01', 1),
+(4, 'employe@coreflow.fr', '$2b$10$9ko/UeodRICYNalR9XEJou9E1dO2vNYb9iwkZ0Wk7codBjYCCsGQem', 'Durand', 'Sophie',   'employe', 'Commercial',          'Commerciale',            '01 23 45 67 92', '2024-04-01', 1);
 
 -- ------------------------------------------------------------
 -- Table : tickets
@@ -234,9 +236,9 @@ CREATE TABLE `documents` (
   `created_at`   TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
   `updated_at`   TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  KEY `idx_auteur`    (`auteur_id`),
+  KEY `idx_auteur`     (`auteur_id`),
   KEY `idx_cible_role` (`cible_role`),
-  KEY `idx_service`   (`service_id`)
+  KEY `idx_service_id` (`service_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
@@ -335,7 +337,5 @@ COMMIT;
 -- | Manager | manager@coreflow.fr    | Manager_1234   |
 -- | Employé | employe@coreflow.fr    | Employe_1234   |
 -- ============================================================
--- ⚠️  IMPORTANT : Les passwords dans cette seed sont des
--- placeholders. Lancez le script Node.js hash-passwords.js
--- pour les remplacer par de vrais hash bcrypt.
+-- ✅ Les passwords sont déjà hashés en bcrypt, aucune étape supplémentaire nécessaire.
 -- ============================================================
