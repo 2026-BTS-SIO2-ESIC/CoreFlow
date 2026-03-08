@@ -144,11 +144,12 @@
                         <td>{{ d.motif || '-' }}</td>
                         <td>
                             <span :class="['badge', d.statut]">
-                                {{ d.statut }}
+                                {{ formatStatut(d.statut) }}
                             </span>
                         </td>
                         <td>
-                            <button v-if="d.statut === 'EN_ATTENTE'" class="btn btn-secondary" @click="annuler(d.id)">
+                            <button v-if="formatStatut(d.statut) === 'en_attente'" class="btn btn-secondary"
+                                @click="annuler(d.id)">
                                 Annuler
                             </button>
                         </td>
@@ -243,7 +244,7 @@ async function submit() {
     const fin = new Date(dateFin.value)
 
     const conflit = demandes.value.some(d => {
-        if (d.statut !== "EN_ATTENTE") return false
+        if (formatStatut(d.statut) !== "en_attente") return false
         const dDebut = new Date(d.date_debut)
         const dFin = new Date(d.date_fin)
         return debut <= dFin && fin >= dDebut // chevauchement
@@ -294,17 +295,32 @@ async function annuler(id) {
     }
 }
 function formatDate(dateStr) {
-    if (!dateStr) return '-'
-    // dateStr attendu: "YYYY-MM-DD"
-    const [y, m, d] = dateStr.split('-')
-    return `${d}/${m}/${y}`
+  if (!dateStr) return '-'
+
+  const date = new Date(dateStr)
+
+  if (Number.isNaN(date.getTime())) return dateStr
+
+  return date.toLocaleDateString('fr-FR')
 }
 
 function formatDateTime(dateTimeStr) {
-    if (!dateTimeStr) return '-'
-    const dt = new Date(dateTimeStr)
-    if (Number.isNaN(dt.getTime())) return dateTimeStr
-    return dt.toLocaleString('fr-FR')
+  if (!dateTimeStr) return '-'
+
+  const date = new Date(dateTimeStr)
+
+  if (Number.isNaN(date.getTime())) return dateTimeStr
+
+  return date.toLocaleString('fr-FR')
+}
+function formatStatut(statut) {
+    const labels = {
+        en_attente: 'En attente',
+        approuve: 'Approuvé',
+        refuse: 'Refusé'
+    }
+
+    return labels[statut] || statut
 }
 </script>
 
@@ -342,32 +358,26 @@ function formatDateTime(dateTimeStr) {
 }
 
 .badge {
-    display: inline-block;
-    padding: 6px 10px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 700;
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
 }
 
-.badge.EN_ATTENTE {
-    background: #fef3c7;
-    color: #92400e;
+.badge.en_attente {
+  background: #fef3c7;
+  color: #92400e;
 }
 
-.badge.APPROUVEE,
-.badge.VALIDEE {
-    background: #d1fae5;
-    color: #065f46;
+.badge.approuve {
+  background: #d1fae5;
+  color: #065f46;
 }
 
-.badge.REFUSEE {
-    background: #fee2e2;
-    color: #991b1b;
-}
-
-.badge.ANNULEE {
-    background: #e5e7eb;
-    color: #374151;
+.badge.refuse {
+  background: #fee2e2;
+  color: #991b1b;
 }
 
 .empty {

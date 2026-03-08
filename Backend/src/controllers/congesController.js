@@ -13,51 +13,111 @@ let conges = [
 // (temporaire) on simule l'utilisateur connecté
 // plus tard: on prendra l'id via un vrai token + middleware
 const FAKE_USER_ID = 4;
+const { pool } = require('../config/database');
 
 // GET /api/conges
-exports.getMyConges = (req, res) => {
-  const mesConges = conges.filter(c => c.id_utilisateur === FAKE_USER_ID);
-  res.status(200).json({
-    success: true,
-    data: mesConges
-  });
+exports.getMyConges = async (req, res) => {
+  try {
+    // Temporaire : utilisateur de test
+    const userId = 4;
+
+    const [rows] = await pool.query(
+      `
+      SELECT id, user_id, type_conge, date_debut, date_fin, nb_jours, motif, statut, created_at
+      FROM conges
+      WHERE user_id = ?
+      ORDER BY created_at DESC
+      `,
+      [userId]
+    );
+
+    res.status(200).json({
+      success: true,
+      data: rows
+    });
+  } catch (error) {
+    console.error('Erreur getMyConges :', error.message);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la récupération des congés"
+    });
+  }
 };
 
 // POST /api/conges
-exports.createConge = (req, res) => {
-  const { date_debut, date_fin, motif } = req.body;
+exports.createConge = async (req, res) => {
+  try {
+    const { date_debut, date_fin, motif } = req.body;
 
-  if (!date_debut || !date_fin) {
-    return res.status(400).json({
+    // Temporaire : utilisateur de test
+    const userId = 4;
+
+    if (!date_debut || !date_fin) {
+      return res.status(400).json({
+        success: false,
+        message: "date_debut et date_fin sont obligatoires"
+      });
+    }
+
+    const debut = new Date(date_debut);
+    const fin = new Date(date_fin);
+
+    if (fin < debut) {
+      return res.status(400).json({
+        success: false,
+        message: "La date de fin doit être après la date de début"
+      });
+    }
+
+    // Calcul simple en jours calendaires
+    const diffMs = fin - debut;
+    const nbJours = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
+
+    const [result] = await pool.query(
+      `
+      INSERT INTO conges (
+        user_id,
+        type_conge,
+        date_debut,
+        date_fin,
+        nb_jours,
+        motif,
+        statut
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+      `,
+      [
+        userId,
+        'rtt',
+        date_debut,
+        date_fin,
+        nbJours,
+        motif || null,
+        'en_attente'
+      ]
+    );
+
+    const [rows] = await pool.query(
+      `
+      SELECT id, user_id, type_conge, date_debut, date_fin, nb_jours, motif, statut, created_at
+      FROM conges
+      WHERE id = ?
+      `,
+      [result.insertId]
+    );
+
+    res.status(201).json({
+      success: true,
+      message: "Demande créée",
+      data: rows[0]
+    });
+  } catch (error) {
+    console.error('Erreur createConge :', error.message);
+    res.status(500).json({
       success: false,
-      message: "date_debut et date_fin sont obligatoires"
+      message: "Erreur serveur lors de la création du congé"
     });
   }
-
-  if (new Date(date_fin) < new Date(date_debut)) {
-    return res.status(400).json({
-      success: false,
-      message: "date_fin doit être après date_debut"
-    });
-  }
-
-  const newConge = {
-    id: Date.now(),
-    id_utilisateur: FAKE_USER_ID,
-    date_debut,
-    date_fin,
-    motif: motif || null,
-    statut: "EN_ATTENTE",
-    date_demande: new Date().toISOString()
-  };
-
-  conges.unshift(newConge);
-
-  res.status(201).json({
-    success: true,
-    message: "Demande créée",
-    data: newConge
-  });
 };
 
 exports.annulerConge = (req, res) => {

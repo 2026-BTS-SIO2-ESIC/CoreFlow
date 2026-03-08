@@ -10,4 +10,6 @@ router.post('/', congesController.createConge);
 
 router.put('/:id/annuler', congesController.annulerConge);
 
+router.get('/solde', congesController.getSoldeConges);
+
 module.exports = router;
