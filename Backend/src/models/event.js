@@ -1,4 +1,5 @@
-const db = require("../config/database");
+const { pool } = require("../config/database");
+const db = pool;
 
 const Event = {
   // fonction listAll qui permet de recuperer tous les evenements de la base de donnees
@@ -153,52 +154,47 @@ const Event = {
             return callback(err, null);
           }
           if (results.length === 0) {
-            console.error("NO USER FOUND FOR THIS DEPARTMENT");
             const err = new Error("USER_NOT_FOUND_FOR_DEPARTMENT");
             err.code = "USER_NOT_FOUND_FOR_DEPARTMENT";
             return callback(err, null);
           }
           // si des utilisateurs existent dans ce departement, extrait leurs ids avec map et les ajoute a userIdsList
-          // map((user) => user.id) : pour chaque user dans le tableau, retourne uniquement user.id
-          // ... (spread) : deplie le tableau [1,2,3] en 1,2,3 pour les ajouter un par un dans userIdsList
-          if (results.length > 0) {
-            userIdsList.push(...results.map((user) => user.id));
+          userIdsList.push(...results.map((user) => user.id));
+
+          if (userExist === false) {
+            const err = new Error("USER_NOT_FOUND");
+            return callback(err, null);
+          }
+          if (userIdsList.length === 0) {
+            return callback(null, { eventId, participationIds: [] });
+          }
+          const participationIds = [];
+          let completed = 0;
+          for (const userId of userIdsList) {
+            db.query(
+              sqlParticipation,
+              [
+                eventId,
+                userId,
+                event.comment ?? null,
+                "en_attente",
+                event.createdAt,
+                event.updatedAt ?? null,
+              ],
+              (err, resultsParticipations) => {
+                if (err) {
+                  console.error("DB ERROR :", err);
+                  return callback(err, null);
+                }
+                participationIds.push(resultsParticipations.insertId);
+                completed++;
+                if (completed === userIdsList.length) {
+                  return callback(null, { eventId, participationIds });
+                }
+              },
+            );
           }
         });
-
-        if (userExist === false) {
-          const err = new Error("USER_NOT_FOUND");
-          return callback(err, null);
-        }
-        if (userIdsList.length === 0) {
-          return callback(null, { eventId, participationIds: [] });
-        }
-        const participationIds = [];
-        let completed = 0;
-        for (const userId of userIdsList) {
-          db.query(
-            sqlParticipation,
-            [
-              eventId,
-              userId, // user_id
-              event.comment ?? null, // comment
-              "en_attente", //statut
-              event.createdAt, //created_at
-              event.updatedAt ?? null, //updated_at
-            ],
-            (err, resultsParticipations) => {
-              if (err) {
-                console.error("DB ERROR :", err);
-                return callback(err, null);
-              }
-              participationIds.push(resultsParticipations.insertId);
-              completed++;
-              if (completed === userIdsList.length) {
-                return callback(null, { eventId, participationIds });
-              }
-            },
-          );
-        }
       },
     );
   },

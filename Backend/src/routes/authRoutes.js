@@ -1,3 +1,4 @@
+const { pool } = require("../config/database");
 const express = require("express");
 const router = express.Router();
 const authController = require("../controllers/authController");
