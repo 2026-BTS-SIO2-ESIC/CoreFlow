@@ -242,7 +242,8 @@ exports.event_create = async (req, res) => {
   }
 
   // Appelle la fonction create du modèle Event, prend event comme paramètre
-  Event.create(event, (err, results) => {
+  Event.create(event, event.department, (err, results) => {
+    console.log(event.department);
     if (err) {
       logError(
         500,
@@ -497,11 +498,7 @@ const validateUpdateEvent = async (event) => {
   }
 
   // Vérification niveau si fourni
-  if (
-    event.level !== undefined &&
-    event.level !== "1" &&
-    event.level !== "2"
-  ) {
+  if (event.level !== undefined && event.level !== "1" && event.level !== "2") {
     err.push("Champ niveau est invalide, doit être 1 ou 2");
   }
 

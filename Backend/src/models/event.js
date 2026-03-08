@@ -79,7 +79,7 @@ const Event = {
   },
 
   // fonction create qui cree une requette d'Insertion dans la table evenements
-  create: async (event, callback) => {
+  create: async (event, department, callback) => {
     // requette sql avec tous les champs de la table evenements
     const sql = `
         INSERT INTO evenements (
@@ -101,13 +101,16 @@ const Event = {
 
     const sqlParticipation =
       "INSERT INTO participations (evenement_id, user_id, commentaire, statut, created_at, updated_at) VALUES(?,?,?,?,?,?)";
-    const checkUser = "SELECT role FROM utilisateurs WHERE id=?";
-    const [checkUserRole] = await db
+    const getUserRoleFromId = "SELECT role FROM utilisateurs WHERE id=?";
+    const getUserIdsFromDepartment =
+      "SELECT id FROM utilisateurs WHERE departement=?";
+
+    const [getUserRoleFromIdResult] = await db
       .promise()
-      .query(checkUser, [event.organizerId]);
+      .query(getUserRoleFromId, [event.organizerId]);
     if (
-      checkUserRole[0].role !== "manager" &&
-      checkUserRole[0].role !== "admin"
+      getUserRoleFromIdResult[0].role !== "manager" &&
+      getUserRoleFromIdResult[0].role !== "admin"
     ) {
       const err = new Error("USER_NOT_AUTHORIZED");
       err.code = "USER_NOT_AUTHORIZED";
@@ -138,9 +141,31 @@ const Event = {
           return callback(err, null);
         }
         const eventId = results.insertId; // insertId est le dernier id inserer dans la table evenement
+
+        // recupere la liste des userIds des invites et verifie si les emails existent dans la DB
         const { userExist, _, userIdsList } = await Event.checkIfUserExist(
           event.invited,
         );
+        // requette sql pour recuperer les ids des utilisateurs du meme departement
+        db.query(getUserIdsFromDepartment, [department], (err, results) => {
+          if (err) {
+            console.error("DB ERROR :", err);
+            return callback(err, null);
+          }
+          if (results.length === 0) {
+            console.error("NO USER FOUND FOR THIS DEPARTMENT");
+            const err = new Error("USER_NOT_FOUND_FOR_DEPARTMENT");
+            err.code = "USER_NOT_FOUND_FOR_DEPARTMENT";
+            return callback(err, null);
+          }
+          // si des utilisateurs existent dans ce departement, extrait leurs ids avec map et les ajoute a userIdsList
+          // map((user) => user.id) : pour chaque user dans le tableau, retourne uniquement user.id
+          // ... (spread) : deplie le tableau [1,2,3] en 1,2,3 pour les ajouter un par un dans userIdsList
+          if (results.length > 0) {
+            userIdsList.push(...results.map((user) => user.id));
+          }
+        });
+
         if (userExist === false) {
           const err = new Error("USER_NOT_FOUND");
           return callback(err, null);
