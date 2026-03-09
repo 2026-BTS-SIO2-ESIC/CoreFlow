@@ -1,13 +1,13 @@
 const db = require('../config/db');
 
-const findUserByEmailAndPassword = (email, password) => {
+const findUserByEmail = (email) => {
   return new Promise((resolve, reject) => {
     const sql = `
       SELECT u.*
       FROM utilisateurs u
-      WHERE u.email = ? AND u.password = ?
+      WHERE u.email = ?
     `;
-    db.query(sql, [email, password], (err, results) => {
+    db.query(sql, [email], (err, results) => {
       if (err) return reject(err);
       resolve(results);
     });
@@ -28,4 +28,4 @@ const findUserById = (id) => {
   });
 };
 
-module.exports = { findUserByEmailAndPassword, findUserById };
+module.exports = { findUserByEmail, findUserById };

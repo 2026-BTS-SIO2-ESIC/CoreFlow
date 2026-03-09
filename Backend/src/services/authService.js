@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const authRepository = require('../repositories/authRepository');
 
 const generateToken = (user) => {
@@ -11,10 +12,12 @@ const generateToken = (user) => {
 };
 
 const login = async (email, password) => {
-  const results = await authRepository.findUserByEmailAndPassword(email, password);
+  const results = await authRepository.findUserByEmail(email);
   if (results.length === 0) return null;
 
   const user = results[0];
+  const passwordOk = await bcrypt.compare(password, user.password);
+  if (!passwordOk) return null;
   const token = generateToken(user);
   const { password: _password, ...userWithoutPassword } = user;
 
