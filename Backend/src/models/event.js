@@ -205,10 +205,10 @@ const Event = {
     let params = [];
 
     let sqlParticipations = "UPDATE participations SET ";
-    const sqlcheckParticipations =
-      "SELECT * FROM participations WHERE evenement_id=?";
     let participationsParams = [];
 
+    // Vérifier si l'événement existe, puis exécuter l'UPDATE
+    const sql_exist = "SELECT * FROM evenements WHERE id=?";
     // Pour table evenements
     if (event.title) {
       sql += "titre=?, ";
@@ -242,10 +242,6 @@ const Event = {
       sql += "nb_places_max=?, ";
       params.push(event.maxPlaces);
     }
-    if (event.invited !== undefined) {
-      sql += "inviter=?, ";
-      params.push(event.invited);
-    }
     if (event.status !== undefined) {
       sql += "statut=?, ";
       params.push(event.status);
@@ -274,8 +270,6 @@ const Event = {
       return callback(err, null);
     }
 
-    // Vérifier si l'événement existe, puis exécuter l'UPDATE
-    const sql_exist = "SELECT * FROM evenements WHERE id=?";
     db.query(sql_exist, [event.id], (err, existResults) => {
       if (err) {
         console.error("DB ERROR :", err);
@@ -297,35 +291,39 @@ const Event = {
 
       console.log(sqlParticipations, updateParticipationsParams);
 
-      db.query(sql, updateParams, async (err, results) => {
-        if (err) {
-          console.error("DB ERROR :", err);
-          return callback(err, null);
-        }
-        if (results.affectedRows === 0) {
-          const errOwned = new Error("EVENT_NOT_OWNED");
-          errOwned.code = "EVENT_NOT_OWNED";
-          return callback(errOwned, null);
-        }
-        db.query(
-          sqlParticipations,
-          updateParticipationsParams,
-          (err, resultsParticipations) => {
-            if (err) {
-              console.error("DB ERROR :", err);
-              return callback(err, null);
-            }
-            if (resultsParticipations.affectedRows === 0) {
-              const errParticipationsNotFound = new Error(
-                "PARTICIPATIONS_NOT_FOUND",
-              );
-              errParticipationsNotFound.code = "PARTICIPATIONS_NOT_FOUND";
-              return callback(errParticipationsNotFound, null);
-            }
-            return callback(null, results);
-          },
-        );
-      });
+      if (updateParams.length > 0) {
+        db.query(sql, updateParams, async (err, results) => {
+          if (err) {
+            console.error("DB ERROR :", err);
+            return callback(err, null);
+          }
+          if (results.affectedRows === 0) {
+            const errOwned = new Error("EVENT_NOT_OWNED");
+            errOwned.code = "EVENT_NOT_OWNED";
+            return callback(errOwned, null);
+          }
+          if (participationsParams.length > 0) {
+            db.query(
+              sqlParticipations,
+              updateParticipationsParams,
+              (err, resultsParticipations) => {
+                if (err) {
+                  console.error("DB ERROR :", err);
+                  return callback(err, null);
+                }
+                if (resultsParticipations.affectedRows === 0) {
+                  const errParticipationsNotFound = new Error(
+                    "PARTICIPATIONS_NOT_FOUND",
+                  );
+                  errParticipationsNotFound.code = "PARTICIPATIONS_NOT_FOUND";
+                  return callback(errParticipationsNotFound, null);
+                }
+                return callback(null, results);
+              },
+            );
+          }
+        });
+      }
     });
   },
 

@@ -38,12 +38,13 @@ const mapEventBody = (body) => {
     isRequired: body.est_obligatoire,
     maxPlaces: body.nb_places_max,
     status: body.statut,
-    statusParticipation: body.statut_participation,
+    level: body.niveau,
     createdAt: body.created_at,
     updatedAt: body.updated_at,
-    level: body.niveau,
+
+    statusParticipation: body.statut_participation,
     invited: body.inviter,
-    department: body.department,
+    department: body.departement,
     comment: body.commentaire,
   };
 };
@@ -208,11 +209,11 @@ exports.event_create = async (req, res) => {
   const event = mapEventBody(req.body);
 
   const userRole = req.params.userRole;
-  if (userRole !== "manager") {
+  if (userRole !== "manager" && userRole !== "admin") {
     return res.status(403).json({
       error: {
         error: "PERMISSION_DENIED",
-        message: "Vous n'avez pas les droits pour crees une evenement",
+        message: "Vous n'avez pas les droits pour crees un evenement",
       },
     });
   }
@@ -243,7 +244,6 @@ exports.event_create = async (req, res) => {
 
   // Appelle la fonction create du modèle Event, prend event comme paramètre
   Event.create(event, event.department, (err, results) => {
-    console.log(event.department);
     if (err) {
       logError(
         500,
