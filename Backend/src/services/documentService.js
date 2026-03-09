@@ -10,12 +10,12 @@ class DocumentService {
         const newDocument = {
             titre: textData.titre,
             description: textData.description,
-            cible_role: textData.cible_role,
-            chemin_fichier: fichierData.filename, // Chemin du fichier stocké
-            type_mime: fichierData.mimetype, // Type MIME du fichier
+            cible_role: textData.cible_role || 'Tous', // Par défaut, le document est destiné à tous les rôles
+            fichier_path: fichierData.filename, // Chemin du fichier stocké
+            type_fichier: fichierData.mimetype, // Type MIME du fichier
             taille: fichierData.size, // Taille du fichier en octets
-            idUtilisateurs: 1,// A remplacer par l'ID de l'utilisateur connecté (à récupérer depuis le token d'authentification)
-            idServices: 1 // A remplacer par l'ID du service sélectionné (à récupérer depuis le formulaire)
+            auteur_id: 1,// A remplacer par l'ID de l'utilisateur connecté (à récupérer depuis le token d'authentification)
+            service_id: textData.service_id || 1 // A remplacer par l'ID du service sélectionné (à récupérer depuis le formulaire)
         };
         //on enregistre le document dans la base de données
         const documentId = await documentRepository.createDocument(newDocument);

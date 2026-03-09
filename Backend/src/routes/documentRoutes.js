@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const upload = require('../config/multer');
-const documentController = require('../controller/documentController');
+const documentController = require('../controllers/documentController');
 
 
 //L'URL de base pour les documents est /api/documents
