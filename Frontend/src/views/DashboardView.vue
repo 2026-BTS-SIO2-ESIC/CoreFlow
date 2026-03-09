@@ -21,7 +21,7 @@
                 Tableau de bord
             </a>
 
-            <a href="#" class="nav-item">
+            <a href="/conges" class="nav-item">
                 <div class="nav-icon">
                     <svg viewBox="0 0 24 24">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
