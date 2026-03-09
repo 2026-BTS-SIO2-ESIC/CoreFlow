@@ -64,7 +64,7 @@ CREATE TABLE `tickets` (
   `id`             INT          NOT NULL AUTO_INCREMENT,
   `titre`          VARCHAR(255) NOT NULL,
   `description`    TEXT         NOT NULL,
-  `categorie`      ENUM('it','rh','comptabilite','direction','autre') DEFAULT 'autre',
+  `categorie`      ENUM('it', 'rh', 'autre') DEFAULT 'autre',
   `priorite`       ENUM('basse','normale','haute','urgente')          DEFAULT 'normale',
   `statut`         ENUM('ouvert','en_cours','resolu','ferme')         DEFAULT 'ouvert',
   `demandeur_id`   INT          NOT NULL,
