@@ -103,16 +103,14 @@
         <p>Créez, modifiez et gérez les comptes utilisateurs de votre organisation</p>
       </div>
 
-
-
       <!-- Content -->
       <div class="content-section">
         <!-- Toolbar -->
         <div class="toolbar">
           <div class="search-section">
-            <input 
-              v-model="search" 
-              type="text" 
+            <input
+              v-model="search"
+              type="text"
               placeholder="🔍 Rechercher par nom, prénom ou email..."
               class="search-input"
               @input="filterUsers"
@@ -154,7 +152,11 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="user in filteredUsers" :key="user.id" :class="{ 'inactive-row': !user.est_actif }">
+              <tr
+                v-for="user in filteredUsers"
+                :key="user.id"
+                :class="{ 'inactive-row': !user.est_actif }"
+              >
                 <td class="id-cell">{{ user.id }}</td>
                 <td class="user-cell">
                   <div class="user-avatar">{{ user.prenom.charAt(0) }}{{ user.nom.charAt(0) }}</div>
@@ -171,7 +173,10 @@
                 </td>
                 <td class="dept-cell">{{ user.departement || '-' }}</td>
                 <td>
-                  <span class="status-badge" :class="user.est_actif ? 'status-active' : 'status-inactive'">
+                  <span
+                    class="status-badge"
+                    :class="user.est_actif ? 'status-active' : 'status-inactive'"
+                  >
                     {{ user.est_actif ? 'Actif' : 'Inactif' }}
                   </span>
                 </td>
@@ -179,10 +184,19 @@
                   <button @click="editUser(user)" class="action-btn edit-btn" title="Modifier">
                     ✏️
                   </button>
-                  <button @click="toggleUserStatus(user)" class="action-btn toggle-btn" :title="user.est_actif ? 'Désactiver' : 'Activer'">
+                  <button
+                    @click="toggleUserStatus(user)"
+                    class="action-btn toggle-btn"
+                    :title="user.est_actif ? 'Désactiver' : 'Activer'"
+                  >
                     {{ user.est_actif ? '🔒' : '🔓' }}
                   </button>
-                  <button @click="confirmDelete(user)" class="action-btn delete-btn" title="Supprimer" :disabled="user.id === 1">
+                  <button
+                    @click="confirmDelete(user)"
+                    class="action-btn delete-btn"
+                    title="Supprimer"
+                    :disabled="user.id === 1"
+                  >
                     🗑️
                   </button>
                 </td>
@@ -202,7 +216,7 @@
     <div v-if="showCreateModal || showEditModal" class="modal-overlay" @click.self="closeModals">
       <div class="modal">
         <div class="modal-header">
-          <h2>{{ showEditModal ? '✏️ Modifier l\'utilisateur' : '➕ Nouvel utilisateur' }}</h2>
+          <h2>{{ showEditModal ? "✏️ Modifier l'utilisateur" : '➕ Nouvel utilisateur' }}</h2>
           <button @click="closeModals" class="btn-close">✖️</button>
         </div>
 
@@ -224,11 +238,22 @@
               </div>
               <div class="form-group full-width">
                 <label>Email <span class="required">*</span></label>
-                <input v-model="formData.email" type="email" placeholder="jean.dupont@coreflow.fr" required />
+                <input
+                  v-model="formData.email"
+                  type="email"
+                  placeholder="jean.dupont@coreflow.fr"
+                  required
+                />
               </div>
               <div class="form-group" v-if="showCreateModal">
                 <label>Mot de passe <span class="required">*</span></label>
-                <input v-model="formData.password" type="password" placeholder="••••••••" required minlength="6" />
+                <input
+                  v-model="formData.password"
+                  type="password"
+                  placeholder="••••••••"
+                  required
+                  minlength="6"
+                />
                 <span class="input-hint">Minimum 6 caractères</span>
               </div>
               <div class="form-group">
@@ -257,7 +282,11 @@
               </div>
               <div class="form-group">
                 <label>Département</label>
-                <input v-model="formData.departement" type="text" placeholder="IT, RH, Commercial..." />
+                <input
+                  v-model="formData.departement"
+                  type="text"
+                  placeholder="IT, RH, Commercial..."
+                />
               </div>
               <div class="form-group">
                 <label>Poste</label>
@@ -277,7 +306,8 @@
               Création du compte
             </div>
             <div class="info-box-content">
-              Un solde de congés par défaut sera automatiquement créé (25 jours de congés payés + 10 RTT).
+              Un solde de congés par défaut sera automatiquement créé (25 jours de congés payés + 10
+              RTT).
             </div>
           </div>
 
@@ -286,11 +316,9 @@
           </div>
 
           <div class="modal-actions">
-            <button type="button" @click="closeModals" class="btn-secondary">
-              Annuler
-            </button>
+            <button type="button" @click="closeModals" class="btn-secondary">Annuler</button>
             <button type="submit" class="btn-primary" :disabled="loading">
-              {{ loading ? 'Enregistrement...' : (showEditModal ? 'Modifier' : 'Créer le compte') }}
+              {{ loading ? 'Enregistrement...' : showEditModal ? 'Modifier' : 'Créer le compte' }}
             </button>
           </div>
         </form>
@@ -305,15 +333,14 @@
           <button @click="showDeleteModal = false" class="btn-close">✖️</button>
         </div>
         <div class="modal-body">
-          <p>Êtes-vous sûr de vouloir supprimer l'utilisateur <strong>{{ userToDelete?.prenom }} {{ userToDelete?.nom }}</strong> ?</p>
+          <p>
+            Êtes-vous sûr de vouloir supprimer l'utilisateur
+            <strong>{{ userToDelete?.prenom }} {{ userToDelete?.nom }}</strong> ?
+          </p>
           <p class="warning-text">⚠️ Cette action est irréversible !</p>
           <div class="modal-actions">
-            <button @click="showDeleteModal = false" class="btn-secondary">
-              Annuler
-            </button>
-            <button @click="deleteUser" class="btn-danger">
-              Supprimer définitivement
-            </button>
+            <button @click="showDeleteModal = false" class="btn-secondary">Annuler</button>
+            <button @click="deleteUser" class="btn-danger">Supprimer définitivement</button>
           </div>
         </div>
       </div>
@@ -347,108 +374,109 @@ export default {
         departement: '',
         poste: '',
         telephone: '',
-        date_embauche: ''
-      }
+        date_embauche: '',
+      },
     }
   },
   async mounted() {
-    const userStr = localStorage.getItem('user');
+    const userStr = localStorage.getItem('user')
     if (userStr) {
-      this.user = JSON.parse(userStr);
+      this.user = JSON.parse(userStr)
     }
-    await this.loadUsers();
+    await this.loadUsers()
   },
-  methods:{
-  // Fonction helper pour récupérer le token
-  getAuthHeaders() {
-    const token = localStorage.getItem('token');
-    return {
-      'Authorization': `Bearer ${token}`
-    };
-  }, 
+  methods: {
+    // Fonction helper pour récupérer le token
+    getAuthHeaders() {
+      const token = localStorage.getItem('token')
+      return {
+        Authorization: `Bearer ${token}`,
+      }
+    },
     async loadUsers() {
-  try {
-    const token = localStorage.getItem('token');
-    
-    const response = await fetch('http://localhost:3000/api/users', {
-      headers: {
-        'Authorization': `Bearer ${token}`
+      try {
+        const token = localStorage.getItem('token')
+
+        const response = await fetch('http://localhost:3000/api/users', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+
+        const data = await response.json()
+
+        if (data.success) {
+          this.users = data.data
+          this.filteredUsers = data.data
+        } else {
+          console.error('Erreur:', data.message)
+          if (response.status === 401) {
+            alert('Session expirée. Veuillez vous reconnecter.')
+            this.$router.push('/login')
+          }
+        }
+      } catch (error) {
+        console.error('Erreur chargement utilisateurs:', error)
       }
-    });
-    
-    const data = await response.json();
-    
-    if (data.success) {
-      this.users = data.data;
-      this.filteredUsers = data.data;
-    } else {
-      console.error('Erreur:', data.message);
-      if (response.status === 401) {
-        alert('Session expirée. Veuillez vous reconnecter.');
-        this.$router.push('/login');
-      }
-    }
-  } catch (error) {
-    console.error('Erreur chargement utilisateurs:', error);
-  }
-},
+    },
 
     filterUsers() {
-      let filtered = [...this.users];
+      let filtered = [...this.users]
 
       if (this.search) {
-        const searchLower = this.search.toLowerCase();
-        filtered = filtered.filter(u => 
-          u.nom.toLowerCase().includes(searchLower) ||
-          u.prenom.toLowerCase().includes(searchLower) ||
-          u.email.toLowerCase().includes(searchLower)
-        );
+        const searchLower = this.search.toLowerCase()
+        filtered = filtered.filter(
+          (u) =>
+            u.nom.toLowerCase().includes(searchLower) ||
+            u.prenom.toLowerCase().includes(searchLower) ||
+            u.email.toLowerCase().includes(searchLower),
+        )
       }
 
       if (this.filterRole) {
-        filtered = filtered.filter(u => u.role === this.filterRole);
+        filtered = filtered.filter((u) => u.role === this.filterRole)
       }
 
       if (this.filterActif !== '') {
-        const isActif = this.filterActif === 'true';
-        filtered = filtered.filter(u => u.est_actif === isActif);
+        const isActif = this.filterActif === 'true'
+        filtered = filtered.filter((u) => u.est_actif === isActif)
       }
 
-      this.filteredUsers = filtered;
+      this.filteredUsers = filtered
     },
 
     async createUser() {
-  this.loading = true;
-  this.errorMessage = null;
+      this.loading = true
+      this.errorMessage = null
 
-  try {
-    const token = localStorage.getItem('token');
-    
-    const response = await fetch('http://localhost:3000/api/users', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(this.formData)
-    });
+      try {
+        const token = localStorage.getItem('token')
 
-    const data = await response.json();
+        const response = await fetch('http://localhost:3000/api/users', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(this.formData),
+        })
 
-    if (data.success) {
-      await this.loadUsers();
-      this.closeModals();
-      alert('✅ Utilisateur créé avec succès !');
-    } else {
-      this.errorMessage = data.message;
-    }
-  } catch (error) {
-    console.error('Erreur création:', error);
-    this.errorMessage = 'Erreur lors de la création';
-  } finally {
-    this.loading = false;
-  }
-},
+        const data = await response.json()
+
+        if (data.success) {
+          await this.loadUsers()
+          this.closeModals()
+          alert('✅ Utilisateur créé avec succès !')
+        } else {
+          this.errorMessage = data.message
+        }
+      } catch (error) {
+        console.error('Erreur création:', error)
+        this.errorMessage = 'Erreur lors de la création'
+      } finally {
+        this.loading = false
+      }
+    },
 
     editUser(user) {
       this.formData = {
@@ -460,107 +488,111 @@ export default {
         departement: user.departement || '',
         poste: user.poste || '',
         telephone: user.telephone || '',
-        date_embauche: user.date_embauche || ''
-      };
-      this.showEditModal = true;
+        date_embauche: user.date_embauche || '',
+      }
+      this.showEditModal = true
     },
 
     async updateUser() {
-  this.loading = true;
-  this.errorMessage = null;
+      this.loading = true
+      this.errorMessage = null
 
-  try {
-    const token = localStorage.getItem('token');
-    
-    const response = await fetch(`http://localhost:3000/api/users/${this.formData.id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(this.formData)
-    });
+      try {
+        const token = localStorage.getItem('token')
 
-    const data = await response.json();
+        const response = await fetch(`http://localhost:3000/api/users/${this.formData.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(this.formData),
+        })
 
-    if (data.success) {
-      await this.loadUsers();
-      this.closeModals();
-      alert('✅ Utilisateur modifié avec succès !');
-    } else {
-      this.errorMessage = data.message;
-    }
-  } catch (error) {
-    console.error('Erreur modification:', error);
-    this.errorMessage = 'Erreur lors de la modification';
-  } finally {
-    this.loading = false;
-  }
-},
+        const data = await response.json()
+
+        if (data.success) {
+          await this.loadUsers()
+          this.closeModals()
+          alert('✅ Utilisateur modifié avec succès !')
+        } else {
+          this.errorMessage = data.message
+        }
+      } catch (error) {
+        console.error('Erreur modification:', error)
+        this.errorMessage = 'Erreur lors de la modification'
+      } finally {
+        this.loading = false
+      }
+    },
 
     async toggleUserStatus(user) {
-  if (!confirm(`Voulez-vous vraiment ${user.est_actif ? 'désactiver' : 'activer'} ${user.prenom} ${user.nom} ?`)) {
-    return;
-  }
-
-  try {
-    const token = localStorage.getItem('token');
-    
-    const response = await fetch(`http://localhost:3000/api/users/${user.id}/toggle-status`, {
-      method: 'PATCH',
-      headers: {
-        'Authorization': `Bearer ${token}`
+      if (
+        !confirm(
+          `Voulez-vous vraiment ${user.est_actif ? 'désactiver' : 'activer'} ${user.prenom} ${user.nom} ?`,
+        )
+      ) {
+        return
       }
-    });
 
-    const data = await response.json();
+      try {
+        const token = localStorage.getItem('token')
 
-    if (data.success) {
-      await this.loadUsers();
-    }
-  } catch (error) {
-    console.error('Erreur toggle status:', error);
-  }
-},
+        const response = await fetch(`http://localhost:3000/api/users/${user.id}/toggle-status`, {
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+
+        const data = await response.json()
+
+        if (data.success) {
+          await this.loadUsers()
+        }
+      } catch (error) {
+        console.error('Erreur toggle status:', error)
+      }
+    },
 
     confirmDelete(user) {
       if (user.id === 1) {
-        alert('❌ Impossible de supprimer l\'administrateur principal !');
-        return;
+        alert("❌ Impossible de supprimer l'administrateur principal !")
+        return
       }
-      this.userToDelete = user;
-      this.showDeleteModal = true;
+      this.userToDelete = user
+      this.showDeleteModal = true
     },
 
     async deleteUser() {
-  try {
-    const token = localStorage.getItem('token');
-    
-    const response = await fetch(`http://localhost:3000/api/users/${this.userToDelete.id}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`
+      try {
+        const token = localStorage.getItem('token')
+
+        const response = await fetch(`http://localhost:3000/api/users/${this.userToDelete.id}`, {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+
+        const data = await response.json()
+
+        if (data.success) {
+          await this.loadUsers()
+          this.showDeleteModal = false
+          this.userToDelete = null
+          alert('✅ Utilisateur supprimé avec succès')
+        }
+      } catch (error) {
+        console.error('Erreur suppression:', error)
+        alert('❌ Erreur lors de la suppression')
       }
-    });
-
-    const data = await response.json();
-
-    if (data.success) {
-      await this.loadUsers();
-      this.showDeleteModal = false;
-      this.userToDelete = null;
-      alert('✅ Utilisateur supprimé avec succès');
-    }
-  } catch (error) {
-    console.error('Erreur suppression:', error);
-    alert('❌ Erreur lors de la suppression');
-  }
-},
+    },
 
     closeModals() {
-      this.showCreateModal = false;
-      this.showEditModal = false;
-      this.errorMessage = null;
+      this.showCreateModal = false
+      this.showEditModal = false
+      this.errorMessage = null
       this.formData = {
         prenom: '',
         nom: '',
@@ -570,8 +602,8 @@ export default {
         departement: '',
         poste: '',
         telephone: '',
-        date_embauche: ''
-      };
+        date_embauche: '',
+      }
     },
 
     getRoleLabel(role) {
@@ -579,25 +611,25 @@ export default {
         admin: 'Admin',
         rh: 'RH',
         manager: 'Manager',
-        employe: 'Employé'
-      };
-      return roles[role] || role;
+        employe: 'Employé',
+      }
+      return roles[role] || role
     },
 
     goBack() {
-      this.$router.push('/dashboard');
+      this.$router.push('/dashboard')
     },
 
     goToDashboard() {
-      this.$router.push('/dashboard');
+      this.$router.push('/dashboard')
     },
 
     logout() {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      this.$router.push('/login');
-    }
-  }
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      this.$router.push('/login')
+    },
+  },
 }
 </script>
 
@@ -611,27 +643,27 @@ export default {
 }
 
 .sidebar {
-            width: 240px;
-            height: 100vh;
-            background-color: #fafafa;
-            border-right: 1px solid #e5e7eb;
-            display: flex;
-            flex-direction: column;
-            position: fixed;
-            left: 0;
-            top: 0;
-        }
+  width: 240px;
+  height: 100vh;
+  background-color: #fafafa;
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  left: 0;
+  top: 0;
+}
 
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 24px 16px;
-        }
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 16px;
+}
 
 .admin-container {
   font-family: 'Mulish', sans-serif;
-  background: #F0FDFA;
+  background: #f0fdfa;
   min-height: 100vh;
   padding: 20px;
   margin-left: 240px;
@@ -782,7 +814,7 @@ svg {
 .logo-icon {
   width: 40px;
   height: 40px;
-  background: #0D9488;
+  background: #0d9488;
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -807,7 +839,7 @@ svg {
 }
 
 .admin-badge {
-  background: #0D9488;
+  background: #0d9488;
   color: white;
   padding: 8px 16px;
   border-radius: 8px;
@@ -817,8 +849,8 @@ svg {
 
 .btn-back {
   background: transparent;
-  color: #64748B;
-  border: 1px solid #E5E7EB;
+  color: #64748b;
+  border: 1px solid #e5e7eb;
   padding: 8px 16px;
   border-radius: 8px;
   font-family: 'Mulish', sans-serif;
@@ -829,9 +861,9 @@ svg {
 }
 
 .btn-back:hover {
-  background: #F9FAFB;
-  border-color: #0D9488;
-  color: #0D9488;
+  background: #f9fafb;
+  border-color: #0d9488;
+  color: #0d9488;
 }
 
 /* Page Container */
@@ -845,7 +877,7 @@ svg {
 }
 
 .page-header {
-  background: linear-gradient(135deg, #0D9488 0%, #14B8A6 100%);
+  background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
   padding: 40px;
   color: white;
 }
@@ -883,7 +915,7 @@ svg {
 .search-input {
   width: 100%;
   padding: 12px 16px;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
   font-family: 'Mulish', sans-serif;
   font-size: 15px;
@@ -892,8 +924,8 @@ svg {
 
 .search-input:focus {
   outline: none;
-  border-color: #0D9488;
-  background: #F0FDFA;
+  border-color: #0d9488;
+  background: #f0fdfa;
 }
 
 .filters-section {
@@ -904,7 +936,7 @@ svg {
 
 .filter-select {
   padding: 12px 16px;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
   font-family: 'Mulish', sans-serif;
   font-size: 14px;
@@ -915,12 +947,12 @@ svg {
 
 .filter-select:focus {
   outline: none;
-  border-color: #0D9488;
+  border-color: #0d9488;
 }
 
 .btn-primary {
   padding: 12px 24px;
-  background: #0D9488;
+  background: #0d9488;
   color: white;
   border: none;
   border-radius: 8px;
@@ -933,7 +965,7 @@ svg {
 }
 
 .btn-primary:hover {
-  background: #0F766E;
+  background: #0f766e;
   transform: translateY(-1px);
   box-shadow: 0 4px 6px rgba(13, 148, 136, 0.3);
 }
@@ -946,7 +978,7 @@ svg {
 
 /* Table */
 .table-container {
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e5e7eb;
   border-radius: 12px;
   overflow: hidden;
 }
@@ -957,7 +989,7 @@ svg {
 }
 
 .users-table thead {
-  background: #F9FAFB;
+  background: #f9fafb;
 }
 
 .users-table th {
@@ -966,16 +998,16 @@ svg {
   font-weight: 600;
   color: #111827;
   font-size: 14px;
-  border-bottom: 2px solid #E5E7EB;
+  border-bottom: 2px solid #e5e7eb;
 }
 
 .users-table td {
   padding: 16px;
-  border-bottom: 1px solid #F0F0F0;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .users-table tbody tr:hover {
-  background: #F9FAFB;
+  background: #f9fafb;
 }
 
 .inactive-row {
@@ -983,7 +1015,7 @@ svg {
 }
 
 .id-cell {
-  color: #64748B;
+  color: #64748b;
   font-weight: 600;
 }
 
@@ -996,7 +1028,7 @@ svg {
 .user-avatar {
   width: 40px;
   height: 40px;
-  background: #0D9488;
+  background: #0d9488;
   color: white;
   border-radius: 10px;
   display: flex;
@@ -1013,15 +1045,15 @@ svg {
 
 .user-poste {
   font-size: 13px;
-  color: #64748B;
+  color: #64748b;
 }
 
 .email-cell {
-  color: #64748B;
+  color: #64748b;
 }
 
 .dept-cell {
-  color: #64748B;
+  color: #64748b;
 }
 
 .role-badge {
@@ -1033,22 +1065,22 @@ svg {
 }
 
 .role-admin {
-  background: #FEE2E2;
-  color: #991B1B;
+  background: #fee2e2;
+  color: #991b1b;
 }
 
 .role-rh {
-  background: #DBEAFE;
-  color: #1E40AF;
+  background: #dbeafe;
+  color: #1e40af;
 }
 
 .role-manager {
-  background: #FEF3C7;
-  color: #92400E;
+  background: #fef3c7;
+  color: #92400e;
 }
 
 .role-employe {
-  background: #F3F4F6;
+  background: #f3f4f6;
   color: #374151;
 }
 
@@ -1061,13 +1093,13 @@ svg {
 }
 
 .status-active {
-  background: #D1FAE5;
-  color: #065F46;
+  background: #d1fae5;
+  color: #065f46;
 }
 
 .status-inactive {
-  background: #FEE2E2;
-  color: #991B1B;
+  background: #fee2e2;
+  color: #991b1b;
 }
 
 .actions-cell {
@@ -1078,7 +1110,7 @@ svg {
 .action-btn {
   width: 36px;
   height: 36px;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e5e7eb;
   background: white;
   border-radius: 8px;
   cursor: pointer;
@@ -1100,18 +1132,18 @@ svg {
 }
 
 .edit-btn:hover {
-  border-color: #3B82F6;
-  background: #EFF6FF;
+  border-color: #3b82f6;
+  background: #eff6ff;
 }
 
 .toggle-btn:hover {
-  border-color: #F59E0B;
-  background: #FEF3C7;
+  border-color: #f59e0b;
+  background: #fef3c7;
 }
 
 .delete-btn:hover {
-  border-color: #EF4444;
-  background: #FEE2E2;
+  border-color: #ef4444;
+  background: #fee2e2;
 }
 
 .no-results {
@@ -1125,7 +1157,7 @@ svg {
 }
 
 .no-results-text {
-  color: #64748B;
+  color: #64748b;
   font-size: 16px;
 }
 
@@ -1163,7 +1195,7 @@ svg {
   justify-content: space-between;
   align-items: center;
   padding: 24px 30px;
-  border-bottom: 1px solid #E5E7EB;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .modal-header h2 {
@@ -1179,7 +1211,7 @@ svg {
   border: none;
   font-size: 24px;
   cursor: pointer;
-  color: #94A3B8;
+  color: #94a3b8;
   transition: color 0.3s;
 }
 
@@ -1203,7 +1235,7 @@ svg {
   color: #111827;
   margin-bottom: 20px;
   padding-bottom: 12px;
-  border-bottom: 2px solid #F0FDFA;
+  border-bottom: 2px solid #f0fdfa;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1239,7 +1271,7 @@ svg {
 }
 
 .required {
-  color: #EF4444;
+  color: #ef4444;
 }
 
 .form-group input,
@@ -1247,31 +1279,31 @@ svg {
 .form-group textarea {
   width: 100%;
   padding: 12px 16px;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
   font-family: 'Mulish', sans-serif;
   font-size: 15px;
   transition: all 0.3s ease;
-  background: #FFFFFF;
+  background: #ffffff;
 }
 
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #0D9488;
-  background: #F0FDFA;
+  border-color: #0d9488;
+  background: #f0fdfa;
 }
 
 .input-hint {
   font-size: 12px;
-  color: #64748B;
+  color: #64748b;
   margin-top: 4px;
 }
 
 .info-box {
-  background: #F0FDFA;
-  border-left: 4px solid #0D9488;
+  background: #f0fdfa;
+  border-left: 4px solid #0d9488;
   padding: 16px;
   border-radius: 8px;
   margin-top: 24px;
@@ -1288,13 +1320,13 @@ svg {
 
 .info-box-content {
   font-size: 14px;
-  color: #64748B;
+  color: #64748b;
   line-height: 1.5;
 }
 
 .error-message {
-  background: #FEE2E2;
-  color: #991B1B;
+  background: #fee2e2;
+  color: #991b1b;
   padding: 12px 16px;
   border-radius: 8px;
   margin-top: 16px;
@@ -1302,7 +1334,7 @@ svg {
 }
 
 .warning-text {
-  color: #EF4444;
+  color: #ef4444;
   font-weight: 600;
   margin-top: 12px;
 }
@@ -1317,8 +1349,8 @@ svg {
 .btn-secondary {
   padding: 12px 24px;
   background: transparent;
-  color: #64748B;
-  border: 1px solid #E5E7EB;
+  color: #64748b;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
   font-family: 'Mulish', sans-serif;
   font-size: 14px;
@@ -1328,14 +1360,14 @@ svg {
 }
 
 .btn-secondary:hover {
-  background: #F9FAFB;
-  border-color: #0D9488;
-  color: #0D9488;
+  background: #f9fafb;
+  border-color: #0d9488;
+  color: #0d9488;
 }
 
 .btn-danger {
   padding: 12px 24px;
-  background: #EF4444;
+  background: #ef4444;
   color: white;
   border: none;
   border-radius: 8px;
@@ -1347,7 +1379,7 @@ svg {
 }
 
 .btn-danger:hover {
-  background: #DC2626;
+  background: #dc2626;
   transform: translateY(-1px);
 }
 

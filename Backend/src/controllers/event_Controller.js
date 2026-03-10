@@ -24,7 +24,7 @@ const logError = (code, errorCode, msg) => {
     msg,
   );
 };
-// Mapping des champs (nouvelle structure table evenements)
+// Mapping des champs (structure table evenements)
 const mapEventBody = (body) => {
   return {
     id: body.id,
