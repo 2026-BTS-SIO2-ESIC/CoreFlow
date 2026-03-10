@@ -108,10 +108,15 @@
                 <div v-show="showAdvancedOptions" class="form-grid form-grid-2 form-section-inner">
                   <div class="form-field">
                     <label>Niveau *</label>
+
                     <select v-model="formData.niveau" required>
                       <option value="1">Entreprise</option>
-                      <option value="2">Service</option>
+                      <option value="2">Département</option>
                     </select>
+                    <p class="niveau-hint">
+                      <strong>Entreprise</strong> : visible par tous <br />
+                      <strong>Département</strong> : visible pour les participants du département
+                    </p>
                   </div>
                   <div class="form-field">
                     <label>Obligatoire</label>
@@ -135,13 +140,36 @@
               <section class="form-section">
                 <h3>Invitations</h3>
                 <div class="form-grid form-grid-2">
-                  <div class="form-field form-field-full">
+                  <div class="form-field form-field-full inviter-field-wrapper">
                     <label>Emails (séparés par virgules)</label>
                     <input
                       v-model="formData.inviter"
                       type="text"
-                      placeholder="email1@x.com, email2@x.com"
+                      placeholder="Tapez 2 lettres pour rechercher..."
+                      autocomplete="off"
+                      @input="onInviterInput"
+                      @focus="onInviterFocus"
+                      @blur="onInviterBlur"
                     />
+                    <div
+                      v-show="showUserDropdown && userSearchResults.length > 0"
+                      class="user-dropdown"
+                      role="listbox"
+                    >
+                      <button
+                        v-for="u in userSearchResults"
+                        :key="u.id"
+                        type="button"
+                        role="option"
+                        class="user-dropdown-item"
+                        @mousedown.prevent="selectUser(u)"
+                      >
+                        {{ u.email }}
+                      </button>
+                    </div>
+                    <div v-if="userSearchLoading" class="user-dropdown user-dropdown-loading">
+                      Recherche...
+                    </div>
                   </div>
                   <div class="form-field">
                     <label>Département</label>
@@ -208,6 +236,10 @@ export default {
       errorMessage: null,
       errorMessages: null,
       showAdvancedOptions: false,
+      userSearchResults: [],
+      showUserDropdown: false,
+      userSearchLoading: false,
+      inviterSearchDebounce: null,
     }
   },
   computed: {
@@ -239,7 +271,12 @@ export default {
     show(isShown) {
       if (isShown && this.initialDate) this.prefillDates(this.initialDate)
       if (isShown) this.$nextTick(() => this.setupEscapeHandler())
-      else this.removeEscapeHandler()
+      else {
+        this.removeEscapeHandler()
+        this.userSearchResults = []
+        this.showUserDropdown = false
+        this.userSearchLoading = false
+      }
     },
   },
   methods: {
@@ -298,7 +335,7 @@ export default {
       if (startVal) {
         const startDate = new Date(startVal.replace('T', ' '))
         if (startDate < todayStart) {
-          this.errorMessage = 'La date de début ne peut pas être avant aujourd\'hui.'
+          this.errorMessage = "La date de début ne peut pas être avant aujourd'hui."
           this.errorMessages = null
           this.loading = false
           return
@@ -366,6 +403,70 @@ export default {
       const day = String(d.getDate()).padStart(2, '0')
       this.formData.date_debut = `${y}-${m}-${day}T09:00`
       this.formData.date_fin = `${y}-${m}-${day}T10:00`
+    },
+    onInviterInput() {
+      if (this.inviterSearchDebounce) clearTimeout(this.inviterSearchDebounce)
+      const value = (this.formData.inviter || '').trim()
+      const parts = value ? value.split(/,\s*/) : []
+      const lastPart = (parts[parts.length - 1] || '').trim()
+      if (lastPart.length >= 2) {
+        this.inviterSearchDebounce = setTimeout(() => this.searchUsersByEmail(lastPart), 300)
+      } else {
+        this.userSearchResults = []
+        this.showUserDropdown = false
+      }
+    },
+    onInviterFocus() {
+      const value = (this.formData.inviter || '').trim()
+      const parts = value ? value.split(/,\s*/) : []
+      const lastPart = (parts[parts.length - 1] || '').trim()
+      if (lastPart.length >= 2 && this.userSearchResults.length > 0) {
+        this.showUserDropdown = true
+      }
+    },
+    onInviterBlur() {
+      setTimeout(() => {
+        this.showUserDropdown = false
+      }, 200)
+    },
+    async searchUsersByEmail(term) {
+      if (!term || term.length < 2) return
+      const token = localStorage.getItem('token')
+      if (!token) return
+      this.userSearchLoading = true
+      this.userSearchResults = []
+      try {
+        const res = await fetch('http://localhost:3000/api/event/user_list_by_email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ email: term }),
+        })
+        const data = await res.json().catch(() => ({}))
+        if (res.ok && data.usersInfos && Array.isArray(data.usersInfos)) {
+          this.userSearchResults = data.usersInfos
+          this.showUserDropdown = true
+        } else {
+          this.userSearchResults = []
+          this.showUserDropdown = false
+        }
+      } catch {
+        this.userSearchResults = []
+        this.showUserDropdown = false
+      } finally {
+        this.userSearchLoading = false
+      }
+    },
+    selectUser(user) {
+      const value = (this.formData.inviter || '').trim()
+      const parts = value ? value.split(/,\s*/) : []
+      parts.pop()
+      const newParts = [...parts, user.email]
+      this.formData.inviter = newParts.join(', ')
+      this.userSearchResults = []
+      this.showUserDropdown = false
     },
   },
   beforeUnmount() {
@@ -472,6 +573,16 @@ export default {
   margin: 0;
   color: #64748b;
 }
+.niveau-hint {
+  font-size: 0.75rem;
+  margin: 0.25rem 0 0.5rem 0;
+  color: #64748b;
+  line-height: 1.4;
+}
+.niveau-hint strong {
+  color: #475569;
+  font-weight: 600;
+}
 .form-grid {
   display: grid;
   gap: 1rem;
@@ -511,6 +622,43 @@ export default {
   outline: none;
   border-color: #14b8a6;
   box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.2);
+}
+.inviter-field-wrapper {
+  position: relative;
+}
+.user-dropdown {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  margin-top: 2px;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 20;
+}
+.user-dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  font-size: 0.9375rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #334155;
+  transition: background 0.15s ease;
+}
+.user-dropdown-item:hover {
+  background: #f1f5f9;
+}
+.user-dropdown-loading {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: #64748b;
 }
 .form-toggle {
   width: 100%;
