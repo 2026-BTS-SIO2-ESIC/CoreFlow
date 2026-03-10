@@ -511,5 +511,5 @@ const validateUpdateEvent = async (event) => {
 
 const timeVerify = (time) => {
   const today = Date.now();
-  return time <= today;
+  return time >= today;
 };

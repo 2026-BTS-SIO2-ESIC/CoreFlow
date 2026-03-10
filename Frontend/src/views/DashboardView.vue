@@ -41,7 +41,7 @@
           Documents
         </a>
 
-        <a href="/event/create" class="nav-item">
+        <a @click="goToEventPanel" class="nav-item">
           <div class="nav-icon">
             <svg viewBox="0 0 24 24">
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -122,6 +122,13 @@ export default {
     },
     goToAdminPanel() {
       this.$router.push('/admin/users')
+    },
+    goToEventPanel() {
+      try {
+        this.$router.push('/event/create')
+      } catch (err) {
+        console.error('Error navigating to event panel:', err)
+      }
     },
   },
 }

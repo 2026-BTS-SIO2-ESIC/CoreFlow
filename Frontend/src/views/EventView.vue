@@ -1,155 +1,102 @@
 <template>
-  <div class="event-container">
+  <div class="event-view">
     <AppSidebar :user="user" active-item="events" @logout="logout" />
-    <div class="main-content">
-      Zone Principale
-
-      <div>
-        My super duper interactive calendar
-        <div v-if="new Date(year, month - 1, 1).getDay() === 0">premier jour du mois</div>
-        <div v-if="new Date(year, month, 0).getDate() > 0">tout les reste jours du mois</div>
+    <div class="event-main">
+      <div class="page-header">
+        <h1>Calendrier des événements</h1>
+        <p>Cliquez sur un jour pour créer un nouvel événement</p>
       </div>
-      <button
-        v-if="user && (user.role === 'manager' || user.role === 'admin')"
-        @click="showCreateModal = true"
-      >
-        Afficher le formulaire de création d'un Evenement
-      </button>
-      <button v-if="showCreateModal" @click="closeModal()">
-        Fermer la creation d'un Evenement
-      </button>
-      <form @submit.prevent="createEvent">
-        <div v-if="showCreateModal">
-          <div>
-            <label>Titre <span>*</span></label>
-            <input v-model="formData.titre" type="text" placeholder="Titre de l'evenement" />
-          </div>
 
-          <div>
-            <label>description <span>*</span></label>
-            <input v-model="formData.description" type="text" placeholder="Titre de l'evenement" />
-          </div>
-
-          <div>
-            <label>type de evenement <span>*</span></label>
-            <input
-              v-model="formData.type_evenement"
-              type="text"
-              placeholder="Titre de l'evenement"
-            />
-          </div>
-
-          <div>
-            <label>date debut <span>*</span></label>
-            <input
-              v-model="formData.date_debut"
-              type="datetime-local"
-              placeholder="Titre de l'evenement"
-            />
-          </div>
-
-          <div>
-            <label>date fin<span>*</span></label>
-            <input
-              v-model="formData.date_fin"
-              type="datetime-local"
-              placeholder="Titre de l'evenement"
-            />
-          </div>
-
-          <div>
-            <label>lieu<span>*</span></label>
-            <input v-model="formData.lieu" type="text" placeholder="Titre de l'evenement" />
-          </div>
-
-          <div>
-            <label>est obligatoire?<span>*</span></label>
-            <input
-              v-model="formData.est_obligatoire"
-              type="text"
-              placeholder="Titre de l'evenement"
-            />
-          </div>
-
-          <div>
-            <label>Nombre de places maximum<span>*</span></label>
-            <input
-              v-model="formData.nb_places_max"
-              type="text"
-              placeholder="Titre de l'evenement"
-            />
-          </div>
-
-          <div>
-            <label>Statut<span>*</span></label>
-            <input v-model="formData.statut" type="text" placeholder="Titre de l'evenement" />
-          </div>
-
-          <div>
-            <label>Niveau<span>*</span></label>
-            <input v-model="formData.niveau" type="text" placeholder="Titre de l'evenement" />
-          </div>
-
-          <div>
-            <label>inviter<span>*</span></label>
-            <input v-model="formData.inviter" type="text" placeholder="Titre de l'evenement" />
-          </div>
-
-          <div>
-            <label>departement<span>*</span></label>
-            <input v-model="formData.departement" type="text" placeholder="Titre de l'evenement" />
-          </div>
-
-          <div>
-            <label>commentaire<span>*</span></label>
-            <input v-model="formData.commentaire" type="text" placeholder="Titre de l'evenement" />
-          </div>
-
-          <div v-if="errorMessage">{{ errorMessage }}</div>
-          <button type="submit" :disabled="loading">Crees l'evenement</button>
+      <div class="calendar">
+        <div class="calendar-nav">
+          <button type="button" aria-label="Mois précédent" @click="prevMonth">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+          </button>
+          <h2>{{ currentMonthName }} {{ currentYear }}</h2>
+          <button type="button" aria-label="Mois suivant" @click="nextMonth">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </button>
         </div>
-      </form>
+
+        <div class="calendar-weekdays">
+          <span v-for="day in ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']" :key="day">{{
+            day
+          }}</span>
+        </div>
+
+        <div class="calendar-grid">
+          <div
+            v-for="(cell, index) in calendarCells"
+            :key="index"
+            class="calendar-cell"
+            :class="{
+              'cell-empty': cell.isEmpty,
+              'cell-past': !cell.isEmpty && isPast(cell),
+              'cell-selected': !cell.isEmpty && isSelected(cell),
+              'cell-today': !cell.isEmpty && !isSelected(cell) && !isPast(cell) && isToday(cell),
+            }"
+            @click="onDayClick(cell)"
+          >
+            {{ cell.day }}
+          </div>
+        </div>
+      </div>
+
+      <CreateEventModal
+        :show="showCreateModal"
+        :initial-date="selectedDate"
+        :user="user"
+        @close="closeModal"
+        @submit="onEventCreated"
+      />
     </div>
   </div>
 </template>
 
 <script>
 import AppSidebar from '../components/AppSidebar.vue'
+import CreateEventModal from '../components/CreateEventModal.vue'
 
 export default {
   name: 'EventView',
-  components: { AppSidebar },
+  components: { AppSidebar, CreateEventModal },
   data() {
+    const monthNames = [
+      'Janvier',
+      'Février',
+      'Mars',
+      'Avril',
+      'Mai',
+      'Juin',
+      'Juillet',
+      'Août',
+      'Septembre',
+      'Octobre',
+      'Novembre',
+      'Décembre',
+    ]
+    const now = new Date()
     return {
       user: null,
       showCreateModal: false,
-      loading: false,
-      errorMessage: null,
-
-      currentYear: new Date().getFullYear(),
-      currentMonth: new Date().getMonth(),
+      currentYear: now.getFullYear(),
+      currentMonth: now.getMonth(),
+      monthNames,
       selectedDate: null,
-      lastClickedDate: null,
-      clickCount: 0,
-
-      formData: {
-        titre: '',
-        description: '',
-        type_evenement: 'meeting',
-        date_debut: '',
-        date_fin: '',
-        lieu: '',
-        organisateur_id: null,
-        est_obligatoire: 1,
-        nb_places_max: 0,
-        statut: 'planifie',
-        niveau: '1',
-
-        statut_participation: 'inscrit',
-        inviter: '',
-        departement: '',
-        commentaire: '',
-      },
     }
   },
   async mounted() {
@@ -158,133 +105,219 @@ export default {
       this.user = JSON.parse(userStr)
     } else {
       this.$router.push('/login')
-      alert('Veuillez vous connecter pour acceder a cette page')
+      alert('Veuillez vous connecter pour accéder à cette page')
     }
   },
   methods: {
-    // Fonction de creation d'evenement
-    async createEvent() {
-      const body = {
-        titre: this.formData.titre,
-        description: this.formData.description,
-        type_evenement: this.formData.type_evenement,
-        date_debut: this.formData.date_debut.replace('T', ' ') + ':00',
-        date_fin: this.formData.date_fin.replace('T', ' ') + ':00',
-        lieu: this.formData.lieu,
-        organisateur_id: this.user.id,
-        est_obligatoire: this.formData.est_obligatoire,
-        nb_places_max: this.formData.nb_places_max,
-        statut: this.formData.statut,
-        niveau: this.formData.niveau,
-        inviter: this.formData.inviter,
-        departement: this.formData.departement,
-        commentaire: this.formData.commentaire,
-      }
-
-      this.loading = true
-      this.errorMessage = null
-
-      if (this.user.role !== 'manager' && this.user.role !== 'admin') {
-        this.errorMessage = 'Que admin et manager peuvent crees des evenements'
-        return
-      }
-
-      try {
-        const token = localStorage.getItem('token')
-        const response = await fetch(`http://localhost:3000/api/event/create/${this.user.role}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(body),
-        })
-
-        const data = await response.json()
-
-        if (response.status === 201) {
-          this.closeModal()
-          alert('✅ Evenement créé avec succès !')
-        } else {
-          data.error?.error === 'PERMISSION_DENIED'
-            ? (this.errorMessage = 'Que admin et manager peuvent crees des evenements')
-            : (this.errorMessage = data.error?.message)
-        }
-      } catch (error) {
-        console.error('Erreur creation evenement:', error)
-        this.errorMessage = "Erreur lors de la creation de l'evenement"
-      } finally {
-        this.loading = false
-      }
-    },
-
     logout() {
       localStorage.removeItem('token')
       localStorage.removeItem('user')
       this.$router.push('/login')
     },
     closeModal() {
-      //   this.closeCreateModal = false
+      this.selectedDate = null
       this.showCreateModal = false
-      this.formData = {
-        titre: '',
-        description: '',
-        type_evenement: 'meeting',
-        date_debut: '',
-        date_fin: '',
-        lieu: '',
-        organisateur_id: null,
-        est_obligatoire: 1,
-        nb_places_max: 0,
-        statut: 'planifie',
-        niveau: '1',
-
-        statut_participation: 'inscrit',
-        inviter: '',
-        departement: '',
-        commentaire: '',
-      }
     },
-    handleClickedDate(date) {
-      if (this.lastClickedDate && selectedDate) {
-        clickCount++
+    onEventCreated() {
+      this.closeModal()
+    },
+    onDayClick(cell) {
+      if (cell.isEmpty || !cell.date || this.isPast(cell)) return
+      this.selectedDate = cell.date
+      this.showCreateModal = true
+    },
+    isPast(cell) {
+      if (!cell.date || cell.isEmpty) return false
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const d = new Date(cell.date)
+      d.setHours(0, 0, 0, 0)
+      return d < today
+    },
+    prevMonth() {
+      if (this.currentMonth === 0) {
+        this.currentMonth = 11
+        this.currentYear--
       } else {
-        ;((clickCount = 1), (lastClickedDate = null))
-      }
-
-      if (this.clickCount === 2) {
-        this.selectedDate = date
-        this.showCreateModal = true
+        this.currentMonth--
       }
     },
-    CalculateDayOfMonth(month) {
-      //   some calculation wowowowo there is your number of the days of the month
-      return this.nbOfDaysInMonth
+    nextMonth() {
+      if (this.currentMonth === 11) {
+        this.currentMonth = 0
+        this.currentYear++
+      } else {
+        this.currentMonth++
+      }
     },
-    CalculateDayOfMonth(week) {
-      //   some calculation wowowowo there is your day of the week
-      return this.dayOfTheWeek
+    isSelected(cell) {
+      if (!this.selectedDate || cell.isEmpty) return false
+      return cell.date.toDateString() === this.selectedDate.toString()
     },
-
-    getDaysInMonth(month) {
-      return new Date(this.currentYear, month, 0).getDate()
+    isToday(cell) {
+      if (cell.isEmpty || !cell.date) return false
+      return cell.date.toDateString() === new Date().toDateString()
     },
-    getFirstDayOfTheMonth(month) {
-      return new Date(this.currentYear, month, -1, 1).getDay()
+  },
+  computed: {
+    currentMonthName() {
+      return this.monthNames[this.currentMonth]
+    },
+    calendarCells() {
+      const year = this.currentYear
+      const month = this.currentMonth
+      const firstDay = new Date(year, month, 1).getDay()
+      const daysInMonth = new Date(year, month + 1, 0).getDate()
+      const cells = []
+      for (let i = 0; i < firstDay; i++) cells.push({ day: null, isEmpty: true })
+      for (let d = 1; d <= daysInMonth; d++)
+        cells.push({ day: d, isEmpty: false, date: new Date(year, month, d) })
+      while (cells.length < 31) cells.push({ day: null, isEmpty: true })
+      return cells
     },
   },
 }
 </script>
 
 <style scoped>
-.event-container {
-  font-family: 'Mulish', sans-serif;
-  background: #f0fdfa;
+.event-view {
   min-height: 100vh;
+  background: #f1f5f9;
 }
-
-.main-content {
-  margin-left: 240px;
-  padding: 20px;
+.event-main {
+  margin-left: 15rem;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+}
+.page-header {
+  background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
+  padding: 40px;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  color: white;
+}
+.page-header h1 {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 32px;
+  margin: 0 0 8px 0;
+}
+.page-header p {
+  margin: 0;
+  opacity: 0.95;
+  font-size: 16px;
+}
+.calendar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 80vh;
+  padding: 1.5rem;
+  background: #fff;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
+}
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+.calendar-nav button {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #475569;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+.calendar-nav button:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #1e293b;
+}
+.calendar-nav button svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+.calendar-nav h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+  color: #334155;
+}
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.5rem;
+  text-align: center;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 0.5rem;
+}
+.calendar-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.5rem;
+}
+.calendar-cell {
+  min-height: 3.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+  cursor: pointer;
+  border-radius: 8px;
+  font-weight: 500;
+  color: #334155;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+.calendar-cell:not(.cell-empty):hover {
+  background: #f1f5f9;
+}
+.calendar-cell.cell-empty {
+  cursor: default;
+  opacity: 0.35;
+  color: #94a3b8;
+}
+.calendar-cell.cell-selected {
+  background: #14b8a6;
+  color: #fff;
+}
+.calendar-cell.cell-selected:hover {
+  background: #0d9488;
+}
+.calendar-cell.cell-today {
+  background: #ccfbf1;
+  color: #0f766e;
+}
+.calendar-cell.cell-today:hover {
+  background: #99f6e4;
+}
+.calendar-cell.cell-past {
+  color: #94a3b8;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.calendar-cell.cell-past:hover {
+  background: transparent;
 }
 </style>
