@@ -4,7 +4,8 @@
     <div class="event-main">
       <div class="page-header">
         <h1>Calendrier des événements</h1>
-        <p>Cliquez sur un jour pour créer un nouvel événement</p>
+        <p v-if="canCreateEvent">Cliquez sur un jour pour créer un nouvel événement</p>
+        <p v-else>Consultez le calendrier des événements</p>
       </div>
 
       <div class="calendar">
@@ -70,6 +71,7 @@
 <script>
 import AppSidebar from '../components/AppSidebar.vue'
 import CreateEventModal from '../components/CreateEventModal.vue'
+import { fetchUserFromToken, hasRole } from '../composables/useAuth'
 
 export default {
   name: 'EventView',
@@ -92,6 +94,7 @@ export default {
     const now = new Date()
     return {
       user: null,
+      authVerified: false,
       showCreateModal: false,
       currentYear: now.getFullYear(),
       currentMonth: now.getMonth(),
@@ -100,13 +103,21 @@ export default {
     }
   },
   async mounted() {
-    const userStr = localStorage.getItem('user')
-    if (userStr) {
-      this.user = JSON.parse(userStr)
-    } else {
+    const token = localStorage.getItem('token')
+    if (!token) {
       this.$router.push('/login')
-      alert('Veuillez vous connecter pour accéder à cette page')
+      return
     }
+    const verifiedUser = await fetchUserFromToken()
+    if (!verifiedUser) {
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      this.$router.push('/login')
+      alert('Session expirée. Veuillez vous reconnecter.')
+      return
+    }
+    this.user = verifiedUser
+    this.authVerified = true
   },
   methods: {
     logout() {
@@ -122,6 +133,10 @@ export default {
       this.closeModal()
     },
     onDayClick(cell) {
+      if (!hasRole(this.user, 'admin', 'manager')) {
+        alert("Vous n'avez pas les permissions pour créer un événement")
+        return
+      }
       if (cell.isEmpty || !cell.date || this.isPast(cell)) return
       this.selectedDate = cell.date
       this.showCreateModal = true
@@ -160,6 +175,9 @@ export default {
     },
   },
   computed: {
+    canCreateEvent() {
+      return hasRole(this.user, 'admin', 'manager')
+    },
     currentMonthName() {
       return this.monthNames[this.currentMonth]
     },
