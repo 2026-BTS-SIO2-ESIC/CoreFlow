@@ -24,27 +24,36 @@ const logError = (code, errorCode, msg) => {
     msg,
   );
 };
+// DB: type_evenement ENUM('reunion','formation','afterwork','seminaire','autre')
+const TYPE_EVENT_MAP = {
+  meeting: "reunion",
+  conference: "seminaire",
+  atelier: "formation",
+};
+
 // Mapping des champs (structure table evenements)
 const mapEventBody = (body) => {
+  const rawType = body.type_evenement;
+  const eventType = rawType && TYPE_EVENT_MAP[rawType] ? TYPE_EVENT_MAP[rawType] : rawType;
   return {
     id: body.id,
     title: body.titre,
     description: body.description,
-    eventType: body.type_evenement,
+    eventType,
     startDate: body.date_debut,
     endDate: body.date_fin,
     location: body.lieu,
     organizerId: body.organisateur_id,
     isRequired: body.est_obligatoire,
     maxPlaces: body.nb_places_max,
-    status: body.statut,
+    status: body.statut ?? "planifie",
     level: body.niveau,
     createdAt: body.created_at,
     updatedAt: body.updated_at,
 
     statusParticipation: body.statut_participation,
     invited: body.inviter,
-    department: body.departement,
+    department: body.departement ?? body.department,
     comment: body.commentaire,
   };
 };
@@ -243,7 +252,7 @@ exports.event_create = async (req, res) => {
   }
 
   // Appelle la fonction create du modèle Event, prend event comme paramètre
-  Event.create(event, event.department, (err, results) => {
+  Event.create(event, event.department || null, (err, results) => {
     if (err) {
       logError(
         500,
@@ -403,9 +412,14 @@ const validateEvent = async (event) => {
     err.push("Champ titre est invalide ou requis");
   }
 
-  // Vérification type_evenement (obligatoire)
+  // Vérification type_evenement (obligatoire) - valeurs DB: reunion, formation, afterwork, seminaire, autre
+  const allowedTypes = ["reunion", "formation", "afterwork", "seminaire", "autre"];
   if (!event.eventType || typeof event.eventType !== "string") {
     err.push("Champ type_evenement est invalide ou requis");
+  } else if (!allowedTypes.includes(event.eventType)) {
+    err.push(
+      "Champ type_evenement invalide, doit être: reunion, formation, afterwork, seminaire ou autre",
+    );
   }
 
   // Vérification niveau (1 ou 2)

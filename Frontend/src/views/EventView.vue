@@ -52,7 +52,19 @@
             }"
             @click="onDayClick(cell)"
           >
-            {{ cell.day }}
+            <div class="cell-day">{{ cell.day }}</div>
+            <div v-if="getEventsForDay(cell).length" class="cell-events">
+              <div
+                v-for="ev in getEventsForDay(cell)"
+                :key="ev.id"
+                class="cell-event"
+                :class="ev.niveau === '2' ? 'cell-event-lvl2' : 'cell-event-lvl1'"
+                :title="`${ev.titre} - ${ev.type_evenement || ''}`"
+                @click.stop="onEventClick(ev.id)"
+              >
+                {{ ev.titre }}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -64,6 +76,11 @@
         @close="closeModal"
         @submit="onEventCreated"
       />
+      <DetailCardEvent
+        :show="showDetailModal"
+        :event-id="selectedEventId"
+        @close="closeDetailModal"
+      />
     </div>
   </div>
 </template>
@@ -71,11 +88,12 @@
 <script>
 import AppSidebar from '../components/AppSidebar.vue'
 import CreateEventModal from '../components/CreateEventModal.vue'
-import { fetchUserFromToken, hasRole } from '../composables/useAuth'
+import DetailCardEvent from '../components/DetailCardEvent.vue'
+import { fetchUserFromToken, hasRole, API_URL } from '../composables/useAuth'
 
 export default {
   name: 'EventView',
-  components: { AppSidebar, CreateEventModal },
+  components: { AppSidebar, CreateEventModal, DetailCardEvent },
   data() {
     const monthNames = [
       'Janvier',
@@ -95,7 +113,11 @@ export default {
     return {
       user: null,
       authVerified: false,
+      events: [],
+      eventsLoading: false,
       showCreateModal: false,
+      showDetailModal: false,
+      selectedEventId: null,
       currentYear: now.getFullYear(),
       currentMonth: now.getMonth(),
       monthNames,
@@ -118,6 +140,7 @@ export default {
     }
     this.user = verifiedUser
     this.authVerified = true
+    await this.fetchEvents()
   },
   methods: {
     logout() {
@@ -129,8 +152,62 @@ export default {
       this.selectedDate = null
       this.showCreateModal = false
     },
-    onEventCreated() {
+    onEventClick(eventId) {
+      this.selectedEventId = eventId
+      this.showDetailModal = true
+    },
+    closeDetailModal() {
+      this.showDetailModal = false
+      this.selectedEventId = null
+    },
+    async onEventCreated() {
       this.closeModal()
+      await this.fetchEvents()
+    },
+    async fetchEvents() {
+      if (!this.user?.id || !this.user?.role) return
+      this.eventsLoading = true
+      try {
+        const token = localStorage.getItem('token')
+        const res = await fetch(
+          `${API_URL}/event/list/participation/${this.user.id}/${this.user.role}`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        )
+        const data = await res.json()
+        if (res.ok) {
+          if (data.eventAdmin) {
+            this.events = data.eventAdmin || []
+          } else {
+            const l1 = data.eventLevelOne || []
+            const l2 = data.eventLevelTwo || []
+            const seen = new Set()
+            this.events = [...l1, ...l2].filter((e) => {
+              if (seen.has(e.id)) return false
+              seen.add(e.id)
+              return true
+            })
+          }
+        } else {
+          this.events = []
+        }
+      } catch {
+        this.events = []
+      } finally {
+        this.eventsLoading = false
+      }
+    },
+    getEventsForDay(cell) {
+      if (!cell.date || cell.isEmpty || !this.events.length) return []
+      const y = cell.date.getFullYear()
+      const m = cell.date.getMonth()
+      const d = cell.date.getDate()
+      const cellStart = new Date(y, m, d).getTime()
+      const cellEnd = new Date(y, m, d, 23, 59, 59).getTime()
+      return this.events.filter((ev) => {
+        const start = new Date(ev.date_debut.replace(' ', 'T')).getTime()
+        const end = new Date(ev.date_fin.replace(' ', 'T')).getTime()
+        return start <= cellEnd && end >= cellStart
+      })
     },
     onDayClick(cell) {
       if (!hasRole(this.user, 'admin', 'manager')) {
@@ -295,11 +372,12 @@ export default {
   gap: 0.5rem;
 }
 .calendar-cell {
-  min-height: 3.5rem;
+  min-height: 5rem;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4rem;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: 2rem;
   cursor: pointer;
   border-radius: 8px;
   font-weight: 500;
@@ -307,6 +385,46 @@ export default {
   transition:
     background 0.15s ease,
     color 0.15s ease;
+}
+.cell-day {
+  font-size: 0.9375rem;
+  font-weight: 600;
+
+  text-align: center;
+  margin-bottom: 0.25rem;
+}
+.cell-events {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+  min-height: 0;
+}
+.cell-event {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  text-align: center;
+  padding: 10px 20px;
+  border-radius: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+.cell-event-lvl1 {
+  color: #1e40af;
+  background: #bfdbfe;
+}
+.cell-event-lvl1:hover {
+  background: #93c5fd;
+}
+.cell-event-lvl2 {
+  color: #0f766e;
+  background: #ccfbf1;
+}
+.cell-event-lvl2:hover {
+  background: #99f6e4;
 }
 .calendar-cell:not(.cell-empty):hover {
   background: #f1f5f9;
@@ -318,6 +436,11 @@ export default {
 }
 .calendar-cell.cell-selected {
   background: #14b8a6;
+  color: #fff;
+}
+.calendar-cell.cell-selected .cell-event-lvl1,
+.calendar-cell.cell-selected .cell-event-lvl2 {
+  background: rgba(255, 255, 255, 0.3);
   color: #fff;
 }
 .calendar-cell.cell-selected:hover {

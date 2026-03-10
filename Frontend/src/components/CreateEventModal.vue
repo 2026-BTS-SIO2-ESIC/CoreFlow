@@ -45,10 +45,10 @@
                   <div class="form-field">
                     <label>Type *</label>
                     <select v-model="formData.type_evenement" required>
-                      <option value="meeting">Réunion</option>
+                      <option value="reunion">Réunion</option>
                       <option value="formation">Formation</option>
-                      <option value="conference">Conférence</option>
-                      <option value="atelier">Atelier</option>
+                      <option value="afterwork">Afterwork</option>
+                      <option value="seminaire">Séminaire</option>
                       <option value="autre">Autre</option>
                     </select>
                   </div>
@@ -133,6 +133,15 @@
                       min="0"
                       placeholder="0"
                     />
+                  </div>
+                  <div class="form-field">
+                    <label>Statut</label>
+                    <select v-model="formData.statut">
+                      <option value="planifie">Planifié</option>
+                      <option value="en_cours">En cours</option>
+                      <option value="termine">Terminé</option>
+                      <option value="annule">Annulé</option>
+                    </select>
                   </div>
                 </div>
               </section>
@@ -219,7 +228,7 @@ export default {
       formData: {
         titre: '',
         description: '',
-        type_evenement: 'meeting',
+        type_evenement: 'reunion',
         date_debut: '',
         date_fin: '',
         lieu: '',
@@ -227,6 +236,7 @@ export default {
         est_obligatoire: 1,
         nb_places_max: 0,
         niveau: '1',
+        statut: 'planifie',
         statut_participation: 'inscrit',
         inviter: '',
         departement: '',
@@ -359,6 +369,7 @@ export default {
         lieu: this.formData.lieu || '',
         organisateur_id: organisateurId,
         niveau: this.formData.niveau,
+        statut: this.formData.statut || 'planifie',
         est_obligatoire: this.formData.est_obligatoire,
         nb_places_max: this.formData.nb_places_max || 0,
         inviter: this.formData.inviter || '',

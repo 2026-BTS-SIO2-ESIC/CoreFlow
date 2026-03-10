@@ -146,6 +146,8 @@ const Event = {
     idsForParticipations = [...new Set(idsForParticipations)];
 
     // 2. INSERT evenement (seulement si toutes les validations passent)
+    const statutValue = event.status ?? "planifie";
+
     db.query(
       sql,
       [
@@ -158,7 +160,7 @@ const Event = {
         event.organizerId,
         event.isRequired ?? null,
         event.maxPlaces ?? null,
-        event.status ?? null,
+        statutValue,
         event.createdAt,
         event.updatedAt,
         event.level,
