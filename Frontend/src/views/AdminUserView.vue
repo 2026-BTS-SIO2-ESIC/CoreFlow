@@ -247,13 +247,22 @@
               </div>
               <div class="form-group" v-if="showCreateModal">
                 <label>Mot de passe <span class="required">*</span></label>
-                <input
-                  v-model="formData.password"
-                  type="password"
-                  placeholder="••••••••"
-                  required
-                  minlength="6"
-                />
+                <div class="password-input-wrapper">
+                  <input
+                    v-model="formData.password"
+                    :type="showPassword ? 'text' : 'password'"
+                    placeholder="••••••••"
+                    required
+                    minlength="6"
+                  />
+                  <button
+                    type="button"
+                    class="toggle-password"
+                    @click="showPassword = !showPassword"
+                  >
+                    {{ showPassword ? '🙈' : '👁️' }}
+                  </button>
+                </div>
                 <span class="input-hint">Minimum 6 caractères</span>
               </div>
               <div class="form-group">
@@ -362,6 +371,7 @@ export default {
       showCreateModal: false,
       showEditModal: false,
       showDeleteModal: false,
+      showPassword: false,
       loading: false,
       errorMessage: null,
       userToDelete: null,
@@ -439,7 +449,7 @@ export default {
 
       if (this.filterActif !== '') {
         const isActif = this.filterActif === 'true'
-        filtered = filtered.filter((u) => u.est_actif === isActif)
+        filtered = filtered.filter((u) => Boolean(u.est_actif) === isActif)
       }
 
       this.filteredUsers = filtered
@@ -894,6 +904,7 @@ svg {
   font-weight: 700;
   font-size: 32px;
   margin-bottom: 8px;
+  color: white;
 }
 
 .page-header p {
@@ -1306,6 +1317,33 @@ svg {
   font-size: 12px;
   color: #64748b;
   margin-top: 4px;
+}
+
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper input {
+  padding-right: 45px;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggle-password:hover {
+  opacity: 0.7;
 }
 
 .info-box {

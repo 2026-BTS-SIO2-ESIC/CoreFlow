@@ -270,8 +270,11 @@ export default {
     },
     show(isShown) {
       if (isShown && this.initialDate) this.prefillDates(this.initialDate)
-      if (isShown) this.$nextTick(() => this.setupEscapeHandler())
-      else {
+      if (isShown) {
+        const u = this.user || JSON.parse(localStorage.getItem('user') || '{}')
+        if (u?.email && !this.formData.inviter) this.formData.inviter = u.email
+        this.$nextTick(() => this.setupEscapeHandler())
+      } else {
         this.removeEscapeHandler()
         this.userSearchResults = []
         this.showUserDropdown = false

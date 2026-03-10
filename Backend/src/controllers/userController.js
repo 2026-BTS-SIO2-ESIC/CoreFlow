@@ -1,4 +1,5 @@
 const { pool } = require('../config/database');
+const bcrypt = require('bcrypt');
 
 // GET /api/users - Liste tous les utilisateurs
 exports.getAllUsers = async (req, res) => {
@@ -110,6 +111,9 @@ exports.createUser = async (req, res) => {
       });
     }
 
+    // Hasher le mot de passe
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     // Créer le nouvel utilisateur
     const [result] = await pool.query(
       `INSERT INTO utilisateurs 
@@ -117,7 +121,7 @@ exports.createUser = async (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)`,
       [
         email,
-        password,
+        hashedPassword,
         nom,
         prenom,
         role,
@@ -227,8 +231,9 @@ exports.updateUser = async (req, res) => {
       params.push(date_embauche);
     }
     if (password) {
+      const hashedPassword = await bcrypt.hash(password, 10);
       updates.push('password = ?');
-      params.push(password);
+      params.push(hashedPassword);
     }
 
     if (updates.length === 0) {
