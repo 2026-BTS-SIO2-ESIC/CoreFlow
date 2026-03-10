@@ -9,7 +9,7 @@ const Event = {
     const sql = "SELECT * FROM evenements WHERE niveau=1";
     const eventIdsSql =
       "SELECT evenement_id FROM participations WHERE user_id=?";
-    const secondSql = "SELECT * FROM evenements WHERE niveau=2 AND id=?";
+    const secondSql = "SELECT * FROM evenements WHERE niveau=2 AND id IN (?)";
 
     if (userRole === "admin") {
       db.query(adminsql, (err, resultsAdmin) => {
@@ -31,19 +31,19 @@ const Event = {
             return callback(err, null, null, null);
           }
 
-          db.query(
-            secondSql,
-            [resultsEventIds[0].evenement_id],
-            (err, resultsLvlTwo) => {
-              if (err) {
-                console.error("DB ERROR :", err);
-                return callback(err, null, null, null);
-              }
-              console.log("resultsLvlTwo", resultsLvlTwo);
-              console.log("resultsLvlOne", resultsLvlOne);
-              return callback(null, null, resultsLvlOne, resultsLvlTwo);
-            },
-          );
+          const eventIds = (resultsEventIds || []).map((r) => r.evenement_id);
+
+          if (eventIds.length === 0) {
+            return callback(null, null, resultsLvlOne, []);
+          }
+
+          db.query(secondSql, [eventIds], (err, resultsLvlTwo) => {
+            if (err) {
+              console.error("DB ERROR :", err);
+              return callback(err, null, null, null);
+            }
+            return callback(null, null, resultsLvlOne, resultsLvlTwo || []);
+          });
         });
       });
     }
@@ -117,7 +117,35 @@ const Event = {
       return callback(err, null);
     }
 
-    // execute la query en lui donnant la requette (sql) et les valeurs de l'evenement comme parametre
+    // 1. Validations AVANT l'INSERT (pour ne pas insérer si erreur)
+    let idsForParticipations = [];
+    if (event.invited && String(event.invited).trim()) {
+      const { userExist, userIdsList } = await Event.checkIfUserExist(
+        event.invited,
+      );
+      if (userExist === false) {
+        const err = new Error("USER_NOT_FOUND");
+        err.code = "USER_NOT_FOUND";
+        return callback(err, null);
+      }
+      idsForParticipations = [...(userIdsList || [])];
+    }
+
+    if (department) {
+      const [deptResults] = await db
+        .promise()
+        .query(getUserIdsFromDepartment, [department]);
+      if (deptResults.length === 0) {
+        const err = new Error("USER_NOT_FOUND_FOR_DEPARTMENT");
+        err.code = "USER_NOT_FOUND_FOR_DEPARTMENT";
+        return callback(err, null);
+      }
+      idsForParticipations.push(...deptResults.map((user) => user.id));
+    }
+    // Dédupliquer : un user peut être à la fois invité ET dans le département
+    idsForParticipations = [...new Set(idsForParticipations)];
+
+    // 2. INSERT evenement (seulement si toutes les validations passent)
     db.query(
       sql,
       [
@@ -135,65 +163,43 @@ const Event = {
         event.updatedAt,
         event.level,
       ],
-      async (err, results) => {
+      (err, results) => {
         if (err) {
           console.error("DB ERROR :", err);
           return callback(err, null);
         }
-        const eventId = results.insertId; // insertId est le dernier id inserer dans la table evenement
+        const eventId = results.insertId;
 
-        // recupere la liste des userIds des invites et verifie si les emails existent dans la DB
-        const { userExist, userIdsList } = await Event.checkIfUserExist(
-          event.invited,
-        );
-        // requette sql pour recuperer les ids des utilisateurs du meme departement
-        db.query(getUserIdsFromDepartment, [department], (err, results) => {
-          if (err) {
-            console.error("DB ERROR :", err);
-            return callback(err, null);
-          }
-          if (results.length === 0) {
-            const err = new Error("USER_NOT_FOUND_FOR_DEPARTMENT");
-            err.code = "USER_NOT_FOUND_FOR_DEPARTMENT";
-            return callback(err, null);
-          }
-          // si des utilisateurs existent dans ce departement, extrait leurs ids avec map et les ajoute a userIdsList
-          userIdsList.push(...results.map((user) => user.id));
+        if (idsForParticipations.length === 0) {
+          return callback(null, { eventId, participationIds: [] });
+        }
 
-          if (userExist === false) {
-            const err = new Error("USER_NOT_FOUND");
-            return callback(err, null);
-          }
-          if (userIdsList.length === 0) {
-            return callback(null, { eventId, participationIds: [] });
-          }
-          const participationIds = [];
-          let completed = 0;
-          for (const userId of userIdsList) {
-            db.query(
-              sqlParticipation,
-              [
-                eventId,
-                userId,
-                event.comment ?? null,
-                "en_attente",
-                event.createdAt,
-                event.updatedAt ?? null,
-              ],
-              (err, resultsParticipations) => {
-                if (err) {
-                  console.error("DB ERROR :", err);
-                  return callback(err, null);
-                }
-                participationIds.push(resultsParticipations.insertId);
-                completed++;
-                if (completed === userIdsList.length) {
-                  return callback(null, { eventId, participationIds });
-                }
-              },
-            );
-          }
-        });
+        const participationIds = [];
+        let completed = 0;
+        for (const userId of idsForParticipations) {
+          db.query(
+            sqlParticipation,
+            [
+              eventId,
+              userId,
+              event.comment ?? null,
+              "en_attente",
+              event.createdAt,
+              event.updatedAt ?? null,
+            ],
+            (err, resultsParticipations) => {
+              if (err) {
+                console.error("DB ERROR :", err);
+                return callback(err, null);
+              }
+              participationIds.push(resultsParticipations.insertId);
+              completed++;
+              if (completed === idsForParticipations.length) {
+                return callback(null, { eventId, participationIds });
+              }
+            },
+          );
+        }
       },
     );
   },
