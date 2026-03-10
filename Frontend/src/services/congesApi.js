@@ -45,3 +45,14 @@ export async function annulerConge(id) {
 
   return data;
 }
+
+export async function getSoldeConges() {
+  const response = await fetch("http://localhost:3000/api/conges/solde");
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Erreur lors de la récupération du solde");
+  }
+
+  return data.data;
+}

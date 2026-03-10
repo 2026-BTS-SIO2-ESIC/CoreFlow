@@ -73,7 +73,14 @@
     </div>
     <div class="conges-container">
         <h1>Nouvelle demande de congé</h1>
-
+        <div v-if="solde" class="solde-box">
+            <div class="solde-item">
+                <strong>Congés payés restants :</strong> {{ solde.conges_restants }}
+            </div>
+            <div class="solde-item">
+                <strong>RTT restants :</strong> {{ solde.rtt_restants }}
+            </div>
+        </div>
         <div v-if="message" :class="['message', messageType]">
             {{ message }}
         </div>
@@ -138,7 +145,7 @@
 
                 <tbody>
                     <tr v-for="d in demandes" :key="d.id">
-                        <td>{{ formatDateTime(d.date_demande) }}</td>
+                        <td>{{ formatDateTime(d.created_at) }}</td>
                         <td>{{ formatDate(d.date_debut) }}</td>
                         <td>{{ formatDate(d.date_fin) }}</td>
                         <td>{{ d.motif || '-' }}</td>
@@ -148,8 +155,7 @@
                             </span>
                         </td>
                         <td>
-                            <button v-if="formatStatut(d.statut) === 'en_attente'" class="btn btn-secondary"
-                                @click="annuler(d.id)">
+                            <button v-if="d.statut === 'en_attente'" class="btn btn-secondary"@click="annuler(d.id)">
                                 Annuler
                             </button>
                         </td>
@@ -163,10 +169,11 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { onMounted } from "vue";
-import { getMesConges, creerConge, annulerConge } from "../services/congesApi";
+import { getMesConges, creerConge, annulerConge, getSoldeConges } from "../services/congesApi";
 
 const demandes = ref([]);
 const loading = ref(false);
+const solde = ref(null);
 
 async function chargerDemandes() {
     loading.value = true;
@@ -182,6 +189,7 @@ async function chargerDemandes() {
 
 onMounted(() => {
     chargerDemandes();
+    chargerSolde();
 });
 
 /* -- Champs du formulaire -- */
@@ -295,32 +303,41 @@ async function annuler(id) {
     }
 }
 function formatDate(dateStr) {
-  if (!dateStr) return '-'
+    if (!dateStr) return '-'
 
-  const date = new Date(dateStr)
+    const date = new Date(dateStr)
 
-  if (Number.isNaN(date.getTime())) return dateStr
+    if (Number.isNaN(date.getTime())) return dateStr
 
-  return date.toLocaleDateString('fr-FR')
+    return date.toLocaleDateString('fr-FR')
 }
 
 function formatDateTime(dateTimeStr) {
-  if (!dateTimeStr) return '-'
+    if (!dateTimeStr) return '-'
 
-  const date = new Date(dateTimeStr)
+    const date = new Date(dateTimeStr)
 
-  if (Number.isNaN(date.getTime())) return dateTimeStr
+    if (Number.isNaN(date.getTime())) return dateTimeStr
 
-  return date.toLocaleString('fr-FR')
+    return date.toLocaleString('fr-FR')
 }
 function formatStatut(statut) {
     const labels = {
         en_attente: 'En attente',
         approuve: 'Approuvé',
-        refuse: 'Refusé'
+        refuse: 'Refusé',
+        annule: 'Annulé'
     }
 
     return labels[statut] || statut
+}
+async function chargerSolde() {
+    try {
+        solde.value = await getSoldeConges();
+    } catch (e) {
+        messageType.value = "error";
+        message.value = e.message;
+    }
 }
 </script>
 
@@ -358,26 +375,31 @@ function formatStatut(statut) {
 }
 
 .badge {
-  display: inline-block;
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
+    display: inline-block;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
 }
 
 .badge.en_attente {
-  background: #fef3c7;
-  color: #92400e;
+    background: #fef3c7;
+    color: #92400e;
 }
 
 .badge.approuve {
-  background: #d1fae5;
-  color: #065f46;
+    background: #d1fae5;
+    color: #065f46;
 }
 
 .badge.refuse {
-  background: #fee2e2;
-  color: #991b1b;
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.badge.annule {
+    background: #e5e7eb;
+    color: #374151;
 }
 
 .empty {
@@ -680,5 +702,20 @@ textarea {
     .btn {
         width: 100%;
     }
+}
+
+.solde-box {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding: 16px;
+    background: #eefaf8;
+    border-radius: 10px;
+    border: 1px solid #d1fae5;
+}
+
+.solde-item {
+    font-size: 14px;
+    color: #065f46;
 }
 </style>
