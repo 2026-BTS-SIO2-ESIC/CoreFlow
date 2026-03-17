@@ -284,10 +284,16 @@ async function submit() {
         // 🟢 4) Recharger la liste
         await chargerDemandes();
 
-    } catch (e) {
-        messageType.value = "error";
-        message.value = e.message;
-    }
+    } catch (error) {
+
+  const msg =
+    error?.response?.data?.message ||
+    "Erreur lors de la création du congé";
+
+  messageType.value = "error";
+  message.value = msg;
+
+}
 }
 async function annuler(id) {
     try {

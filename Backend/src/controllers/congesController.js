@@ -2,12 +2,12 @@ const { pool } = require('../config/database');
 
 // Temporaire : utilisateur connecté simulé
 // Plus tard, on remplacera ça par req.user.id via middleware d'auth
-const FAKE_USER_ID = 4;
+const req.user.id = 4;
 
 // GET /api/conges
 exports.getMyConges = async (req, res) => {
   try {
-    const userId = FAKE_USER_ID;
+    const userId = req.user.id;
 
     const [rows] = await pool.query(
       `
@@ -46,7 +46,8 @@ exports.getMyConges = async (req, res) => {
 exports.createConge = async (req, res) => {
   try {
     const { date_debut, date_fin, motif } = req.body;
-    const userId = FAKE_USER_ID;
+    const userId = req.user.id;
+    const typeConge = 'rtt'; // temporaire tant qu'on ne choisit pas le type côté front
 
     if (!date_debut || !date_fin) {
       return res.status(400).json({
@@ -69,6 +70,42 @@ exports.createConge = async (req, res) => {
     const diffMs = fin - debut;
     const nbJours = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
 
+    // 1) Récupérer le solde utilisateur
+    const [soldeRows] = await pool.query(
+      `
+      SELECT conges_payes_total, conges_payes_pris, rtt_total, rtt_pris
+      FROM soldes_conges
+      WHERE user_id = ? AND annee = ?
+      `,
+      [userId, new Date().getFullYear()]
+    );
+
+    if (soldeRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Solde de congés introuvable"
+      });
+    }
+
+    const solde = soldeRows[0];
+
+    // 2) Vérifier le solde disponible selon le type
+    let disponible = 0;
+
+    if (typeConge === 'rtt') {
+      disponible = solde.rtt_total - solde.rtt_pris;
+    } else {
+      disponible = solde.conges_payes_total - solde.conges_payes_pris;
+    }
+
+    if (nbJours > disponible) {
+      return res.status(400).json({
+        success: false,
+        message: `Solde insuffisant : il vous reste ${disponible} jour(s)`
+      });
+    }
+
+    // 3) Créer le congé
     const [result] = await pool.query(
       `
       INSERT INTO conges (
@@ -84,7 +121,7 @@ exports.createConge = async (req, res) => {
       `,
       [
         userId,
-        'rtt',
+        typeConge,
         date_debut,
         date_fin,
         nbJours,
@@ -93,6 +130,28 @@ exports.createConge = async (req, res) => {
       ]
     );
 
+    // 4) Décrémenter le solde (via le compteur "pris")
+    if (typeConge === 'rtt') {
+      await pool.query(
+        `
+        UPDATE soldes_conges
+        SET rtt_pris = rtt_pris + ?
+        WHERE user_id = ? AND annee = ?
+        `,
+        [nbJours, userId, new Date().getFullYear()]
+      );
+    } else {
+      await pool.query(
+        `
+        UPDATE soldes_conges
+        SET conges_payes_pris = conges_payes_pris + ?
+        WHERE user_id = ? AND annee = ?
+        `,
+        [nbJours, userId, new Date().getFullYear()]
+      );
+    }
+
+    // 5) Renvoyer le congé créé
     const [rows] = await pool.query(
       `
       SELECT 
@@ -130,11 +189,11 @@ exports.createConge = async (req, res) => {
 exports.annulerConge = async (req, res) => {
   try {
     const id = Number(req.params.id);
-    const userId = FAKE_USER_ID;
+    const userId = req.user.id;
 
     const [rows] = await pool.query(
       `
-      SELECT id, user_id, statut
+      SELECT id, user_id, type_conge, nb_jours, statut
       FROM conges
       WHERE id = ? AND user_id = ?
       `,
@@ -157,6 +216,7 @@ exports.annulerConge = async (req, res) => {
       });
     }
 
+    // 1) Mettre le statut à annule
     await pool.query(
       `
       UPDATE conges
@@ -165,6 +225,27 @@ exports.annulerConge = async (req, res) => {
       `,
       ['annule', 'Annulé par l’utilisateur', id]
     );
+
+    // 2) Recréditer le solde selon le type
+    if (conge.type_conge === 'rtt') {
+      await pool.query(
+        `
+        UPDATE soldes_conges
+        SET rtt_pris = rtt_pris - ?
+        WHERE user_id = ? AND annee = ?
+        `,
+        [conge.nb_jours, userId, new Date().getFullYear()]
+      );
+    } else {
+      await pool.query(
+        `
+        UPDATE soldes_conges
+        SET conges_payes_pris = conges_payes_pris - ?
+        WHERE user_id = ? AND annee = ?
+        `,
+        [conge.nb_jours, userId, new Date().getFullYear()]
+      );
+    }
 
     const [updatedRows] = await pool.query(
       `
@@ -202,7 +283,7 @@ exports.annulerConge = async (req, res) => {
 // GET /api/conges/solde
 exports.getSoldeConges = async (req, res) => {
   try {
-    const userId = FAKE_USER_ID;
+    const userId = req.user.id ;
 
     const [rows] = await pool.query(
       `

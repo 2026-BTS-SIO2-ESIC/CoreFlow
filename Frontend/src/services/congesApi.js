@@ -1,4 +1,5 @@
 const API_BASE = "http://localhost:3000";
+const token = localStorage.getItem("token");
 
 export async function getMesConges() {
   const res = await fetch(`${API_BASE}/api/conges`);
@@ -10,7 +11,7 @@ export async function getMesConges() {
 export async function creerConge(payload) {
   const res = await fetch(`${API_BASE}/api/conges`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { Authorization: `Bearer ${token}`,"Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
 
@@ -28,6 +29,7 @@ export async function annulerConge(id) {
   const response = await fetch(`${API_BASE}/api/conges/${id}/annuler`, {
     method: "PUT",
     headers: {
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json"
     }
   });
