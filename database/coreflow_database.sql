@@ -1,6 +1,9 @@
 -- ============================================================
 -- CoreFlow - Base de données unifiée pour l'équipe
--- Version : 1.0 | Date : 2026-03-06
+-- Version : 1.3 | Date : 2026-03-08
+-- Changelog v1.1 : table documents - remplacement est_public par cible_role + ajout service_id
+-- Changelog v1.2 : table conges - simplification type_conge en VARCHAR DEFAULT rtt
+-- Changelog v1.3 : vrais hash bcrypt intégrés directement dans le SQL
 -- À importer par tous les membres de l'équipe
 -- Commande : mysql -u root -p coreflow < coreflow_database.sql
 -- ============================================================
@@ -45,14 +48,13 @@ CREATE TABLE `utilisateurs` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Données de test standardisées
--- IMPORTANT : Les mots de passe ci-dessous sont en clair pour les tests.
--- En production, ils doivent être hashés (bcrypt) côté Node.js.
 -- Mots de passe : Admin -> @dmiN1234 | RH -> Rh_1234 | Manager -> Manager_1234 | Employé -> Employe_1234
+-- Les hash bcrypt sont déjà intégrés, plus besoin de lancer hash-passwords.js
 INSERT INTO `utilisateurs` (`id`, `email`, `password`, `nom`, `prenom`, `role`, `departement`, `poste`, `telephone`, `date_embauche`, `est_actif`) VALUES
-(1, 'admin@coreflow.fr',   '$2b$10$adminHashPlaceholder000000000000000000000000000000000000', 'Admin',  'CoreFlow', 'admin',   'Informatique',       'Administrateur Système', '01 23 45 67 89', '2024-01-01', 1),
-(2, 'rh@coreflow.fr',      '$2b$10$rhHashPlaceholder0000000000000000000000000000000000000000', 'Martin', 'Marie',    'rh',      'Ressources Humaines', 'Responsable RH',         '01 23 45 67 90', '2024-02-01', 1),
-(3, 'manager@coreflow.fr', '$2b$10$managerHashPlaceholder00000000000000000000000000000000000', 'Dubois', 'Pierre',   'manager', 'IT',                  'Manager IT',             '01 23 45 67 91', '2024-03-01', 1),
-(4, 'employe@coreflow.fr', '$2b$10$employeHashPlaceholder00000000000000000000000000000000000', 'Durand', 'Sophie',   'employe', 'Commercial',          'Commerciale',            '01 23 45 67 92', '2024-04-01', 1);
+(1, 'admin@coreflow.fr',   '$2b$10$QJd3Cz3FnyoHsArcDyBLY.L0XATHRJMIrwNXGVAwznO3tf3fa5XSK', 'Admin',  'CoreFlow', 'admin',   'Informatique',       'Administrateur Système', '01 23 45 67 89', '2024-01-01', 1),
+(2, 'rh@coreflow.fr',      '$2b$10$RCMVhX6SDQwErhXJ/BcqJ.Qx/XKl5hbYJ1ngIkaPL4hnVIHOhixqG', 'Martin', 'Marie',    'rh',      'Ressources Humaines', 'Responsable RH',         '01 23 45 67 90', '2024-02-01', 1),
+(3, 'manager@coreflow.fr', '$2b$10$BMQGxHBEiVSVJJ3riMQy2.Iu8eo/zIZud1q8/C9u6LtYXxPokOvMO', 'Dubois', 'Pierre',   'manager', 'IT',                  'Manager IT',             '01 23 45 67 91', '2024-03-01', 1),
+(4, 'employe@coreflow.fr', '$2b$10$9ko/UeodRICYNalR9XEJou9E1dO2vNYb9iwkZ0Wk7codBjYCCsGQem', 'Durand', 'Sophie',   'employe', 'Commercial',          'Commerciale',            '01 23 45 67 92', '2024-04-01', 1);
 
 -- ------------------------------------------------------------
 -- Table : tickets
@@ -62,7 +64,7 @@ CREATE TABLE `tickets` (
   `id`             INT          NOT NULL AUTO_INCREMENT,
   `titre`          VARCHAR(255) NOT NULL,
   `description`    TEXT         NOT NULL,
-  `categorie`      ENUM('it','rh','comptabilite','direction','autre') DEFAULT 'autre',
+  `categorie`      ENUM('it', 'rh', 'autre') DEFAULT 'autre',
   `priorite`       ENUM('basse','normale','haute','urgente')          DEFAULT 'normale',
   `statut`         ENUM('ouvert','en_cours','resolu','ferme')         DEFAULT 'ouvert',
   `demandeur_id`   INT          NOT NULL,
@@ -112,12 +114,12 @@ DROP TABLE IF EXISTS `conges`;
 CREATE TABLE `conges` (
   `id`                     INT  NOT NULL AUTO_INCREMENT,
   `user_id`                INT  NOT NULL,
-  `type_conge`             ENUM('conge_paye','rtt','maladie','sans_solde') NOT NULL DEFAULT 'conge_paye',
+  `type_conge`             VARCHAR(50) DEFAULT 'rtt',
   `date_debut`             DATE NOT NULL,
   `date_fin`               DATE NOT NULL,
   `nb_jours`               INT  NOT NULL,
   `motif`                  TEXT DEFAULT NULL,
-  `statut`                 ENUM('en_attente','approuve','refuse') DEFAULT 'en_attente',
+  `statut`                 ENUM('en_attente','approuve','refuse', "annule") DEFAULT 'en_attente',
   `validateur_id`          INT  DEFAULT NULL,
   `date_validation`        TIMESTAMP DEFAULT NULL,
   `commentaire_validateur` TEXT DEFAULT NULL,
@@ -133,7 +135,8 @@ CREATE TABLE `conges` (
 INSERT INTO `conges` (`id`, `user_id`, `type_conge`, `date_debut`, `date_fin`, `nb_jours`, `motif`, `statut`, `validateur_id`, `date_validation`) VALUES
 (1, 4, 'conge_paye', '2026-02-10', '2026-02-14', 5, 'Vacances familiales',  'approuve',   2, '2026-01-20 09:30:00'),
 (2, 3, 'rtt',        '2026-02-20', '2026-02-20', 1, 'Rendez-vous médical',  'en_attente', NULL, NULL),
-(3, 4, 'maladie',    '2026-01-15', '2026-01-17', 3, 'Grippe',               'approuve',   2, '2026-01-15 13:00:00');
+(3, 4, 'maladie',    '2026-01-15', '2026-01-17', 3, 'Grippe',               'approuve',   2, '2026-01-15 13:00:00'),
+(4, 2, 'conge_paye', '2026-03-10', '2026-03-14', 5, 'Vacances familiales',  'annule',     NULL, NULL);
 
 -- ------------------------------------------------------------
 -- Table : soldes_conges
@@ -229,12 +232,14 @@ CREATE TABLE `documents` (
   `taille`       INT          DEFAULT NULL,
   `description`  TEXT         DEFAULT NULL,
   `auteur_id`    INT          NOT NULL,
-  `est_public`   TINYINT(1)   DEFAULT '0',
+  `cible_role`   VARCHAR(50)  DEFAULT 'tous',
+  `service_id`   VARCHAR(100) DEFAULT NULL,
   `created_at`   TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
   `updated_at`   TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  KEY `idx_auteur`    (`auteur_id`),
-  KEY `idx_est_public`(`est_public`)
+  KEY `idx_auteur`     (`auteur_id`),
+  KEY `idx_cible_role` (`cible_role`),
+  KEY `idx_service_id` (`service_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
@@ -333,7 +338,5 @@ COMMIT;
 -- | Manager | manager@coreflow.fr    | Manager_1234   |
 -- | Employé | employe@coreflow.fr    | Employe_1234   |
 -- ============================================================
--- ⚠️  IMPORTANT : Les passwords dans cette seed sont des
--- placeholders. Lancez le script Node.js hash-passwords.js
--- pour les remplacer par de vrais hash bcrypt.
+-- ✅ Les passwords sont déjà hashés en bcrypt, aucune étape supplémentaire nécessaire.
 -- ============================================================
