@@ -350,30 +350,6 @@ const Event = {
     });
   } ,
   
- // fonction qui verifie les evenements passés
-  verifyPastEvents: (events) => {
-    const today = Date.now();
-    const pastEvents = [];  
-    events.forEach((event) => {
-      if (Date.parse(event.startDate) < today) {
-        pastEvents.push(event);
-      }
-    });
-    return pastEvents;
-  },
-
-  // fonction qui verifie les evenements a venir      
-  verifyFutureEvents: (events) => {
-    const today = Date.now();   
-    const futureEvents = [];
-    events.forEach((event) => {
-      if (Date.parse(event.startDate) >= today) {
-        futureEvents.push(event);
-      } 
-    });
-    return futureEvents;
-  },
-
 
 
   // fonction qui lance  une requette pour verfier si utilisateurs dans champ inviter existe deans la DB
