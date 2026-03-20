@@ -23,6 +23,21 @@ router.put(
   authorize("admin", "manager"),
   event_controller.event_update,
 );
+
+// Appelle la fonction event_delete dans ../controllers/event_Controller quand est appelé sur localhost:3000/event/delete
+router.delete(
+  "/delete",
+  authorize("admin", "manager"),
+  event_controller.event_delete,
+);
+
+//appelle la fonction event_past dans ../controllers/event_Controller quand est appelé sur localhost:3000/event/past_events/:user_id
+router.get("/past_event/:user_id", event_controller.past_events);
+
+//appelle la fonction future_events dans ../controllers/event_Controller quand est appelé sur localhost:3000/event/future_events/:user_id
+router.get("/future_event/:user_id", event_controller.future_events);
+
+
 // Apelle la fonction list_one dans ../controllers/event_Controller quand est appele sur localhost:3000/event/list/:id
 router.get(`/list/:id`, event_controller.event_list_by_id);
 //Apelle la fonction user_list_by_email dans ../controllers/event_Controller quand est appeler sur localhost:3000/event/user_list_by_email

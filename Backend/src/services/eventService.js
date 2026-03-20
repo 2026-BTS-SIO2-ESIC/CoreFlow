@@ -168,6 +168,40 @@ const validateUpdateEvent = async (event) => {
   };
 };
 
+
+// valide les champs necessaires pour supprimer un evenement
+const validateDeleteEvent = async (event) => {
+  const err = [];
+  let codeError = 400;
+  // Vérification id (obligatoire pour delete)
+  if (event.id === undefined || !Number.isInteger(Number(event.id))) {
+    err.push("Champ id est invalide ou requis pour la suppression");
+  }
+  return {
+    isValid: err.length === 0,
+    err,
+    codeError,
+  };
+}  
+
+
+//verification des evenements passés et a venir
+const verifyPastAndFutureEvents = (events) => {
+  const today = Date.now();
+  const pastEvents = [];
+  const futureEvents = [];
+  events.forEach((event) => {
+    if (Date.parse(event.startDate) < today) {
+      pastEvents.push(event);
+    } else {
+      futureEvents.push(event);
+    }
+  });
+  return { pastEvents, futureEvents };
+};  
+
+
+
 const timeVerify = (time) => {
   const today = Date.now();
   return time >= today;

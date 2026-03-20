@@ -335,6 +335,47 @@ const Event = {
     });
   },
 
+    // fonction delete qui supprime un evenement de la table evenements a partir de son id
+  delete: (eventId, callback) => {
+    // requette sql qui supprime l'evenement a partir du id donner(eventId) dans la table evenements  
+    const sql = "DELETE FROM evenements WHERE id = ?";
+    // execute la query en lui donnant la requette (sql) et le eventId comme parametre
+    db.query(sql, [eventId], (err, results) => {
+      // en cas d'erreur renvoi l'erreur
+      if (err) {
+        console.error("DB ERROR :", err);
+        return callback(err, null);
+      }
+      return callback(null, results);
+    });
+  } ,
+  
+ // fonction qui verifie les evenements passés
+  verifyPastEvents: (events) => {
+    const today = Date.now();
+    const pastEvents = [];  
+    events.forEach((event) => {
+      if (Date.parse(event.startDate) < today) {
+        pastEvents.push(event);
+      }
+    });
+    return pastEvents;
+  },
+
+  // fonction qui verifie les evenements a venir      
+  verifyFutureEvents: (events) => {
+    const today = Date.now();   
+    const futureEvents = [];
+    events.forEach((event) => {
+      if (Date.parse(event.startDate) >= today) {
+        futureEvents.push(event);
+      } 
+    });
+    return futureEvents;
+  },
+
+
+
   // fonction qui lance  une requette pour verfier si utilisateurs dans champ inviter existe deans la DB
   checkIfUserExist: async (userMail) => {
     // declaraison de la variable userExiste qui va aider a renvoyer l'erreure en cas si email existe pas

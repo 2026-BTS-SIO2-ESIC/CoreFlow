@@ -359,4 +359,86 @@ exports.event_update = async (req, res) => {
   });
 };
 
+
+// Fonction qui permet de supprimer un événement, prend l'id de l'événement à supprimer depuis les paramètres de l'URL
+exports.event_delete = async (req, res) => {
+  const eventId = req.params.id;
+  Event.delete(eventId, (err) => {   
+    if (err && err.code === "EVENT_NOT_FOUND") {
+      logError(
+        404,
+        "NOT_FOUND",
+        "Événement introuvable (ID: " + eventId + ")",
+      );
+      return res.status(404).json({
+        error: {    
+          error: "NOT_FOUND",
+          message: "L'événement n'existe pas",
+          details: err.message,
+        },
+      });
+    } 
+    if (err && err.code === "EVENT_NOT_OWNED") {
+      logError(
+        403,
+        "PERMISSION_ERROR",
+        "Droits insuffisants sur l'événement ID: " + eventId,
+      );
+      return res.status(403).json({
+        error: {
+          error: "PERMISSION_ERROR",
+          message: "Vous ne possédez pas les droits sur cet événement",
+          details: err.message,
+        },
+      });
+    }
+  });
+};
+
+
+// methode Get pour afficher les evenements passés, prend l'id de l'utilisateur depuis les paramètres de l'URL
+exports.past_events = function (req, res) {
+  const userId = req.params.user_id;
+  Event.listPastEvents(userId, (err, results) => {
+    if (err) {
+      logError(
+        500,
+        "DB_ERROR",
+        "Erreur lors de la récupération des événements passés: " + err.message,
+      );
+      return res.status(500).json({
+        error: {
+          error: "DB_ERROR",
+          message: "Erreur lors de la récupération des événements passés",
+          detail: err.message,
+        },
+      });
+    }
+    res.status(200).json(results);
+  });
+};
+
+// methode Get pour afficher les evenements à venir, prend l'id de l'utilisateur depuis les paramètres de l'URL
+
+exports.future_events = function (req, res) {
+  const userId = req.params.user_id;
+  Event.listFutureEvents(userId, (err, results) => {  
+    if (err) {
+      logError(
+        500,
+        "DB_ERROR",
+        "Erreur lors de la récupération des événements à venir: " + err.message,
+      );
+      return res.status(500).json({
+        error: {
+          error: "DB_ERROR",
+          message: "Erreur lors de la récupération des événements à venir",
+          detail: err.message,
+        },
+      });
+    }
+    res.status(200).json(results);
+  });
+};
+
 // La logique de validation métier est déportée dans services/eventService.js
