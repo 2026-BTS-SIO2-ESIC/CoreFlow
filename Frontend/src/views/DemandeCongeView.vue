@@ -30,6 +30,16 @@
             <a href="#" class="nav-item">
                 <div class="nav-icon">
                     <svg viewBox="0 0 24 24">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                </div>
+                Documents
+            </a>
+
+            <a href="#" class="nav-item">
+                <div class="nav-icon">
+                    <svg viewBox="0 0 24 24">
                         <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                         <line x1="16" y1="2" x2="16" y2="6"></line>
                         <line x1="8" y1="2" x2="8" y2="6"></line>
@@ -52,7 +62,7 @@
                 Tickets & Support
             </a>
             <div v-if="user && (user.role === 'admin' || user.role === 'manager')">
-                <a href="#" class="nav-item">
+                <a @click="goToAdminPanel" class="nav-item">
                     <div class="nav-icon">
                         <svg viewBox="0 0 24 24">
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -155,7 +165,7 @@
                             </span>
                         </td>
                         <td>
-                            <button v-if="d.statut === 'en_attente'" class="btn btn-secondary"@click="annuler(d.id)">
+                            <button v-if="d.statut === 'en_attente'" class="btn btn-secondary" @click="annuler(d.id)">
                                 Annuler
                             </button>
                         </td>
@@ -286,14 +296,14 @@ async function submit() {
 
     } catch (error) {
 
-  const msg =
-    error?.response?.data?.message ||
-    "Erreur lors de la création du congé";
+        const msg =
+            error?.response?.data?.message ||
+            "Erreur lors de la création du congé";
 
-  messageType.value = "error";
-  message.value = msg;
+        messageType.value = "error";
+        message.value = msg;
 
-}
+    }
 }
 async function annuler(id) {
     try {

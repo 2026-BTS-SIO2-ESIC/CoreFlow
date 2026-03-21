@@ -1,16 +1,12 @@
 const express = require('express');
 const router = express.Router();
+
 const congesController = require('../controllers/congesController');
-const { protect } = require('../middlewares/authMiddleware');
+const { authenticate } = require('../middlewares/authMiddleware');
 
-
-// GET /api/conges -> liste des demandes (mock)
-router.get("/", protect, getMyConges);
-
-router.post("/", protect, createConge);
-
-router.put("/:id/annuler", protect, annulerConge);
-
-router.get("/solde", protect, getSolde);
+router.get('/', authenticate, congesController.getMyConges);
+router.get('/solde', authenticate, congesController.getSoldeConges);
+router.post('/', authenticate, congesController.createConge);
+router.put('/:id/annuler', authenticate, congesController.annulerConge);
 
 module.exports = router;

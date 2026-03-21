@@ -2,7 +2,7 @@ const { pool } = require('../config/database');
 
 // Temporaire : utilisateur connecté simulé
 // Plus tard, on remplacera ça par req.user.id via middleware d'auth
-const req.user.id = 4;
+
 
 // GET /api/conges
 exports.getMyConges = async (req, res) => {
