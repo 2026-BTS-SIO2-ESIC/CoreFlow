@@ -170,19 +170,13 @@ const validateUpdateEvent = async (event) => {
 
 
 // valide les champs necessaires pour supprimer un evenement
-const validateDeleteEvent = async (event) => {
-  const err = [];
-  let codeError = 400;
-  // Vérification id (obligatoire pour delete)
-  if (event.id === undefined || !Number.isInteger(Number(event.id))) {
-    err.push("Champ id est invalide ou requis pour la suppression");
+const validateDeleteEvent = (id) => {
+  const errors = [];
+  if (!id || isNaN(id)) {
+    errors.push("ID d'événement invalide ou manquant.");
   }
-  return {
-    isValid: err.length === 0,
-    err,
-    codeError,
-  };
-}  
+  return { isValid: errors.length === 0, errors };
+};
 
 
 //verification des evenements passés et a venir
@@ -210,6 +204,6 @@ const timeVerify = (time) => {
 module.exports = {
   validateEvent,
   validateUpdateEvent,
-
+  validateDeleteEvent,
 };
 

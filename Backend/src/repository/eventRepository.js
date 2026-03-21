@@ -337,19 +337,23 @@ const Event = {
 
     // fonction delete qui supprime un evenement de la table evenements a partir de son id
   delete: (eventId, callback) => {
-    // requette sql qui supprime l'evenement a partir du id donner(eventId) dans la table evenements  
-    const sql = "DELETE FROM evenements WHERE id = ?";
-    // execute la query en lui donnant la requette (sql) et le eventId comme parametre
-    db.query(sql, [eventId], (err, results) => {
-      // en cas d'erreur renvoi l'erreur
-      if (err) {
-        console.error("DB ERROR :", err);
-        return callback(err, null);
+  db.promise()
+    .query("SELECT id FROM evenements WHERE id = ?", [eventId])
+    .then(([rows]) => {
+      if (rows.length === 0) {
+        const err = new Error("EVENT_NOT_FOUND");
+        err.code = "EVENT_NOT_FOUND";
+        return callback(err);
       }
-      return callback(null, results);
-    });
-  } ,
-  
+
+      return db.promise().query(
+        "DELETE FROM evenements WHERE id = ?",
+        [eventId]
+      );
+    })
+    .then(() => callback(null))
+    .catch((err) => callback(err));
+},
 
 
   // fonction qui lance  une requette pour verfier si utilisateurs dans champ inviter existe deans la DB

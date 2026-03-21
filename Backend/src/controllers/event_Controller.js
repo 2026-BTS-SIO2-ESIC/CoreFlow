@@ -362,37 +362,36 @@ exports.event_update = async (req, res) => {
 
 // Fonction qui permet de supprimer un événement, prend l'id de l'événement à supprimer depuis les paramètres de l'URL
 exports.event_delete = async (req, res) => {
-  const eventId = req.params.id;
-  Event.delete(eventId, (err) => {   
-    if (err && err.code === "EVENT_NOT_FOUND") {
-      logError(
-        404,
-        "NOT_FOUND",
-        "Événement introuvable (ID: " + eventId + ")",
-      );
-      return res.status(404).json({
-        error: {    
-          error: "NOT_FOUND",
-          message: "L'événement n'existe pas",
-          details: err.message,
-        },
-      });
-    } 
-    if (err && err.code === "EVENT_NOT_OWNED") {
-      logError(
-        403,
-        "PERMISSION_ERROR",
-        "Droits insuffisants sur l'événement ID: " + eventId,
-      );
-      return res.status(403).json({
-        error: {
-          error: "PERMISSION_ERROR",
-          message: "Vous ne possédez pas les droits sur cet événement",
-          details: err.message,
-        },
-      });
+    const eventId = req.params.id;
+
+    // 1. Validation via le Service (ton service utilise async/await)
+    const { isValid, err } = await validateDeleteEvent({ id: eventId });
+    
+    if (!isValid) {
+        console.error("[VALIDATION_ERROR]", err);
+        return res.status(400).json({ error: "ID invalide", details: err });
     }
-  });
+
+    // 2. Appel au Repository (style Callback)
+    Event.delete(eventId, (err, results) => {
+        if (err) {
+            // Gestion erreur 404 (demandée par ton collègue)
+            if (err.code === "EVENT_NOT_FOUND") {
+                console.error(`[NOT_FOUND] Événement ${eventId} inexistant.`);
+                return res.status(404).json({ error: "Événement introuvable" });
+            }
+            // Gestion erreur 500
+            console.error("[DB_ERROR]", err.message);
+            return res.status(500).json({ error: "Erreur lors de la suppression" });
+        }
+
+        // 3. Succès
+        console.log(`[SUCCESS] Événement ${eventId} supprimé par ${req.user.id}`);
+        return res.status(200).json({ 
+            message: "Événement supprimé avec succès", 
+            id: eventId 
+        });
+    });
 };
 
 
