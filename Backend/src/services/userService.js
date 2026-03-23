@@ -1,4 +1,4 @@
-const userRepository = require('../repository/userRepository');
+const userRepository = require('../Repository/userRepository');
 
 function createServiceError(status, message) {
 	const error = new Error(message);
@@ -83,6 +83,21 @@ async function getInactiveUsers() {
 	return userRepository.getInactiveUsers();
 }
 
+
+async function listTickets() {
+    const tickets = await userRepository.getAllTickets(); 
+    return tickets;
+}
+
+async function listItTickets() {
+    const tickets = await userRepository.getItTickets(); 
+    return tickets;
+}
+async function listRhTickets() {
+    const tickets = await userRepository.getRhTickets(); 
+    return tickets;
+}
+
 module.exports = {
 	getAllUsers,
 	getUserById,
@@ -91,4 +106,7 @@ module.exports = {
 	toggleUserStatus,
 	deleteUser,
 	getInactiveUsers,
+	listTickets,
+	listItTickets,
+	listRhTickets,
 };
