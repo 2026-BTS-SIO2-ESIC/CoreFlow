@@ -54,6 +54,20 @@ exports.createConge = async (userId, congeData) => {
 
   const annee = new Date().getFullYear();
 
+const congeChevauchant = await congesRepository.findOverlappingCongeByUserId(
+  userId,
+  date_debut,
+  date_fin
+);
+
+if (congeChevauchant) {
+  const error = new Error(
+    'Une demande de congé existe déjà sur cette période (en attente ou approuvée)'
+  );
+  error.statusCode = 400;
+  throw error;
+}
+
   const solde = await congesRepository.findSoldeByUserIdAndYear(userId, annee);
 
   if (!solde) {

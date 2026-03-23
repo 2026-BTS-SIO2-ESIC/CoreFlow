@@ -10,9 +10,6 @@
         <h1>Nouvelle demande de congé</h1>
         <div v-if="solde" class="solde-box">
             <div class="solde-item">
-                <strong>Congés payés restants :</strong> {{ solde.conges_restants }}
-            </div>
-            <div class="solde-item">
                 <strong>RTT restants :</strong> {{ solde.rtt_restants }}
             </div>
         </div>
@@ -205,51 +202,45 @@ async function submit() {
         return;
     }
 
+
+
     const debut = new Date(dateDebut.value)
     const fin = new Date(dateFin.value)
 
     const conflit = demandes.value.some(d => {
-        if (formatStatut(d.statut) !== "en_attente") return false
+        if (!['en_attente', 'approuve'].includes(d.statut)) return false
+
         const dDebut = new Date(d.date_debut)
         const dFin = new Date(d.date_fin)
-        return debut <= dFin && fin >= dDebut // chevauchement
+
+        return debut <= dFin && fin >= dDebut
     })
 
     if (conflit) {
         messageType.value = "error"
-        message.value = "Vous avez déjà une demande en attente sur cette période."
+        message.value = "Vous avez déjà une demande en attente ou approuvée sur cette période."
         return
     }
 
     try {
-        // 🔵 1) On appelle le backend
         await creerConge({
             date_debut: dateDebut.value,
             date_fin: dateFin.value,
             motif: motif.value || null
-        });
+        })
 
-        // 🟢 2) Message succès
-        messageType.value = "success";
-        message.value = "✅ Demande envoyée.";
+        messageType.value = "success"
+        message.value = "✅ Demande envoyée."
 
-        // 🟢 3) Reset formulaire
-        dateDebut.value = "";
-        dateFin.value = "";
-        motif.value = "";
+        dateDebut.value = ""
+        dateFin.value = ""
+        motif.value = ""
 
-        // 🟢 4) Recharger la liste
-        await chargerDemandes();
-
+        await chargerDemandes()
+        await chargerSolde()
     } catch (error) {
-
-        const msg =
-            error?.response?.data?.message ||
-            "Erreur lors de la création du congé";
-
-        messageType.value = "error";
-        message.value = msg;
-
+        messageType.value = "error"
+        message.value = error.message || "Erreur lors de la création du congé"
     }
 }
 async function annuler(id) {

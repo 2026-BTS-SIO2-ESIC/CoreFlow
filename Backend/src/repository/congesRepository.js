@@ -209,3 +209,24 @@ exports.cancelConge = async (congeId, commentaire) => {
 
   return result;
 };
+
+exports.findOverlappingCongeByUserId = async (userId, dateDebut, dateFin) => {
+  const [rows] = await pool.query(
+    `
+    SELECT 
+      id,
+      date_debut,
+      date_fin,
+      statut
+    FROM conges
+    WHERE user_id = ?
+      AND statut IN ('en_attente', 'approuve')
+      AND date_debut <= ?
+      AND date_fin >= ?
+    LIMIT 1
+    `,
+    [userId, dateFin, dateDebut]
+  );
+
+  return rows[0] || null;
+};
