@@ -194,6 +194,11 @@ export default {
       localStorage.removeItem('user');
       this.$router.push('/login');
     },
+    goToAdminPanel() {
+      this.$router.push('/admin/users');
+    },
+    goToGestionTicket() {
+      this.$router.push('/gestionTicket');
 
     openPasswordModal() {
       this.modalError = null;

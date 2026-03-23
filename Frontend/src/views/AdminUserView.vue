@@ -522,6 +522,13 @@ export default {
       this.$router.push('/dashboard');
     },
 
+    goToDashboard() {
+      this.$router.push('/dashboard');
+    },
+    goToTicket() {
+      this.$router.push('/gestionTicket');
+    },
+
     logout() {
       localStorage.removeItem('token');
       localStorage.removeItem('user');

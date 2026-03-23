@@ -22,6 +22,11 @@ const eventRouter = require("./routes/eventRoutes");
 app.use("/api/event", eventRouter);
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
+const ticketRoutes = require("./routes/ticketRoutes")
+
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/ticket", ticketRoutes)
 const congesRoutes = require('./routes/congesRoutes');
 app.use('/api/conges', congesRoutes);
 app.use('/api/auth', authRoutes);

@@ -4,6 +4,7 @@ import DashboardView from '../views/DashboardView.vue'
 import CongesValidation from '@/views/congesValidation.vue'
 import DemandeCongeView from '../views/DemandeCongeView.vue'
 import AdminUserView from '../views/AdminUserView.vue'
+import gestionTicket from '../views/gestionTicket.vue'
 import addDocumentView from '@/views/addDocumentView.vue'
 
 const router = createRouter({
@@ -39,6 +40,10 @@ const router = createRouter({
       component: AdminUserView
     },
     {
+      path: '/gestionTicket',
+      name: 'gestionTicket',
+      component: gestionTicket
+    }
       path: '/documents/add',
       name: 'add-document',
       component: addDocumentView
