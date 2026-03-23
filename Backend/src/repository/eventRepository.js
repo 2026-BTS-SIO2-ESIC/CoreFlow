@@ -330,6 +330,20 @@ const Event = {
     })
     .then(() => callback(null))
     .catch((err) => callback(err));
+    db.query("DELETE FROM evenements WHERE id = ?", [eventId], (err, results) => {
+    if (err) {
+      console.error("DB ERROR :", err);
+      return callback(err);
+    } else {
+      if (results.affectedRows === 0) {
+        const errNotFound = new Error("EVENT_NOT_FOUND"); 
+        errNotFound.code = "EVENT_NOT_FOUND";
+        return callback(errNotFound);
+      }
+      return callback(null);
+    }
+  }); 
+
 },
 
 
@@ -364,6 +378,18 @@ const Event = {
     if (res.affectedRows === 0) return callback({ code: "PARTICIPATION_NOT_FOUND" }, null);
     callback(null, res);
   });
+  db.query(sql, [status, eventId, userId], (err, res) => {
+    if (err) {
+      console.error("DB ERROR :", err);
+      return callback(err, null);
+    }
+    if (res.affectedRows === 0) {
+      const errNotFound = new Error("PARTICIPATION_NOT_FOUND");
+      errNotFound.code = "PARTICIPATION_NOT_FOUND";
+      return callback(errNotFound, null);
+    }
+    callback(null, res);
+  });
 },
 
 
@@ -372,6 +398,14 @@ updateStatus: (eventId, newStatus, callback) => {
   db.query(sql, [newStatus, eventId], (err, res) => {
     if (err) return callback(err, null);
     callback(null, res);
+  });
+  db.query(sql, [newStatus, eventId], (err, res) => {
+    if (err) {
+      console.error("DB ERROR :", err);
+      return callback(err, null);
+    } else {
+      callback(null, res);
+    } 
   });
 },
 
@@ -398,6 +432,14 @@ checkRoomConflict: async (location, startDate, endDate, eventId = null) => {
       console.error("Erreur SQL dans checkRoomConflict:", error);
       throw error;
     }
+    db.query(sql, params, (err, results) => {
+      if (err) {
+        console.error("DB ERROR :", err);
+        return callback(err, null);
+      }
+      callback(null, results.length > 0);
+    });
+
   }, // <--- UNE SEULE ACCOLADE ICI (pour fermer la fonction)
 
 
@@ -436,6 +478,17 @@ checkRoomConflict: async (location, startDate, endDate, eventId = null) => {
     // en cas success renvoi userExiste et userMailList
     return { userExist, userMailList, userIdsList };
   },
+  db.query = (sql, params) => {
+    return new Promise((resolve, reject) => {
+      db.query(sql, params, (err, results) => {
+        if (err) {
+          console.error("DB ERROR :", err);
+          return reject(err);
+        }
+        resolve(results);
+      });
+    });
+  }
 };
 
 module.exports = Event;

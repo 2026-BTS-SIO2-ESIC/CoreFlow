@@ -19,26 +19,26 @@ router.post(
 );
 // Appelee la fonction event_update dans ../controllers/evetController quand est appelé sur localhost:3000/event/update
 router.put(
-  "/update",
+  "/update/:user_id/:userRole",
   authorize("admin", "manager"),
   event_controller.event_update,
 );
 
 // Appelle la fonction event_delete dans ../controllers/event_Controller quand est appelé sur localhost:3000/event/delete
 router.delete(
-  "/delete",
+  "/delete/:user_id/:userRole",
   authorize("admin", "manager"),
   event_controller.event_delete,
 );
 
 // Afficher les événements terminés
-router.get("/past/:user_id", event_controller.past_events);
+router.get("/past/:user_id/:userRole", event_controller.past_events);
 
 // Afficher les événements à venir
-router.get("/future/:user_id", event_controller.future_events);
+router.get("/future/:user_id/:userRole", event_controller.future_events);
 
 // Point 1 : Réponse employé
-router.post("/participation/respond", event_controller.event_respond);
+router.post("/participation/respond/:user_id", event_controller.event_respond);
 
 // Point 2 : Changement de statut (Manager/Admin)
 router.patch("/status", authorize("admin", "manager"), (req, res) => {
