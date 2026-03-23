@@ -65,6 +65,8 @@
 </template>
 
 <script>
+import router from '@/router';
+
 export default {
   name: 'DashboardSidebar',
   emits: ['logout'],

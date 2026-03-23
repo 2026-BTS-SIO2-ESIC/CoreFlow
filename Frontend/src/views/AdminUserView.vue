@@ -26,6 +26,11 @@
         <p>Créez, modifiez et gérez les comptes utilisateurs de votre organisation</p>
       </div>
 
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> feature/gestion-tickets-CT
       <!-- Content -->
       <div class="content-section">
         <!-- Toolbar -->
@@ -203,7 +208,11 @@
               Création du compte
             </div>
             <div class="info-box-content">
+<<<<<<< HEAD
               Un solde de congés par défaut sera automatiquement créé (10 jours de RTT).
+=======
+              Un solde de congés par défaut sera automatiquement créé (25 jours de congés payés + 10 RTT).
+>>>>>>> feature/gestion-tickets-CT
             </div>
           </div>
 

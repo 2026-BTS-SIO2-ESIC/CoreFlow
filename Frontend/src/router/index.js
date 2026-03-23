@@ -6,51 +6,55 @@ import DemandeCongeView from '../views/DemandeCongeView.vue'
 import AdminUserView from '../views/AdminUserView.vue'
 import gestionTicket from '../views/gestionTicket.vue'
 import addDocumentView from '@/views/addDocumentView.vue'
+import TicketsView from '../views/TicketsView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
-      redirect: '/login'
+      redirect: '/login',
     },
     {
       path: '/login',
       name: 'login',
-      component: LoginView
+      component: LoginView,
     },
     {
       path: '/dashboard',
       name: 'dashboard',
-      component: DashboardView
+      component: DashboardView,
     },
     {
       path: '/conges',
       name: 'conges',
-      component: CongesValidation
+      component: CongesValidation,
     },
     {
       path: '/conges/demande',
       name: 'DemandeConge',
-      component: DemandeCongeView
+      component: DemandeCongeView,
     },
     {
       path: '/admin/users',
       name: 'admin-users',
-      component: AdminUserView
+      component: AdminUserView,
     },
     {
       path: '/gestionTicket',
       name: 'gestionTicket',
-      component: gestionTicket
+      component: gestionTicket,
     },
     {
       path: '/documents/add',
       name: 'add-document',
-      component: addDocumentView
+      component: addDocumentView,
     },
-   
-    
+    {
+      path: '/tickets',
+      name: 'tickets',
+      component: TicketsView,
+    },
   ],
 })
 
