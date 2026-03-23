@@ -200,7 +200,6 @@ export default {
     goToGestionTicket() {
       this.$router.push('/gestionTicket');
     },
-
     openPasswordModal() {
       this.modalError = null;
       this.modalSuccess = null;
@@ -232,6 +231,7 @@ export default {
 
       const token = localStorage.getItem('token');
       this.modalLoading = true;
+    
       try {
         const res = await fetch(`${API_URL}/api/users/password`, {
           method: 'PUT',

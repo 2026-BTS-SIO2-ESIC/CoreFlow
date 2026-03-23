@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 
+
 const token = localStorage.getItem("token");
 const API = "http://localhost:3000/api/ticket/tickets"; // on définit l'URL de l'API pour récupérer les tickets
 const API_It = "http://localhost:3000/api/ticket/itTickets"; // on définit l'URL de l'API pour récupérer les tickets
@@ -50,78 +51,12 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="sidebar">
-    <div class="logo">
-      <div class="logo-icon">C</div>
-      <div class="logo-text">CoreFlow</div>
-    </div>
-    <nav class="nav-menu">
-      <a href="dashboard" class="nav-item">
-        <div class="nav-icon">
-          <svg viewBox="0 0 24 24">
-            <rect x="3" y="3" width="7" height="7"></rect>
-            <rect x="14" y="3" width="7" height="7"></rect>
-            <rect x="14" y="14" width="7" height="7"></rect>
-            <rect x="3" y="14" width="7" height="7"></rect>
-          </svg>
-        </div>
-        Tableau de bord
-      </a>
-      <a href="#" class="nav-item">
-        <div class="nav-icon">
-          <svg viewBox="0 0 24 24">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-            <circle cx="12" cy="7" r="4"></circle>
-          </svg>
-        </div>
-        Mes Congés
-      </a>
-
-      <a href="#" class="nav-item">
-        <div class="nav-icon">
-          <svg viewBox="0 0 24 24">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-            <line x1="16" y1="2" x2="16" y2="6"></line>
-            <line x1="8" y1="2" x2="8" y2="6"></line>
-            <line x1="3" y1="10" x2="21" y2="10"></line>
-          </svg>
-        </div>
-        Événements
-      </a>
-
-      <a href="gestionTicket" class="nav-item active">
-        <div class="nav-icon">
-          <svg viewBox="0 0 24 24">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-            <polyline points="14 2 14 8 20 8"></polyline>
-            <line x1="16" y1="13" x2="8" y2="13"></line>
-            <line x1="16" y1="17" x2="8" y2="17"></line>
-            <polyline points="10 9 9 9 8 9"></polyline>
-          </svg>
-        </div>
-        Tickets & Support
-      </a>
-      <div v-if="user && (user.role === 'admin' || user.role === 'manager')">
-        <a href="#" class="nav-item">
-          <div class="nav-icon">
-            <svg viewBox="0 0 24 24">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
-            </svg>
-          </div>
-          Gestion utilisateurs
-        </a>
-      </div>
-    </nav>
-    <div class="user-profile">
-      <div v-if="user">
-        <div class="user-name">{{ user.nom }}</div>
-        <div class="user-role">{{ user.role }}</div>
-      </div>
-      <button @click="logout" class="btn-logout">Déconnexion</button>
-    </div>
-  </div>
   <section class="dashboard-header">
+        <DashboardSidebar
+        :user="user"
+        :loading="false"
+        @logout="logout"
+      />
     <h1>Gestion des Tickets</h1>
     <!--@click="Créer la fonction nécessaire pour le bon fonctionnement" -->
     <button @click="createTicket" class="btn-create-ticket">+ Ajouter un ticket</button>
@@ -174,8 +109,14 @@ onMounted(() => {
 </template>
 
 <script>
+import DashboardSidebar from "@/components/DashboardSidebar.vue";
+
 export default {
   name: "gestionTicket",
+  components: {
+    DashboardSidebar
+  },
+
   data() {
     return {
       user: null,
@@ -229,18 +170,6 @@ window.onload = () => {
 <style scoped>
 section {
   padding: 20px 0;
-}
-
-.sidebar {
-  width: 240px;
-  height: 100vh;
-  background-color: #fafafa;
-  border-right: 1px solid #e5e7eb;
-  display: flex;
-  flex-direction: column;
-  position: fixed;
-  left: 0;
-  top: 0;
 }
 
 .logo {

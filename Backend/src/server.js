@@ -42,16 +42,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 // Dès qu'une requête commence par /api/documents, on l'envoie vers documentRoutes.js
 app.use('/api/documents', documentRoutes);
 
-
-// --- TES ROUTES DE TEST (On les garde !) ---
-app.get('/', (req, res) => {
-  res.json({ 
-    message: 'Bienvenue sur l\'API CoreFlow !',
-    status: 'OK',
-    timestamp: new Date().toISOString()
-  });
-});
-
+// Route de test santé
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'healthy',
@@ -88,9 +79,10 @@ app.get("/api/conges", (req, res) => {
     }
   ]
 
-  res.json(conges)
+  res.json(conges)  
 })
-// Middleware de gestion d'erreurs (TOUJOURS EN DERNIER)
+
+
 const { notFound, errorHandler } = require("./middlewares/errorMiddleware");
 app.use(notFound);
 app.use(errorHandler);

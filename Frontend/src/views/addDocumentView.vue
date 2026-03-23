@@ -1,6 +1,10 @@
 <template>
   <main class="min-h-screen bg-[#F0FDFA] flex justify-center p-12">
-    
+      <DashboardSidebar
+        :user="user"
+        :loading="false"
+        @logout="logout"
+      />
     <div class="w-full max-w-2xl">
       
       <div class="mb-10">
@@ -113,6 +117,7 @@
 </template>
 
 <script setup>
+import DashboardSidebar from '@/components/DashboardSidebar.vue';
 import { ref } from 'vue';
 
 // Variables
