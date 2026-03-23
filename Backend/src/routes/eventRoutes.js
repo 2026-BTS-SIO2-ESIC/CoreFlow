@@ -31,12 +31,23 @@ router.delete(
   event_controller.event_delete,
 );
 
-//appelle la fonction event_past dans ../controllers/event_Controller quand est appelé sur localhost:3000/event/past_events/:user_id
-router.get("/past_event/:user_id", event_controller.past_events);
+// Afficher les événements terminés
+router.get("/past/:user_id", event_controller.past_events);
 
-//appelle la fonction future_events dans ../controllers/event_Controller quand est appelé sur localhost:3000/event/future_events/:user_id
-router.get("/future_event/:user_id", event_controller.future_events);
+// Afficher les événements à venir
+router.get("/future/:user_id", event_controller.future_events);
 
+// Point 1 : Réponse employé
+router.post("/participation/respond", event_controller.event_respond);
+
+// Point 2 : Changement de statut (Manager/Admin)
+router.patch("/status", authorize("admin", "manager"), (req, res) => {
+  const { id, status } = req.body;
+  Event.updateStatus(id, status, (err) => {
+    if (err) return res.status(500).send(err);
+    res.json({ message: "Statut mis à jour" });
+  });
+});
 
 // Apelle la fonction list_one dans ../controllers/event_Controller quand est appele sur localhost:3000/event/list/:id
 router.get(`/list/:id`, event_controller.event_list_by_id);

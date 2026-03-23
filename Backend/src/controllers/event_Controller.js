@@ -3,6 +3,8 @@ var Event = require("../repository/eventRepository");
 const {
   validateEvent,
   validateUpdateEvent,
+  validateDeleteEvent,
+  validateEventList,
 } = require("../services/eventService");
 
 const logSuccess = (code, msg) => {
@@ -69,10 +71,12 @@ exports.event_list = async function (req, res) {
   // Ainsi déclare err pour afficher les erreurs rencontrées dans la DB
   const userId = req.params.user_id;
   const userRole = req.params.userRole;
+  const typeFilter = req.query.type;
 
   Event.listAll(
     userId,
     userRole,
+    typeFilter,
     (err, resultsAdmin, resultsLvlOne, resultsLvlTwo) => {
       // Vérifie si le header est bien Content-Type: application/json
       // Renvoie une erreur en cas d'une mauvaise requête vers la DB
@@ -396,48 +400,63 @@ exports.event_delete = async (req, res) => {
 
 
 // methode Get pour afficher les evenements passés, prend l'id de l'utilisateur depuis les paramètres de l'URL
-exports.past_events = function (req, res) {
-  const userId = req.params.user_id;
-  Event.listPastEvents(userId, (err, results) => {
+exports.past_events = async (req, res) => {
+  const userId = req.params.user_id || req.user.id;
+
+  const { isValid, err } = await validateEventList(userId);
+  if (!isValid) return res.status(400).json({ error: err });
+
+  Event.listPast(userId, (err, results) => {
     if (err) {
-      logError(
-        500,
-        "DB_ERROR",
-        "Erreur lors de la récupération des événements passés: " + err.message,
-      );
-      return res.status(500).json({
-        error: {
-          error: "DB_ERROR",
-          message: "Erreur lors de la récupération des événements passés",
-          detail: err.message,
-        },
-      });
+      console.error("[DB_ERROR]", err.message);
+      return res.status(500).json({ error: "Erreur lors de la récupération des archives" });
     }
-    res.status(200).json(results);
+    res.status(200).json({ success: true, count: results.length, data: results });
   });
 };
 
 // methode Get pour afficher les evenements à venir, prend l'id de l'utilisateur depuis les paramètres de l'URL
 
-exports.future_events = function (req, res) {
-  const userId = req.params.user_id;
-  Event.listFutureEvents(userId, (err, results) => {  
+exports.future_events = async (req, res) => {
+  const userId = req.params.user_id || req.user.id;
+
+  const { isValid, err } = await validateEventList(userId);
+  if (!isValid) return res.status(400).json({ error: err });
+
+  Event.listFuture(userId, (err, results) => {
     if (err) {
-      logError(
-        500,
-        "DB_ERROR",
-        "Erreur lors de la récupération des événements à venir: " + err.message,
-      );
-      return res.status(500).json({
-        error: {
-          error: "DB_ERROR",
-          message: "Erreur lors de la récupération des événements à venir",
-          detail: err.message,
-        },
-      });
+      console.error("[DB_ERROR]", err.message);
+      return res.status(500).json({ error: "Erreur lors de la récupération des événements à venir" });
     }
-    res.status(200).json(results);
+    res.status(200).json({ success: true, count: results.length, data: results });
   });
+};
+
+
+exports.event_respond = async (req, res) => {
+  const { eventId, userId, status } = req.body;
+  
+  Event.updateParticipation(eventId, userId, status, (err, results) => {
+    if (err) {
+      logError(500, "DB_ERROR", "Erreur participation: " + err.message);
+      return res.status(500).json({ error: "Erreur lors de la réponse" });
+    }
+    logSuccess(200, `Utilisateur ${userId} a répondu ${status} à l'event ${eventId}`);
+    res.status(200).json({ message: "Réponse enregistrée" });
+  });
+};
+
+exports.getAllEvents = (req, res) => {
+    const userId = req.user.id;
+    const userRole = req.user.role;
+
+    // On passe bien (err, results) à la fin
+    Event.listAll(userId, userRole, (err, results) => {
+        if (err) {
+            return res.status(500).json({ message: "Erreur serveur", error: err });
+        }
+        return res.status(200).json(results);
+    });
 };
 
 // La logique de validation métier est déportée dans services/eventService.js

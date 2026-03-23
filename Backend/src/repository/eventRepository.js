@@ -3,48 +3,25 @@ const { db } = require("../config/database");
 const Event = {
   // fonction listAll qui permet de recuperer tous les evenements de la base de donnees
   listAll: (userId, userRole, callback) => {
-    // requette sql pour recuperer tous les evenements
-    const adminsql = "SELECT * FROM evenements;"; // pour admin
-
-    const sql = "SELECT * FROM evenements WHERE niveau=1";
-    const eventIdsSql =
-      "SELECT evenement_id FROM participations WHERE user_id=?";
-    const secondSql = "SELECT * FROM evenements WHERE niveau=2 AND id IN (?)";
-
     if (userRole === "admin") {
-      db.query(adminsql, (err, resultsAdmin) => {
-        if (err) {
-          console.error("DB ERROR :", err);
-          return callback(err, null);
-        }
-        return callback(null, resultsAdmin, null, null);
+      const sql = "SELECT * FROM evenements ORDER BY date_debut DESC";
+      db.query(sql, (err, results) => {
+        if (err) return callback(err, null);
+        // On renvoie un seul tableau propre, comme attendu par le controller
+        return callback(null, results); 
       });
     } else {
-      db.query(sql, (err, resultsLvlOne) => {
-        if (err) {
-          console.error("DB ERROR :", err);
-          return callback(err, null);
-        }
-        db.query(eventIdsSql, [userId], (err, resultsEventIds) => {
-          if (err) {
-            console.error("DB_ERROR :", err);
-            return callback(err, null, null, null);
-          }
-
-          const eventIds = (resultsEventIds || []).map((r) => r.evenement_id);
-
-          if (eventIds.length === 0) {
-            return callback(null, null, resultsLvlOne, []);
-          }
-
-          db.query(secondSql, [eventIds], (err, resultsLvlTwo) => {
-            if (err) {
-              console.error("DB ERROR :", err);
-              return callback(err, null, null, null);
-            }
-            return callback(null, null, resultsLvlOne, resultsLvlTwo || []);
-          });
-        });
+      // Pour les utilisateurs : Niveau 1 (Public) + Niveau 2 (Où ils sont invités)
+      const sql = `
+        SELECT DISTINCT e.* FROM evenements e
+        LEFT JOIN participations p ON e.id = p.evenement_id
+        WHERE e.niveau = 1 
+        OR (e.niveau = 2 AND p.user_id = ?)
+        ORDER BY e.date_debut DESC
+      `;
+      db.query(sql, [userId], (err, results) => {
+        if (err) return callback(err, null);
+        return callback(null, results);
       });
     }
   },
@@ -354,6 +331,74 @@ const Event = {
     .then(() => callback(null))
     .catch((err) => callback(err));
 },
+
+
+  // ... tes autres fonctions ...
+
+  // Récupérer les événements passés (date_fin < maintenant)
+  listPast: (userId, callback) => {
+    const sql = `
+      SELECT e.* FROM evenements e 
+      JOIN participations p ON e.id = p.evenement_id 
+      WHERE p.user_id = ? AND e.date_fin < NOW()
+      ORDER BY e.date_fin DESC
+    `;
+    db.query(sql, [userId], callback);
+  },
+
+  // Récupérer les événements à venir (date_debut > maintenant)
+  listFuture: (userId, callback) => {
+    const sql = `
+      SELECT e.* FROM evenements e 
+      JOIN participations p ON e.id = p.evenement_id 
+      WHERE p.user_id = ? AND e.date_debut > NOW()
+      ORDER BY e.date_debut ASC
+    `;
+    db.query(sql, [userId], callback);
+  },
+
+  updateParticipation: (eventId, userId, status, callback) => {
+  const sql = "UPDATE participations SET statut = ?, updated_at = NOW() WHERE evenement_id = ? AND user_id = ?";
+  db.query(sql, [status, eventId, userId], (err, res) => {
+    if (err) return callback(err, null);
+    if (res.affectedRows === 0) return callback({ code: "PARTICIPATION_NOT_FOUND" }, null);
+    callback(null, res);
+  });
+},
+
+
+updateStatus: (eventId, newStatus, callback) => {
+  const sql = "UPDATE evenements SET statut = ?, updated_at = NOW() WHERE id = ?";
+  db.query(sql, [newStatus, eventId], (err, res) => {
+    if (err) return callback(err, null);
+    callback(null, res);
+  });
+},
+
+checkRoomConflict: async (location, startDate, endDate, eventId = null) => {
+    try { // <--- IL MANQUAIT CELUI-LÀ
+      let sql = `
+        SELECT id FROM evenements 
+        WHERE lieu = ? 
+        AND (
+          (date_debut < ? AND date_fin > ?)
+        )
+      `;
+      const params = [location, endDate, startDate];
+      
+      // Si c'est un update, on exclut l'événement actuel
+      if (eventId) {
+        sql += " AND id != ?";
+        params.push(eventId);
+      }
+
+      const [rows] = await db.promise().query(sql, params);
+      return rows.length > 0;
+    } catch (error) { // <--- MAINTENANT LE CATCH EST VALIDE
+      console.error("Erreur SQL dans checkRoomConflict:", error);
+      throw error;
+    }
+  }, // <--- UNE SEULE ACCOLADE ICI (pour fermer la fonction)
 
 
   // fonction qui lance  une requette pour verfier si utilisateurs dans champ inviter existe deans la DB
