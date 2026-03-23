@@ -21,9 +21,16 @@ async function getRhTickets() {
 	);
 	return rows;
 }
+async function update(id, data) {
+  return await db.query(
+    "UPDATE tickets SET titre = ?, description = ?, statut = ? WHERE id = ?",
+    [data.titre, data.description, data.statut, id]
+  );
+}
 
 module.exports = {
     getAllTickets,
     getItTickets,
     getRhTickets,
+	update,
 }

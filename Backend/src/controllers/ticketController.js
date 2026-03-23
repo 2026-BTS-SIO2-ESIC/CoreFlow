@@ -27,3 +27,12 @@ exports.getRhTickets = async (req, res) => {
     res.status(500).json({ error: error.message }); // en cas d'erreur, on retourne une réponse avec le code 500 et le message d'erreur 
   };
 }
+
+exports.updateTicket = async (req, res) => {
+  const id = req.params.id;
+  const data = req.body;
+
+  const updatedTicket = await ticketService.updateTicket(id, data);
+
+  res.json(updatedTicket);
+}
