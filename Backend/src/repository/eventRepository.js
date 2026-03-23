@@ -335,9 +335,9 @@ const Event = {
     });
   },
 
-    // fonction delete qui supprime un evenement de la table evenements a partir de son id
+  // fonction delete qui supprime un evenement de la table evenements a partir de son id
   delete: (eventId, callback) => {
-    // requette sql qui supprime l'evenement a partir du id donner(eventId) dans la table evenements  
+    // requette sql qui supprime l'evenement a partir du id donner(eventId) dans la table evenements
     const sql = "DELETE FROM evenements WHERE id = ?";
     // execute la query en lui donnant la requette (sql) et le eventId comme parametre
     db.query(sql, [eventId], (err, results) => {
@@ -348,9 +348,7 @@ const Event = {
       }
       return callback(null, results);
     });
-  } ,
-  
-
+  },
 
   // fonction qui lance  une requette pour verfier si utilisateurs dans champ inviter existe deans la DB
   checkIfUserExist: async (userMail) => {

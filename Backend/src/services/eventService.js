@@ -58,7 +58,13 @@ const validateEvent = async (event) => {
   }
 
   // Vérification type_evenement (obligatoire) - valeurs DB: reunion, formation, afterwork, seminaire, autre
-  const allowedTypes = ["reunion", "formation", "afterwork", "seminaire", "autre"];
+  const allowedTypes = [
+    "reunion",
+    "formation",
+    "afterwork",
+    "seminaire",
+    "autre",
+  ];
   if (!event.eventType || typeof event.eventType !== "string") {
     err.push("Champ type_evenement est invalide ou requis");
   } else if (!allowedTypes.includes(event.eventType)) {
@@ -125,7 +131,9 @@ const validateUpdateEvent = async (event) => {
     event.organizerId === undefined ||
     !Number.isInteger(Number(event.organizerId))
   ) {
-    err.push("Champ organisateur_id est invalide ou requis pour la mise à jour");
+    err.push(
+      "Champ organisateur_id est invalide ou requis pour la mise à jour",
+    );
   }
 
   // Vérification inviter si fourni
@@ -168,7 +176,6 @@ const validateUpdateEvent = async (event) => {
   };
 };
 
-
 // valide les champs necessaires pour supprimer un evenement
 const validateDeleteEvent = async (event) => {
   const err = [];
@@ -182,8 +189,7 @@ const validateDeleteEvent = async (event) => {
     err,
     codeError,
   };
-}  
-
+};
 
 //verification des evenements passés et a venir
 const verifyPastAndFutureEvents = (events) => {
@@ -198,9 +204,7 @@ const verifyPastAndFutureEvents = (events) => {
     }
   });
   return { pastEvents, futureEvents };
-};  
-
-
+};
 
 const timeVerify = (time) => {
   const today = Date.now();
@@ -211,4 +215,3 @@ module.exports = {
   validateEvent,
   validateUpdateEvent,
 };
-
