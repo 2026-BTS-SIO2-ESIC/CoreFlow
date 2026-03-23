@@ -42,6 +42,20 @@ app.get("/api/health", (req, res) => {
   });
 });
 
+app.get("/api/conges", (req, res) => {
+
+  const conges = [
+    {
+      id: 1,
+      nom: "Sophie Martin",
+      type: "Congé payé",
+      periode: "15 - 25 Déc 2024",
+      duree: "11 jours"
+    }
+  ]
+
+  res.json(conges)
+})
 // Middleware de gestion d'erreurs (TOUJOURS EN DERNIER)
 const { notFound, errorHandler } = require("./middlewares/errorMiddleware");
 app.use(notFound);
