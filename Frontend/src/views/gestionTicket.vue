@@ -2,9 +2,9 @@
 import { ref, onMounted } from "vue";
 
 const token = localStorage.getItem("token");
-const API = "http://localhost:3000/api/users/tickets"; // on définit l'URL de l'API pour récupérer les tickets
-const API_It = "http://localhost:3000/api/users/itTickets"; // on définit l'URL de l'API pour récupérer les tickets
-const API_Rh = "http://localhost:3000/api/users/rhTickets"; // on définit l'URL de l'API pour récupérer les tickets
+const API = "http://localhost:3000/api/ticket/tickets"; // on définit l'URL de l'API pour récupérer les tickets
+const API_It = "http://localhost:3000/api/ticket/itTickets"; // on définit l'URL de l'API pour récupérer les tickets
+const API_Rh = "http://localhost:3000/api/ticket/rhTickets"; // on définit l'URL de l'API pour récupérer les tickets
 
 const tickets = ref([]); // on crée une variable réactive pour stocker les tickets
 const loading = ref(true); // on crée une variable réactive pour indiquer si les données sont en cours de chargement

@@ -106,7 +106,4 @@ module.exports = {
 	toggleUserStatus,
 	deleteUser,
 	getInactiveUsers,
-	listTickets,
-	listItTickets,
-	listRhTickets,
 };

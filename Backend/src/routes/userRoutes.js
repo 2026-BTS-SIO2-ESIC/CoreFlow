@@ -10,15 +10,6 @@ router.use(authenticate);
 // GET /api/users - Liste tous les utilisateurs (admin, rh, manager)
 router.get('/', authorize('admin', 'rh', 'manager'), userController.getAllUsers);
 
-// GET /api/users/tickets - Liste tous les tickets
-router.get('/tickets', userController.getAllTickets);
-
-// GET /api/users/itTickets - Liste tous les tickets de la catégorie IT
-router.get('/itTickets', userController.getItTickets);
-
-// GET /api/users/rhTickets - Liste tous les tickets de la catégorie RH
-router.get('/rhTickets', userController.getRhTickets);
-
 // GET /api/users/:id - Récupérer un utilisateur (admin, rh, manager)
 router.get('/:id', authorize('admin', 'rh', 'manager'), userController.getUserById);
 
@@ -32,6 +23,6 @@ router.put('/:id', authorize('admin', 'rh'), validateUserUpdate, userController.
 router.patch('/:id/toggle-status', authorize('admin', 'rh'), userController.toggleUserStatus);
 
 // DELETE /api/users/:id - Supprimer un utilisateur (admin uniquement)
-router.delete('/:id', userController.deleteUser);
+router.delete('/:id', authorize('admin'), userController.deleteUser);
 
 module.exports = router;
