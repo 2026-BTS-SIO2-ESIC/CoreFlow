@@ -31,13 +31,18 @@
 
         <div class="form-group">
           <label for="password">Mot de passe</label>
-          <input
-            id="password"
-            v-model="password"
-            type="password"
-            placeholder="••••••••"
-            required
-          />
+          <div class="password-input-wrapper">
+            <input
+              id="password"
+              v-model="password"
+              :type="showPassword ? 'text' : 'password'"
+              placeholder="••••••••"
+              required
+            />
+            <button type="button" class="toggle-password" @click="showPassword = !showPassword">
+              {{ showPassword ? '🙈' : '👁️' }}
+            </button>
+          </div>
         </div>
 
         <button type="submit" class="btn-login" :disabled="loading">
@@ -95,6 +100,7 @@ export default {
     return {
       email: '',
       password: '',
+      showPassword: false,
       loading: false,
       error: null
     }
@@ -323,6 +329,33 @@ export default {
         outline: none;
         border-color: #667eea;
         background: #F0FDFA;
+    }
+
+    .password-input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .password-input-wrapper input {
+        padding-right: 45px;
+    }
+
+    .toggle-password {
+        position: absolute;
+        right: 12px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 18px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .toggle-password:hover {
+        opacity: 0.7;
     }
 
     .error-message {
