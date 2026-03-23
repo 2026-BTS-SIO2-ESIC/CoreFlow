@@ -1,27 +1,50 @@
 const { db } = require("../config/database");
 
 const Event = {
-  // fonction listAll qui permet de recuperer tous les evenements de la base de donnees
+ // fonction listAll qui permet de recuperer tous les evenements de la base de donnees
   listAll: (userId, userRole, callback) => {
+    // requette sql pour recuperer tous les evenements
+    const adminsql = "SELECT * FROM evenements;"; // pour admin
+
+    const sql = "SELECT * FROM evenements WHERE niveau=1";
+    const eventIdsSql =
+      "SELECT evenement_id FROM participations WHERE user_id=?";
+    const secondSql = "SELECT * FROM evenements WHERE niveau=2 AND id IN (?)";
+
     if (userRole === "admin") {
-      const sql = "SELECT * FROM evenements ORDER BY date_debut DESC";
-      db.query(sql, (err, results) => {
-        if (err) return callback(err, null);
-        // On renvoie un seul tableau propre, comme attendu par le controller
-        return callback(null, results); 
+      db.query(adminsql, (err, resultsAdmin) => {
+        if (err) {
+          console.error("DB ERROR :", err);
+          return callback(err, null);
+        }
+        return callback(null, resultsAdmin, null, null);
       });
     } else {
-      // Pour les utilisateurs : Niveau 1 (Public) + Niveau 2 (Où ils sont invités)
-      const sql = `
-        SELECT DISTINCT e.* FROM evenements e
-        LEFT JOIN participations p ON e.id = p.evenement_id
-        WHERE e.niveau = 1 
-        OR (e.niveau = 2 AND p.user_id = ?)
-        ORDER BY e.date_debut DESC
-      `;
-      db.query(sql, [userId], (err, results) => {
-        if (err) return callback(err, null);
-        return callback(null, results);
+      db.query(sql, (err, resultsLvlOne) => {
+        if (err) {
+          console.error("DB ERROR :", err);
+          return callback(err, null);
+        }
+        db.query(eventIdsSql, [userId], (err, resultEventIds) => {
+          if (err) {
+            console.error("DB_ERROR :", err);
+            return callback(err, null, null, null);
+          }
+
+          const eventIds = (resultEventIds || []).map((r) => r.evenement_id);
+
+          if (eventIds.length === 0) {
+            return callback(null, null, resultsLvlOne, []);
+          }
+
+          db.query(secondSql, [eventIds], (err, resultsLvlTwo) => {
+            if (err) {
+              console.error("DB ERROR :", err);
+              return callback(err, null);
+            }
+            return callback(null, null, resultsLvlOne, resultsLvlTwo);
+          });
+        });
       });
     }
   },
@@ -330,20 +353,6 @@ const Event = {
     })
     .then(() => callback(null))
     .catch((err) => callback(err));
-    db.query("DELETE FROM evenements WHERE id = ?", [eventId], (err, results) => {
-    if (err) {
-      console.error("DB ERROR :", err);
-      return callback(err);
-    } else {
-      if (results.affectedRows === 0) {
-        const errNotFound = new Error("EVENT_NOT_FOUND"); 
-        errNotFound.code = "EVENT_NOT_FOUND";
-        return callback(errNotFound);
-      }
-      return callback(null);
-    }
-  }); 
-
 },
 
 
@@ -378,18 +387,6 @@ const Event = {
     if (res.affectedRows === 0) return callback({ code: "PARTICIPATION_NOT_FOUND" }, null);
     callback(null, res);
   });
-  db.query(sql, [status, eventId, userId], (err, res) => {
-    if (err) {
-      console.error("DB ERROR :", err);
-      return callback(err, null);
-    }
-    if (res.affectedRows === 0) {
-      const errNotFound = new Error("PARTICIPATION_NOT_FOUND");
-      errNotFound.code = "PARTICIPATION_NOT_FOUND";
-      return callback(errNotFound, null);
-    }
-    callback(null, res);
-  });
 },
 
 
@@ -398,14 +395,6 @@ updateStatus: (eventId, newStatus, callback) => {
   db.query(sql, [newStatus, eventId], (err, res) => {
     if (err) return callback(err, null);
     callback(null, res);
-  });
-  db.query(sql, [newStatus, eventId], (err, res) => {
-    if (err) {
-      console.error("DB ERROR :", err);
-      return callback(err, null);
-    } else {
-      callback(null, res);
-    } 
   });
 },
 
@@ -478,17 +467,6 @@ checkRoomConflict: async (location, startDate, endDate, eventId = null) => {
     // en cas success renvoi userExiste et userMailList
     return { userExist, userMailList, userIdsList };
   },
-  db.query = (sql, params) => {
-    return new Promise((resolve, reject) => {
-      db.query(sql, params, (err, results) => {
-        if (err) {
-          console.error("DB ERROR :", err);
-          return reject(err);
-        }
-        resolve(results);
-      });
-    });
-  }
 };
 
 module.exports = Event;
