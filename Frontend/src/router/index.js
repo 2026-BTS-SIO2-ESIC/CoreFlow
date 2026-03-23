@@ -4,6 +4,7 @@ import DashboardView from '../views/DashboardView.vue'
 import CongesValidation from '@/views/congesValidation.vue'
 import DemandeCongeView from '../views/DemandeCongeView.vue'
 import AdminUserView from '../views/AdminUserView.vue'
+import addDocumentView from '@/views/addDocumentView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -36,7 +37,14 @@ const router = createRouter({
       path: '/admin/users',
       name: 'admin-users',
       component: AdminUserView
-    }
+    },
+    {
+      path: '/documents/add',
+      name: 'add-document',
+      component: addDocumentView
+    },
+   
+    
   ],
 })
 

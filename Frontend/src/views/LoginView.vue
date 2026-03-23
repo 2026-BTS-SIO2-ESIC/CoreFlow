@@ -1,4 +1,5 @@
 <template>
+  <div class="login-page">
   <div class="login-container">
     <!-- Partie gauche : formulaire de connexion -->
     <div class="login-left">
@@ -87,6 +88,8 @@
       </div>
     </div>
   </div>
+  </div>
+
 </template>
 
 
@@ -151,7 +154,7 @@ export default {
         box-sizing: border-box;
     }
 
-    body {
+    .login-page {
         font-family: 'Mulish', sans-serif;
         background: linear-gradient(135deg, #F0FDFA 0%, #E0F2FE 100%);
         min-height: 100vh;
