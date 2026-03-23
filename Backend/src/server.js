@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 require("dotenv").config();
 const { testConnection } = require("./config/database");
 
@@ -27,6 +28,7 @@ const ticketRoutes = require("./routes/ticketRoutes")
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/ticket", ticketRoutes)
+
 const congesRoutes = require('./routes/congesRoutes');
 app.use('/api/conges', congesRoutes);
 app.use('/api/auth', authRoutes);
@@ -51,9 +53,12 @@ app.get('/', (req, res) => {
 });
 
 app.get('/api/health', (req, res) => {
-  res.json({ 
+  res.json({
     status: 'healthy',
     uptime: process.uptime()
+  });
+});
+
 // Route de test
 app.get("/", (req, res) => {
   res.json({

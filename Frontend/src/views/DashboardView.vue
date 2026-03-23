@@ -199,6 +199,7 @@ export default {
     },
     goToGestionTicket() {
       this.$router.push('/gestionTicket');
+    },
 
     openPasswordModal() {
       this.modalError = null;

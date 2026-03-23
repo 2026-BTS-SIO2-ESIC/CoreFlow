@@ -44,6 +44,7 @@ const router = createRouter({
       name: 'gestionTicket',
       component: gestionTicket
     }
+    ,{
       path: '/documents/add',
       name: 'add-document',
       component: addDocumentView

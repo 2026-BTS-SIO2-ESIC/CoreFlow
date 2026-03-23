@@ -13,12 +13,24 @@
         Tableau de bord
       </RouterLink>
 
-      <RouterLink to="/conges/demande" class="nav-item">
-        <div class="nav-icon">
-          <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-        </div>
-        Mes Congés
-      </RouterLink>
+      <ul>
+        <li>
+          <RouterLink to="/conges/demande" class="nav-item">
+            <div class="nav-icon">
+              <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </div>
+            Demande Congés
+          </RouterLink>
+        </li>
+        <li>
+          <RouterLink to="/conges" class="nav-item">
+            <div class="nav-icon">
+              <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </div>
+            Validation Congés
+          </RouterLink>
+        </li>
+      </ul>
 
       <a href="#" class="nav-item" @click.prevent>
         <div class="nav-icon">
