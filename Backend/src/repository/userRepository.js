@@ -55,6 +55,16 @@ async function findByEmailExcludingId(email, id) {
 	return users[0] || null;
 }
 
+async function findPasswordById(id) {
+	const [users] = await pool.query('SELECT id, password FROM utilisateurs WHERE id = ?', [id]);
+	return users;
+}
+
+async function updatePasswordById(id, newPassword) {
+	const hashedPassword = await bcrypt.hash(newPassword, 10);
+	await pool.query('UPDATE utilisateurs SET password = ? WHERE id = ?', [hashedPassword, id]);
+}
+
 async function createUser(userData) {
 	const { email, password, nom, prenom, role, departement, poste, telephone, date_embauche } = userData;
 	const hashedPassword = await bcrypt.hash(password, 10);
@@ -184,6 +194,8 @@ module.exports = {
 	getUserById,
 	findByEmail,
 	findByEmailExcludingId,
+	findPasswordById,
+	updatePasswordById,
 	createUser,
 	updateUser,
 	toggleUserStatus,
