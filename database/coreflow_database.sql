@@ -64,7 +64,7 @@ CREATE TABLE `tickets` (
   `id`             INT          NOT NULL AUTO_INCREMENT,
   `titre`          VARCHAR(255) NOT NULL,
   `description`    TEXT         NOT NULL,
-  `categorie`      ENUM('it','rh','comptabilite','direction','autre') DEFAULT 'autre',
+  `categorie`      ENUM('it', 'rh', 'autre') DEFAULT 'autre',
   `priorite`       ENUM('basse','normale','haute','urgente')          DEFAULT 'normale',
   `statut`         ENUM('ouvert','en_cours','resolu','ferme')         DEFAULT 'ouvert',
   `demandeur_id`   INT          NOT NULL,
@@ -119,7 +119,7 @@ CREATE TABLE `conges` (
   `date_fin`               DATE NOT NULL,
   `nb_jours`               INT  NOT NULL,
   `motif`                  TEXT DEFAULT NULL,
-  `statut`                 ENUM('en_attente','approuve','refuse') DEFAULT 'en_attente',
+  `statut`                 ENUM('en_attente','approuve','refuse', "annule") DEFAULT 'en_attente',
   `validateur_id`          INT  DEFAULT NULL,
   `date_validation`        TIMESTAMP DEFAULT NULL,
   `commentaire_validateur` TEXT DEFAULT NULL,
@@ -135,7 +135,8 @@ CREATE TABLE `conges` (
 INSERT INTO `conges` (`id`, `user_id`, `type_conge`, `date_debut`, `date_fin`, `nb_jours`, `motif`, `statut`, `validateur_id`, `date_validation`) VALUES
 (1, 4, 'conge_paye', '2026-02-10', '2026-02-14', 5, 'Vacances familiales',  'approuve',   2, '2026-01-20 09:30:00'),
 (2, 3, 'rtt',        '2026-02-20', '2026-02-20', 1, 'Rendez-vous médical',  'en_attente', NULL, NULL),
-(3, 4, 'maladie',    '2026-01-15', '2026-01-17', 3, 'Grippe',               'approuve',   2, '2026-01-15 13:00:00');
+(3, 4, 'maladie',    '2026-01-15', '2026-01-17', 3, 'Grippe',               'approuve',   2, '2026-01-15 13:00:00'),
+(4, 2, 'conge_paye', '2026-03-10', '2026-03-14', 5, 'Vacances familiales',  'annule',     NULL, NULL);
 
 -- ------------------------------------------------------------
 -- Table : soldes_conges

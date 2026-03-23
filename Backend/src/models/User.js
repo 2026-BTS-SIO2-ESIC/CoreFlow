@@ -1,4 +1,5 @@
 const { pool } = require('../config/database');
+const bcrypt = require('bcrypt');
 
 class User {
   // Trouver un utilisateur par email
@@ -42,11 +43,14 @@ class User {
   static async create(userData) {
     const { email, password, nom, prenom, role, departement, poste, telephone, date_embauche } = userData;
     
+    // Hashage du mot de passe
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
     const [result] = await pool.query(
       `INSERT INTO utilisateurs 
       (email, password, nom, prenom, role, departement, poste, telephone, date_embauche, est_actif) 
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)`,
-      [email, password, nom, prenom, role, departement, poste, telephone, date_embauche]
+      [email, hashedPassword, nom, prenom, role, departement, poste, telephone, date_embauche]
     );
 
     return await User.findById(result.insertId);

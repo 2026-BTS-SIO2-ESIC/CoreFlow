@@ -1,87 +1,10 @@
 <template>
   <div class="admin-container">
-    <!-- Sidebar -->
-    <div class="sidebar">
-      <div class="logo">
-        <div class="logo-icon">C</div>
-        <div class="logo-text">CoreFlow</div>
-      </div>
-      <nav class="nav-menu">
-        <a @click="goToDashboard" class="nav-item">
-          <div class="nav-icon">
-            <svg viewBox="0 0 24 24">
-              <rect x="3" y="3" width="7" height="7"></rect>
-              <rect x="14" y="3" width="7" height="7"></rect>
-              <rect x="14" y="14" width="7" height="7"></rect>
-              <rect x="3" y="14" width="7" height="7"></rect>
-            </svg>
-          </div>
-          Tableau de bord
-        </a>
-
-        <a href="#" class="nav-item">
-          <div class="nav-icon">
-            <svg viewBox="0 0 24 24">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
-            </svg>
-          </div>
-          Mes Congés
-        </a>
-
-        <a href="#" class="nav-item">
-          <div class="nav-icon">
-            <svg viewBox="0 0 24 24">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
-            </svg>
-          </div>
-          Documents
-        </a>
-
-        <a href="#" class="nav-item">
-          <div class="nav-icon">
-            <svg viewBox="0 0 24 24">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-              <line x1="16" y1="2" x2="16" y2="6"></line>
-              <line x1="8" y1="2" x2="8" y2="6"></line>
-              <line x1="3" y1="10" x2="21" y2="10"></line>
-            </svg>
-          </div>
-          Événements
-        </a>
-
-        <a href="#" class="nav-item">
-          <div class="nav-icon">
-            <svg viewBox="0 0 24 24">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-              <line x1="16" y1="13" x2="8" y2="13"></line>
-              <line x1="16" y1="17" x2="8" y2="17"></line>
-              <polyline points="10 9 9 9 8 9"></polyline>
-            </svg>
-          </div>
-          Tickets & Support
-        </a>
-
-        <a @click="goBack" class="nav-item active">
-          <div class="nav-icon">
-            <svg viewBox="0 0 24 24">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
-            </svg>
-          </div>
-          Gestion utilisateurs
-        </a>
-      </nav>
-      <div class="user-profile">
-        <div v-if="user">
-          <div class="user-name">{{ user.nom }}</div>
-          <div class="user-role">{{ user.role }}</div>
-        </div>
-        <button @click="logout" class="btn-logout">Déconnexion</button>
-      </div>
-    </div>
+    <DashboardSidebar
+      :user="user"
+      :loading="false"
+      @logout="logout"
+    />
 
     <!-- Header avec logo -->
     <div class="header">
@@ -228,7 +151,12 @@
               </div>
               <div class="form-group" v-if="showCreateModal">
                 <label>Mot de passe <span class="required">*</span></label>
-                <input v-model="formData.password" type="password" placeholder="••••••••" required minlength="6" />
+                <div class="password-input-wrapper">
+                  <input v-model="formData.password" :type="showPassword ? 'text' : 'password'" placeholder="••••••••" required minlength="6" />
+                  <button type="button" class="toggle-password" @click="showPassword = !showPassword">
+                    {{ showPassword ? '🙈' : '👁️' }}
+                  </button>
+                </div>
                 <span class="input-hint">Minimum 6 caractères</span>
               </div>
               <div class="form-group">
@@ -322,8 +250,13 @@
 </template>
 
 <script>
+import DashboardSidebar from '../components/DashboardSidebar.vue';
+
 export default {
   name: 'AdminUserView',
+  components: {
+    DashboardSidebar
+  },
   data() {
     return {
       user: null,
@@ -335,6 +268,7 @@ export default {
       showCreateModal: false,
       showEditModal: false,
       showDeleteModal: false,
+      showPassword: false,
       loading: false,
       errorMessage: null,
       userToDelete: null,
@@ -411,7 +345,7 @@ export default {
 
       if (this.filterActif !== '') {
         const isActif = this.filterActif === 'true';
-        filtered = filtered.filter(u => u.est_actif === isActif);
+        filtered = filtered.filter(u => Boolean(u.est_actif) === isActif);
       }
 
       this.filteredUsers = filtered;
@@ -588,10 +522,6 @@ export default {
       this.$router.push('/dashboard');
     },
 
-    goToDashboard() {
-      this.$router.push('/dashboard');
-    },
-
     logout() {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
@@ -610,158 +540,12 @@ export default {
   box-sizing: border-box;
 }
 
-.sidebar {
-            width: 240px;
-            height: 100vh;
-            background-color: #fafafa;
-            border-right: 1px solid #e5e7eb;
-            display: flex;
-            flex-direction: column;
-            position: fixed;
-            left: 0;
-            top: 0;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 24px 16px;
-        }
-
 .admin-container {
   font-family: 'Mulish', sans-serif;
   background: #F0FDFA;
   min-height: 100vh;
   padding: 20px;
-  margin-left: 240px;
-}
-
-/* Sidebar */
-.sidebar {
-  width: 240px;
-  height: 100vh;
-  background-color: #fafafa;
-  border-right: 1px solid #e5e7eb;
-  display: flex;
-  flex-direction: column;
-  position: fixed;
-  left: 0;
-  top: 0;
-}
-
-.sidebar .logo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 24px 16px;
-}
-
-.sidebar .logo-icon {
-  width: 36px;
-  height: 36px;
-  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: bold;
-  font-size: 18px;
-}
-
-.sidebar .logo-text {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.nav-menu {
-  flex: 1;
-  padding: 16px 0;
-  overflow-y: auto;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  color: #6b7280;
-  text-decoration: none;
-  transition: all 0.2s ease;
-  cursor: pointer;
-  font-size: 15px;
-  border-left: 3px solid transparent;
-}
-
-.nav-item:hover {
-  background-color: #f3f4f6;
-  color: #14b8a6;
-}
-
-.nav-item.active {
-  background-color: transparent;
-  color: #14b8a6;
-  border-left: 3px solid #14b8a6;
-}
-
-.nav-icon {
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.sidebar .user-profile {
-  padding: 16px;
-  border-top: 1px solid #e5e7eb;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-}
-
-.sidebar .user-name {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 2px;
-}
-
-.sidebar .user-role {
-  font-size: 12px;
-  color: #9ca3af;
-  margin-bottom: 12px;
-}
-
-.sidebar .btn-logout {
-  background-color: #ef4444;
-  color: white;
-  border: none;
-  padding: 8px 24px;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-  width: 100%;
-}
-
-.sidebar .btn-logout:hover {
-  background-color: #dc2626;
-}
-
-/* SVG Icons */
-svg {
-  width: 20px;
-  height: 20px;
-  stroke: currentColor;
-  fill: none;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  margin-left: 248px;
 }
 
 /* Header */
@@ -855,6 +639,7 @@ svg {
   font-weight: 700;
   font-size: 32px;
   margin-bottom: 8px;
+  color: white;
 }
 
 .page-header p {
@@ -1267,6 +1052,33 @@ svg {
   font-size: 12px;
   color: #64748B;
   margin-top: 4px;
+}
+
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper input {
+  padding-right: 45px;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggle-password:hover {
+  opacity: 0.7;
 }
 
 .info-box {
