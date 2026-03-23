@@ -79,7 +79,9 @@
       <DetailCardEvent
         :show="showDetailModal"
         :event-id="selectedEventId"
+        :user="user"
         @close="closeDetailModal"
+        @updated="onEventUpdated"
       />
     </div>
   </div>
@@ -162,6 +164,9 @@ export default {
     },
     async onEventCreated() {
       this.closeModal()
+      await this.fetchEvents()
+    },
+    async onEventUpdated() {
       await this.fetchEvents()
     },
     async fetchEvents() {

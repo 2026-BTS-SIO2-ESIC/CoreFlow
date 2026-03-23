@@ -50,7 +50,7 @@
               </svg>
               {{ error }}
             </div>
-            <div v-else-if="event" class="detail-content">
+            <div v-else-if="event && !editMode" class="detail-content">
               <div class="detail-hero">
                 <span class="detail-type-badge">{{ formatType(event.type_evenement) }}</span>
                 <h3 class="detail-title">{{ event.titre }}</h3>
@@ -165,6 +165,91 @@
                   <span>{{ event.niveau === '1' ? 'Entreprise' : 'Département' }}</span>
                 </div>
               </div>
+
+              <div v-if="canEdit" class="detail-actions">
+                <button type="button" class="btn-edit" @click="startEdit">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Modifier
+                </button>
+              </div>
+            </div>
+
+            <!-- Edit form -->
+            <div v-else-if="event && editMode" class="detail-edit-form">
+              <form @submit.prevent="handleUpdate">
+                <div class="form-section">
+                  <label>Titre *</label>
+                  <input v-model="editForm.titre" type="text" required />
+                </div>
+                <div class="form-section">
+                  <label>Description</label>
+                  <textarea v-model="editForm.description" rows="2" />
+                </div>
+                <div class="form-section">
+                  <label>Type *</label>
+                  <select v-model="editForm.type_evenement" required>
+                    <option value="reunion">Réunion</option>
+                    <option value="formation">Formation</option>
+                    <option value="afterwork">Afterwork</option>
+                    <option value="seminaire">Séminaire</option>
+                    <option value="autre">Autre</option>
+                  </select>
+                </div>
+                <div class="form-section form-grid-2">
+                  <div>
+                    <label>Date/heure début *</label>
+                    <input v-model="editForm.date_debut" type="datetime-local" required />
+                  </div>
+                  <div>
+                    <label>Date/heure fin *</label>
+                    <input v-model="editForm.date_fin" type="datetime-local" required />
+                  </div>
+                </div>
+                <div class="form-section">
+                  <label>Lieu</label>
+                  <input v-model="editForm.lieu" type="text" />
+                </div>
+                <div class="form-section form-grid-2">
+                  <div>
+                    <label>Statut</label>
+                    <select v-model="editForm.statut">
+                      <option value="planifie">Planifié</option>
+                      <option value="en_cours">En cours</option>
+                      <option value="termine">Terminé</option>
+                      <option value="annule">Annulé</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label>Niveau</label>
+                    <select v-model="editForm.niveau">
+                      <option value="1">Entreprise</option>
+                      <option value="2">Département</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-section form-grid-2">
+                  <div>
+                    <label>Places max</label>
+                    <input v-model.number="editForm.nb_places_max" type="number" min="0" />
+                  </div>
+                  <div>
+                    <label>Obligatoire</label>
+                    <select v-model.number="editForm.est_obligatoire">
+                      <option :value="0">Optionnel</option>
+                      <option :value="1">Obligatoire</option>
+                    </select>
+                  </div>
+                </div>
+                <div v-if="updateError" class="form-error">{{ updateError }}</div>
+                <div class="form-actions">
+                  <button type="button" @click="cancelEdit">Annuler</button>
+                  <button type="submit" :disabled="updateLoading">
+                    {{ updateLoading ? 'Enregistrement...' : 'Enregistrer' }}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>
@@ -198,14 +283,30 @@ export default {
   props: {
     show: { type: Boolean, default: false },
     eventId: { type: [Number, String], default: null },
+    user: { type: Object, default: null },
   },
-  emits: ['close'],
+  emits: ['close', 'updated'],
   data() {
     return {
       event: null,
       loading: false,
       error: null,
+      editMode: false,
+      editForm: {},
+      updateLoading: false,
+      updateError: null,
     }
+  },
+  computed: {
+    currentUser() {
+      return this.user || JSON.parse(localStorage.getItem('user') || '{}')
+    },
+    canEdit() {
+      if (!this.event || !this.currentUser?.id) return false
+      const role = (this.currentUser.role || '').toLowerCase()
+      if (role !== 'admin' && role !== 'manager') return false
+      return Number(this.currentUser.id) === Number(this.event.organisateur_id)
+    },
   },
   watch: {
     eventId: {
@@ -225,6 +326,9 @@ export default {
       this.event = null
       this.loading = false
       this.error = null
+      this.editMode = false
+      this.editForm = {}
+      this.updateError = null
     },
     async fetchEvent(id) {
       if (!id) return
@@ -268,6 +372,89 @@ export default {
         hour: '2-digit',
         minute: '2-digit',
       })
+    },
+    toDatetimeLocal(str) {
+      if (!str) return ''
+      const d = new Date(str.replace(' ', 'T'))
+      if (isNaN(d.getTime())) return ''
+      const pad = (n) => String(n).padStart(2, '0')
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+    },
+    toBackendDatetime(str) {
+      if (!str) return null
+      const normalized = String(str).replace('T', ' ')
+      return normalized.length === 16 ? `${normalized}:00` : normalized.slice(0, 19)
+    },
+    startEdit() {
+      if (!this.event) return
+      this.editForm = {
+        titre: this.event.titre || '',
+        description: this.event.description || '',
+        type_evenement: this.event.type_evenement || 'reunion',
+        date_debut: this.toDatetimeLocal(this.event.date_debut),
+        date_fin: this.toDatetimeLocal(this.event.date_fin),
+        lieu: this.event.lieu || '',
+        statut: this.event.statut || 'planifie',
+        niveau: String(this.event.niveau ?? '1'),
+        nb_places_max: this.event.nb_places_max ?? 0,
+        est_obligatoire: this.event.est_obligatoire ?? 0,
+      }
+      this.updateError = null
+      this.editMode = true
+    },
+    cancelEdit() {
+      this.editMode = false
+      this.editForm = {}
+      this.updateError = null
+    },
+    async handleUpdate() {
+      if (!this.event || !this.event.organisateur_id) return
+      this.updateError = null
+      this.updateLoading = true
+      const token = localStorage.getItem('token')
+      if (!token) {
+        this.updateError = 'Session expirée. Veuillez vous reconnecter.'
+        this.updateLoading = false
+        return
+      }
+      const body = {
+        id: this.event.id,
+        organisateur_id: this.event.organisateur_id,
+        titre: this.editForm.titre,
+        description: this.editForm.description || '',
+        type_evenement: this.editForm.type_evenement,
+        date_debut: this.toBackendDatetime(this.editForm.date_debut),
+        date_fin: this.toBackendDatetime(this.editForm.date_fin),
+        lieu: this.editForm.lieu || '',
+        statut: this.editForm.statut,
+        niveau: this.editForm.niveau,
+        nb_places_max: this.editForm.nb_places_max ?? 0,
+        est_obligatoire: this.editForm.est_obligatoire ?? 0,
+      }
+      try {
+        const res = await fetch(`${API_URL}/event/update`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(body),
+        })
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok) {
+          this.updateError = data?.error?.message || "Erreur lors de la mise à jour."
+          return
+        }
+        this.updateLoading = false
+        this.editMode = false
+        await this.fetchEvent(this.eventId)
+        this.$emit('updated')
+      } catch (e) {
+        this.updateError = "Erreur réseau. Vérifiez que le serveur est démarré."
+        console.error(e)
+      } finally {
+        this.updateLoading = false
+      }
     },
   },
 }
@@ -554,6 +741,110 @@ export default {
   width: 1.125rem;
   height: 1.125rem;
   color: #14b8a6;
+}
+
+.detail-actions {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+.btn-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #0d9488;
+  background: #ccfbf1;
+  border: 1px solid #99f6e4;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.btn-edit:hover {
+  background: #99f6e4;
+  color: #0f766e;
+}
+.btn-edit svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.detail-edit-form {
+  padding: 1rem 0;
+}
+.detail-edit-form .form-section {
+  margin-bottom: 1rem;
+}
+.detail-edit-form label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #475569;
+  margin-bottom: 0.35rem;
+}
+.detail-edit-form input,
+.detail-edit-form select,
+.detail-edit-form textarea {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9375rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+}
+.detail-edit-form textarea {
+  resize: vertical;
+  min-height: 4rem;
+}
+.detail-edit-form .form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.detail-edit-form .form-error {
+  color: #b91c1c;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background: #fef2f2;
+  border-radius: 8px;
+}
+.detail-edit-form .form-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+.detail-edit-form .form-actions button {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.detail-edit-form .form-actions button[type="button"] {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+.detail-edit-form .form-actions button[type="button"]:hover {
+  background: #e2e8f0;
+}
+.detail-edit-form .form-actions button[type="submit"] {
+  background: #0d9488;
+  color: #fff;
+  border: none;
+}
+.detail-edit-form .form-actions button[type="submit"]:hover:not(:disabled) {
+  background: #0f766e;
+}
+.detail-edit-form .form-actions button[type="submit"]:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .modal-enter-active,
