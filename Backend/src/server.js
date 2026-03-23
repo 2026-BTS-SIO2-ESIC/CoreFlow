@@ -20,9 +20,10 @@ const eventRouter = require("./routes/eventRoutes");
 app.use("/api/event", eventRouter);
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
-
-app.use("/api/auth", authRoutes);
-app.use("/api/users", userRoutes);
+const congesRoutes = require('./routes/congesRoutes');
+app.use('/api/conges', congesRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 
 // Route de test
 app.get("/", (req, res) => {
