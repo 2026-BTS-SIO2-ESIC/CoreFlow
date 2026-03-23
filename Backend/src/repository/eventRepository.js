@@ -2,7 +2,7 @@ const { db } = require("../config/database");
 
 const Event = {
  // fonction listAll qui permet de recuperer tous les evenements de la base de donnees
-  listAll: (userId, userRole, callback) => {
+ listAll: (userId, userRole, callback) => {
     // requette sql pour recuperer tous les evenements
     const adminsql = "SELECT * FROM evenements;"; // pour admin
 
@@ -27,7 +27,7 @@ const Event = {
         }
         db.query(eventIdsSql, [userId], (err, resultEventIds) => {
           if (err) {
-            console.error("DB_ERROR :", err);
+            console.error("DB ERROR :", err);
             return callback(err, null, null, null);
           }
 
@@ -40,7 +40,7 @@ const Event = {
           db.query(secondSql, [eventIds], (err, resultsLvlTwo) => {
             if (err) {
               console.error("DB ERROR :", err);
-              return callback(err, null);
+              return callback(err, null, null, null );
             }
             return callback(null, null, resultsLvlOne, resultsLvlTwo);
           });
@@ -58,9 +58,9 @@ const Event = {
       // en cas d'erreur renvoi l'erreur
       if (err) {
         console.error("DB ERROR :", err);
-        return callback(err, null);
+        return callback(err, null, null, null);
       }
-      return callback(null, results);
+      return callback(null, resultsLvlOne, resultsLvlTwo || []);
     });
   },
 

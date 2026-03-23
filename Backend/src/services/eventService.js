@@ -17,13 +17,13 @@ const validateEvent = async (event) => {
     }
   }
 
-  // 3. Vérification des dates
+  // 3. Vérification des dates de debut
   if (!event.startDate || isNaN(Date.parse(event.startDate))) {
     err.push("Champ date_debut est invalide (YYYY-MM-DD)");
   } else if (!timeVerify(Date.parse(event.startDate))) {
     err.push("La date de début ne peut pas être avant aujourd'hui");
   }
-
+  // Vérification des dates de fin
   if (!event.endDate || isNaN(Date.parse(event.endDate))) {
     err.push("Champ date_fin est invalide (YYYY-MM-DD)");
   } else if (event.startDate && event.endDate < event.startDate) {
@@ -34,31 +34,43 @@ const validateEvent = async (event) => {
   if (!event.title || typeof event.title !== "string") {
     err.push("Champ titre est invalide ou requis");
   }
-
+  // Vérification type_evenement (obligatoire) - valeurs DB: 'reunion', 'formation', 'afterwork', 'seminaire', 'autre'
   const allowedTypes = ["reunion", "formation", "afterwork", "seminaire", "autre"];
-  if (!event.eventType || !allowedTypes.includes(event.eventType)) {
-    err.push("Type d'événement invalide");
+  if (!event.eventType || typeof event.eventType !== "string") {
+    err.push("Champ type_evenement est invalide ou requis");
+  } else if (!allowedTypes.includes(event.eventType)) {
+    err.push(
+      "Champ type_evenement invalide, doit être: reunion, formation, afterwork, seminaire ou autre",
+    );
   }
 
-  // ==========================================================
-  // AJOUT : POINT 4 - GESTION DES CONFLITS DE DATE (SALLE)
-  // ==========================================================
-  if (event.location && event.startDate && event.endDate) {
-    try {
-      // On appelle la fonction du repository qu'on a créée tout à l'heure
-      const hasConflict = await EventRepository.checkRoomConflict(
-        event.location, 
-        event.startDate, 
-        event.endDate,
-        event.id || null // On passe l'ID si c'est un update pour éviter l'auto-conflit
+  // Vérification niveau (1 ou 2)
+  if (event.level !== "1" && event.level !== "2") {
+    err.push("Champ niveau est invalide, doit être 1 ou 2");
+  }
+
+  // Vérification nb_places_max si fourni
+  if (event.maxPlaces !== undefined && event.maxPlaces !== null) {
+    if (
+      !Number.isInteger(Number(event.maxPlaces)) ||
+      Number(event.maxPlaces) < 0
+    ) {
+      err.push("Champ nb_places_max doit être un entier positif");
+    }
+  }
+
+  // available status 'planifie','en_cours','termine','annule'
+  if (event.status !== undefined && event.status !== null) {
+    if (
+      event.status !== "planifie" &&
+      event.status !== "en_cours" &&
+      event.status !== "termine" &&
+      event.status !== "annule"
+    ) {
+      err.push(
+        "Champ statut est invalide, doit être planifie, en_cours, termine ou annule",
       );
-      
-      if (hasConflict) {
-        err.push(`La salle "${event.location}" est déjà occupée sur ce créneau.`);
-      }
-    } catch (dbErr) {
-      console.error("Erreur lors de la vérification du conflit de salle:", dbErr);
-      // On ne bloque pas forcément ici, ou on ajoute une erreur générique
+
     }
   }
   // ==========================================================

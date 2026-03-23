@@ -446,33 +446,5 @@ exports.event_respond = async (req, res) => {
   });
 };
 
-exports.getAllEvents = (req, res) => {
-    const userId = req.user.id;
-    const userRole = req.user.role;
-
-    // On récupère les 4 arguments définis par ton collègue
-    Event.listAll(userId, userRole, (err, resultsAdmin, resultsLvlOne, resultsLvlTwo) => {
-        if (err) {
-            logError("GET_ALL_EVENTS", err.message, userId);
-            return res.status(500).json({ error: "Erreur lors de la récupération des événements" });
-        }
-
-        // Logique pour fusionner les résultats selon le rôle
-        let finalResults = [];
-
-        if (userRole === "admin") {
-            // Pour l'admin, les données sont dans le 2ème argument
-            finalResults = resultsAdmin || [];
-        } else {
-            // Pour l'user, on fusionne Niveau 1 (public) et Niveau 2 (invité)
-            const lvl1 = resultsLvlOne || [];
-            const lvl2 = resultsLvlTwo || [];
-            finalResults = [...lvl1, ...lvl2];
-        }
-
-        logSuccess("GET_ALL_EVENTS", `${finalResults.length} événements trouvés`, userId);
-        return res.status(200).json(finalResults);
-    });
-};
 
 // La logique de validation métier est déportée dans services/eventService.js
