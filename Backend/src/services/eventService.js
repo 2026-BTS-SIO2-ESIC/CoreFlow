@@ -214,4 +214,5 @@ const timeVerify = (time) => {
 module.exports = {
   validateEvent,
   validateUpdateEvent,
+
 };
