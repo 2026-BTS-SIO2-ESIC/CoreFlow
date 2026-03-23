@@ -26,6 +26,8 @@ const router = createRouter({
       path: '/conges',
       name: 'conges',
       component: CongesValidation
+    },
+    {
       path: '/conges/demande',
       name: 'DemandeConge',
       component: DemandeCongeView
