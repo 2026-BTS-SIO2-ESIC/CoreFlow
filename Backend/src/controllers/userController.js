@@ -6,13 +6,11 @@ exports.getAllUsers = async (req, res) => {
 
   try {
     const users = await userService.getAllUsers({ role, departement, search, actif });
-
     res.json({
       success: true,
       data: users,
       total: users.length
     });
-
   } catch (error) {
     if (error.status) {
       return res.status(error.status).json({
@@ -22,14 +20,14 @@ exports.getAllUsers = async (req, res) => {
     }
 
     console.error('Erreur getAllUsers:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: 'Erreur lors de la récupération des utilisateurs'
+      message: 'Erreur lors de la recuperation des utilisateurs'
     });
   }
 };
 
-// GET /api/users/:id - Récupérer un utilisateur par ID
+// GET /api/users/:id - Recuperer un utilisateur par ID
 exports.getUserById = async (req, res) => {
   const { id } = req.params;
 
@@ -40,7 +38,6 @@ exports.getUserById = async (req, res) => {
       success: true,
       data: user
     });
-
   } catch (error) {
     if (error.status) {
       return res.status(error.status).json({
@@ -50,14 +47,14 @@ exports.getUserById = async (req, res) => {
     }
 
     console.error('Erreur getUserById:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: 'Erreur lors de la récupération de l\'utilisateur'
+      message: 'Erreur lors de la recuperation de l\'utilisateur'
     });
   }
 };
 
-// POST /api/users - Créer un nouvel utilisateur
+// POST /api/users - Creer un nouvel utilisateur
 exports.createUser = async (req, res) => {
   const { email, password, nom, prenom, role, departement, poste, telephone, date_embauche } = req.body;
 
@@ -71,15 +68,14 @@ exports.createUser = async (req, res) => {
       departement,
       poste,
       telephone,
-      date_embauche,
+      date_embauche
     });
 
     res.status(201).json({
       success: true,
-      message: 'Utilisateur créé avec succès',
+      message: 'Utilisateur cree avec succes',
       data: newUser
     });
-
   } catch (error) {
     if (error.status) {
       return res.status(error.status).json({
@@ -89,9 +85,9 @@ exports.createUser = async (req, res) => {
     }
 
     console.error('Erreur createUser:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: 'Erreur lors de la création de l\'utilisateur'
+      message: 'Erreur lors de la creation de l\'utilisateur'
     });
   }
 };
@@ -111,15 +107,14 @@ exports.updateUser = async (req, res) => {
       poste,
       telephone,
       date_embauche,
-      password,
+      password
     });
 
     res.json({
       success: true,
-      message: 'Utilisateur modifié avec succès',
+      message: 'Utilisateur modifie avec succes',
       data: updatedUser
     });
-
   } catch (error) {
     if (error.status) {
       return res.status(error.status).json({
@@ -129,14 +124,14 @@ exports.updateUser = async (req, res) => {
     }
 
     console.error('Erreur updateUser:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Erreur lors de la modification de l\'utilisateur'
     });
   }
 };
 
-// PATCH /api/users/:id/toggle-status - Activer/Désactiver un utilisateur
+// PATCH /api/users/:id/toggle-status - Activer/Desactiver un utilisateur
 exports.toggleUserStatus = async (req, res) => {
   const { id } = req.params;
 
@@ -145,10 +140,9 @@ exports.toggleUserStatus = async (req, res) => {
 
     res.json({
       success: true,
-      message: `Utilisateur ${result.est_actif ? 'activé' : 'désactivé'} avec succès`,
+      message: `Utilisateur ${result.est_actif ? 'active' : 'desactive'} avec succes`,
       data: result.user
     });
-
   } catch (error) {
     if (error.status) {
       return res.status(error.status).json({
@@ -158,7 +152,7 @@ exports.toggleUserStatus = async (req, res) => {
     }
 
     console.error('Erreur toggleUserStatus:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Erreur lors du changement de statut'
     });
@@ -174,10 +168,9 @@ exports.deleteUser = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Utilisateur supprimé avec succès',
+      message: 'Utilisateur supprime avec succes',
       data: user
     });
-
   } catch (error) {
     if (error.status) {
       return res.status(error.status).json({
@@ -187,14 +180,14 @@ exports.deleteUser = async (req, res) => {
     }
 
     console.error('Erreur deleteUser:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'Erreur lors de la suppression de l\'utilisateur'
     });
   }
 };
 
-// GET /api/users/me - Récupérer les utilisateurs inactifs
+// GET /api/users/inactive - Recuperer les utilisateurs inactifs
 exports.getInactiveUsers = async (req, res) => {
   try {
     const users = await userService.getInactiveUsers();
@@ -213,9 +206,50 @@ exports.getInactiveUsers = async (req, res) => {
     }
 
     console.error('Erreur getInactiveUsers:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: 'Erreur lors de la récupération des utilisateurs inactifs'
+      message: 'Erreur lors de la recuperation des utilisateurs inactifs'
     });
   }
-}
+};
+
+// PUT /api/users/password - Modifier son propre mot de passe
+exports.updatePassword = async (req, res) => {
+  const userId = req.user.userId;
+  const { oldPass, newPass } = req.body;
+
+  if (!oldPass || !newPass) {
+    return res.status(400).json({
+      success: false,
+      message: 'Champs manquants.'
+    });
+  }
+
+  try {
+    const result = await userService.updatePassword(userId, oldPass, newPass);
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        message: result.message
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Mot de passe mis a jour.'
+    });
+  } catch (error) {
+    if (error.status) {
+      return res.status(error.status).json({
+        success: false,
+        message: error.message
+      });
+    }
+
+    console.error('Erreur updatePassword:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la modification du mot de passe'
+    });
+  }
+};
