@@ -167,6 +167,16 @@
               </div>
             </div>
           </div>
+
+          <div v-if="canDelete" class="modal-footer">
+  <button @click="handleDelete" :disabled="deleting" class="btn-delete-full">
+    <svg v-if="!deleting" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+    </svg>
+    <span>{{ deleting ? 'Suppression...' : 'Supprimer cet événement' }}</span>
+  </button>
+</div>
+
         </div>
       </div>
     </Transition>
@@ -205,6 +215,28 @@ export default {
       event: null,
       loading: false,
       error: null,
+      deleting: false,
+    }
+  },
+  computed: {
+    canDelete() {
+      if (!this.event) return false;
+
+      const token = localStorage.getItem('token');
+      if (!token) return false;
+
+      try {
+        // Décode le milieu du JWT (le payload) qui contient id et role
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        
+        // Vérifie si l'ID utilisateur du token match l'organisateur_id de la DB
+        const isOwner = this.event.organisateur_id === payload.id;
+        const isAdmin = payload.role === 'admin' || payload.role === 'manager';
+
+        return isOwner || isAdmin;
+      } catch (e) {
+        return false;
+      }
     }
   },
   watch: {
@@ -269,8 +301,54 @@ export default {
         minute: '2-digit',
       })
     },
+
+    async handleDelete() {
+  if (!confirm("Voulez-vous vraiment supprimer cet événement ?")) return;
+
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) return alert("Session expirée");
+
+    // 1. Décodage du token pour récupérer tes infos (id et role)
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const currentUserId = payload.id;
+    const currentUserRole = payload.role;
+
+    // 2. Construction de l'URL exacte qui a marché dans ton test
+    // Format: /delete/:id/:userRole/:user_id/
+    const deleteUrl = `${API_URL}/event/delete/${this.event.id}/${currentUserRole}/${currentUserId}`;
+
+    console.log("Tentative de suppression via :", deleteUrl);
+
+    this.deleting = true;
+    const res = await fetch(deleteUrl, {
+      method: 'DELETE',
+      headers: { 
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+    });
+
+    if (res.ok) {
+      alert("Événement supprimé avec succès !");
+      this.$emit('close'); 
+      location.reload(); // Pour rafraîchir le dashboard et libérer la salle (Point 4)
+    } else {
+      const data = await res.json();
+      alert(data.error || "Erreur lors de la suppression");
+    }
+  } catch (e) {
+    console.error("Erreur suppression:", e);
+    alert("Erreur technique lors de la suppression.");
+  } finally {
+    this.deleting = false;
+  }
+}
+
   },
 }
+
+
 </script>
 
 <style scoped>
@@ -572,4 +650,53 @@ export default {
 .modal-leave-to .modal-box {
   transform: scale(0.95) translateY(8px);
 }
+
+/* --- NOUVEAU STYLE POUR LE BOUTON DE SUPPRESSION --- */
+
+.modal-footer {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0; /* Même couleur que le séparateur des sections */
+  display: flex;
+  justify-content: center;
+}
+
+.btn-delete-full {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.875rem;
+  
+  /* On réutilise les couleurs de ton design pour le hover de close */
+  background: #fff;
+  color: #dc2626; /* Rouge clair pour le texte */
+  
+  /* On réutilise tes styles de bordures existants */
+  border: 1px solid #fecaca;
+  border-radius: 12px; /* Même arrondi que tes sections detail-section */
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  /* Style d'ombre léger comme tes modals-box */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.btn-delete-full:hover:not(:disabled) {
+  /* On s'assure que le rouge ne jure pas avec ton vert émeraude */
+  background: #fef2f2;
+  border-color: #dc2626;
+  color: #b91c1c; /* Rouge plus foncé au hover */
+  transform: translateY(-1px);
+}
+
+.btn-delete-full:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* --- FIN DU NOUVEAU STYLE --- */
+
 </style>

@@ -26,7 +26,7 @@ router.put(
 
 // Appelle la fonction event_delete dans ../controllers/event_Controller quand est appelé sur localhost:3000/event/delete
 router.delete(
-  "/delete/:user_id/:userRole",
+  "/delete/:id/:userRole/:user_id/",
   authorize("admin", "manager"),
   event_controller.event_delete,
 );

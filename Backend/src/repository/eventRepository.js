@@ -1,8 +1,8 @@
 const { db } = require("../config/database");
 
 const Event = {
- // fonction listAll qui permet de recuperer tous les evenements de la base de donnees
- listAll: (userId, userRole, callback) => {
+  // fonction listAll qui permet de recuperer tous les evenements de la base de donnees
+  listAll: (userId, userRole, callback) => {
     // requette sql pour recuperer tous les evenements
     const adminsql = "SELECT * FROM evenements;"; // pour admin
 
@@ -25,13 +25,13 @@ const Event = {
           console.error("DB ERROR :", err);
           return callback(err, null);
         }
-        db.query(eventIdsSql, [userId], (err, resultEventIds) => {
+        db.query(eventIdsSql, [userId], (err, resultsEventIds) => {
           if (err) {
-            console.error("DB ERROR :", err);
+            console.error("DB_ERROR :", err);
             return callback(err, null, null, null);
           }
 
-          const eventIds = (resultEventIds || []).map((r) => r.evenement_id);
+          const eventIds = (resultsEventIds || []).map((r) => r.evenement_id);
 
           if (eventIds.length === 0) {
             return callback(null, null, resultsLvlOne, []);
@@ -40,9 +40,9 @@ const Event = {
           db.query(secondSql, [eventIds], (err, resultsLvlTwo) => {
             if (err) {
               console.error("DB ERROR :", err);
-              return callback(err, null, null, null );
+              return callback(err, null, null, null);
             }
-            return callback(null, null, resultsLvlOne, resultsLvlTwo);
+            return callback(null, null, resultsLvlOne, resultsLvlTwo || []);
           });
         });
       });
@@ -338,12 +338,12 @@ const Event = {
     // fonction delete qui supprime un evenement de la table evenements a partir de son id
   delete: (eventId, callback) => {
   db.promise()
-    .query("SELECT id FROM evenements WHERE id = ?", [eventId])
+    .query("SELECT id, organisateur_id FROM evenements WHERE id = ?", [eventId])
     .then(([rows]) => {
       if (rows.length === 0) {
         const err = new Error("EVENT_NOT_FOUND");
         err.code = "EVENT_NOT_FOUND";
-        return callback(err);
+        throw err; // ⚠️ important
       }
 
       return db.promise().query(
@@ -351,9 +351,14 @@ const Event = {
         [eventId]
       );
     })
-    .then(() => callback(null))
-    .catch((err) => callback(err));
-},
+    .then(([results]) => {
+      return callback(null, {id: eventId});
+    })
+    .catch((err) => {
+      console.error("DB ERROR :", err);
+      return callback(err, null);
+    });
+  },
 
 
   // ... tes autres fonctions ...

@@ -366,35 +366,58 @@ exports.event_update = async (req, res) => {
 
 // Fonction qui permet de supprimer un événement, prend l'id de l'événement à supprimer depuis les paramètres de l'URL
 exports.event_delete = async (req, res) => {
+    // 1. Récupération de l'ID depuis l'URL (ex: /delete/9)
     const eventId = req.params.id;
+    const userId = req.user.id; // Récupéré via le Middleware Auth (Token JWT)
+    const userRole = req.user.role;
+    console.log(`[REQUEST] Suppression de l'événement ID: ${eventId} par l'utilisateur ${userId} (Role: ${userRole})`);
 
-    // 1. Validation via le Service (ton service utilise async/await)
-    const { isValid, err } = await validateDeleteEvent({ id: eventId });
+    // 2. Validation via ton Service (on passe un nombre pour éviter l'erreur "ID invalide")
+    const { isValid, errors } = validateDeleteEvent(Number(eventId));
     
+    console.log("Validation du champ ID:", { eventId, isValid, errors });
     if (!isValid) {
-        console.error("[VALIDATION_ERROR]", err);
-        return res.status(400).json({ error: "ID invalide", details: err });
+        console.error("[VALIDATION_ERROR]", errors);
+        return res.status(400).json({ error: "ID invalide", details: errors });
     }
-
-    // 2. Appel au Repository (style Callback)
-    Event.delete(eventId, (err, results) => {
+     console.log("ID validé, vérification de l'existence de l'événement et des droits de l'utilisateur...");
+    // 3. Appel au Repository pour vérifier l'existence et obtenir le créateur
+    // On adapte le premier appel pour récupérer les données de l'événement
+    Event.delete(eventId, (err, eventInfo) => {
+      console.log("Résultat de la vérification de l'événement:", { err, eventInfo });
         if (err) {
-            // Gestion erreur 404 (demandée par ton collègue)
             if (err.code === "EVENT_NOT_FOUND") {
                 console.error(`[NOT_FOUND] Événement ${eventId} inexistant.`);
                 return res.status(404).json({ error: "Événement introuvable" });
             }
-            // Gestion erreur 500
-            console.error("[DB_ERROR]", err.message);
-            return res.status(500).json({ error: "Erreur lors de la suppression" });
+            console.log("error",err)
+            return res.status(500).json({ error: "Erreur lors de la suppression", err });
+        }
+        console.log("action faite pass to confirm organizateur")
+        // --- PROTECTION DE PROPRIÉTÉ ---
+        // Seul le créateur (organisateur_id) ou un Admin peut supprimer
+        if (eventInfo.organisateur_id !== userId && userRole !== "admin") {
+            console.warn(`[FORBIDDEN] L'utilisateur ${userId} a tenté de supprimer l'événement de ${eventInfo.organisateur_id}`);
+            return res.status(403).json({ 
+                error: "Droit refusé : Vous ne pouvez supprimer que vos propres événements." 
+            });
         }
 
-        // 3. Succès
-        console.log(`[SUCCESS] Événement ${eventId} supprimé par ${req.user.id}`);
+        // 4. Si la vérification passe, on procède à la suppression réelle
+        console.log("action faite pass to confirm dellete")
+        console.log("SUCESS")
+        console.log(`[SUCCESS] Événement ${eventId} supprimé par son créateur (${userId})`);
         return res.status(200).json({ 
             message: "Événement supprimé avec succès", 
             id: eventId 
         });
+        // Event.confirmDelete(eventId, (deleteErr) => {
+        //     if (deleteErr) {
+        //         return res.status(500).json({ error: "Erreur lors de la suppression finale" });
+        //     }
+
+        //     // 5. Succès
+        // });
     });
 };
 
