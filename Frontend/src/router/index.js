@@ -46,7 +46,6 @@ const router = createRouter({
       path: '/event/create',
       name: 'event-create',
       component: EventView,
-      meta: { requiresRoles: ['admin', 'manager'] },
     },
     // {
     //   path: '/gestionTicket',
