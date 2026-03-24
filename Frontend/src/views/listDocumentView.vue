@@ -1,5 +1,6 @@
 <template>
   <div class="flex min-h-screen bg-[#F0FDFA]">
+    <DashboardSidebar :user="user" @logout="logout" />
     <main class="flex-1 p-10 overflow-auto">
       <div class="flex items-center justify-between mb-8">
         <h1 class="text-gray-900 font-bold text-[32px] font-['Poppins']">
@@ -77,8 +78,12 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { Plus, Filter, Download, Eye, Trash2 } from 'lucide-vue-next';
+import DashboardSidebar from '@/components/DashboardSidebar.vue';
 
+const router = useRouter();
+const user = ref(null);
 const documents = ref([]);
 
 const fetchDocuments = async () => {
@@ -130,5 +135,24 @@ const confirmerSuppression = (id) => {
     }
     };
 
-onMounted(fetchDocuments);
+const logout = () => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  router.push('/login');
+};
+
+onMounted(() => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    router.push('/login');
+    return;
+  }
+
+  const userStr = localStorage.getItem('user');
+  if (userStr) {
+    user.value = JSON.parse(userStr);
+  }
+
+  fetchDocuments();
+});
 </script>

@@ -88,10 +88,8 @@
         </div>
       </div>
     </div>
-    <<<<<<< HEAD
   </div>
 
-  ======= >>>>>>> feature/gestion-tickets-CT
 </template>
 
 <script>

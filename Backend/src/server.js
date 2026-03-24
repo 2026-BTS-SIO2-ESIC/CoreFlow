@@ -21,6 +21,7 @@ app.use(express.json());
 const eventRouter = require("./routes/eventRoutes");
 // La route mis par defaut pour aceder au calls events
 app.use("/api/event", eventRouter);
+app.use('/api/documents', documentRoutes);
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const ticketRoutes = require("./routes/ticketRoutes");
@@ -30,20 +31,10 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/ticket", ticketRoutes);
 app.use('/api/conges', congesRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
 
 // AJOUT : Rendre le dossier "uploads" accessible publiquement
 // "__dirname" c'est ton dossier "src". On fait "../uploads" pour remonter d'un cran.
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
-
-// Route de test santé
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'healthy',
-    uptime: process.uptime()
-  });
-});
 
 // Route de test
 app.get("/", (req, res) => {
