@@ -28,6 +28,7 @@ const ticketRoutes = require("./routes/ticketRoutes")
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/ticket", ticketRoutes)
+
 const congesRoutes = require('./routes/congesRoutes');
 app.use('/api/conges', congesRoutes);
 app.use('/api/auth', authRoutes);
@@ -43,26 +44,37 @@ app.use('/api/documents', documentRoutes);
 
 // Route de test santé
 app.get('/api/health', (req, res) => {
-  res.json({ 
+  res.json({
     status: 'healthy',
     uptime: process.uptime()
   });
 });
 
-app.get("/api/conges", (req, res) => {
+// Route de test
+app.get("/", (req, res) => {
+  res.json({
+    message: "Bienvenue sur l'API CoreFlow !",
+    status: "OK",
+    timestamp: new Date().toISOString(),
+  });
+});
 
-  const conges = [
-    {
-      id: 1,
-      nom: "Sophie Martin",
-      type: "Congé payé",
-      periode: "15 - 25 Déc 2024",
-      duree: "11 jours"
-    }
-  ]
+// Route de santé (health check)
+app.get("/api/health", (req, res) => {
+  res.json({
+    status: "healthy",
+    uptime: process.uptime(),
+  });
+});
 
-  res.json(conges)  
-})
+// Note: L'API /api/conges est déjà gérée par congesRoutes, pas besoin de doublon ci-dessous
+// app.get("/api/conges", (req, res) => {
+//   res.json({
+//     message: "API de gestion des congés",
+//     status: "OK",
+//     timestamp: new Date().toISOString(),
+//   }); 
+// })
 
 
 const { notFound, errorHandler } = require("./middlewares/errorMiddleware");
