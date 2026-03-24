@@ -16,15 +16,9 @@ testConnection();
 // Middlewares
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Les route event sont construit ici puis utiliser
-const eventRouter = require("./routes/eventRoutes");
-// La route mis par defaut pour aceder au calls events
-app.use("/api/event", eventRouter);
-const authRoutes = require("./routes/authRoutes");
-const userRoutes = require("./routes/userRoutes");
-const ticketRoutes = require("./routes/ticketRoutes")
-
+// Routes API
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/ticket", ticketRoutes)
@@ -36,11 +30,7 @@ app.use('/api/users', userRoutes);
 
 // AJOUT : Rendre le dossier "uploads" accessible publiquement
 // "__dirname" c'est ton dossier "src". On fait "../uploads" pour remonter d'un cran.
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-
-// AJOUT : Branchement des APIs
-// Dès qu'une requête commence par /api/documents, on l'envoie vers documentRoutes.js
-app.use('/api/documents', documentRoutes);
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 // Route de test santé
 app.get('/api/health', (req, res) => {
@@ -76,8 +66,6 @@ app.get("/api/health", (req, res) => {
 //   }); 
 // })
 
-
-const { notFound, errorHandler } = require("./middlewares/errorMiddleware");
 app.use(notFound);
 app.use(errorHandler);
 
