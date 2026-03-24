@@ -1,0 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Mulish:wght@400;500;600&display=swap');
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+body {
+  margin: 0;
+  background-color: #f9fafb;
+  font-family: 'Mulish', sans-serif;
+}
