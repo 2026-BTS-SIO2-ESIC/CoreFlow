@@ -43,7 +43,7 @@
         </li>
       </ul>
 
-      <RouterLink to="/evenements" class="nav-item">
+      <RouterLink to="/event/create" class="nav-item" :class="{ active: activeItem === 'events' }">
         <div class="nav-icon">
           <svg viewBox="0 0 24 24">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -58,14 +58,15 @@
       <RouterLink to="/documents/list" class="nav-item">
         <div class="nav-icon">
           <svg viewBox="0 0 24 24">
-            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+            <path
+              d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"
+            ></path>
           </svg>
         </div>
         Documents
       </RouterLink>
 
-      <RouterLink 
-        to="/tickets" class="nav-item">
+      <RouterLink to="/tickets" class="nav-item">
         <div class="nav-icon">
           <svg viewBox="0 0 24 24">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -106,23 +107,23 @@ export default {
   props: {
     user: {
       type: Object,
-      default: null
+      default: null,
     },
     loading: {
       type: Boolean,
-      default: false
-    }
+      default: false,
+    },
   },
   computed: {
     canManageUsers() {
-      const role = this.user?.role?.toLowerCase();
-      return role === 'admin' || role === 'manager';
+      const role = this.user?.role?.toLowerCase()
+      return role === 'admin' || role === 'manager'
     },
     canValidateConges() {
-      const role = this.user?.role?.toLowerCase();
-      return role === 'rh' || role === 'manager';
-    }
-  }
+      const role = this.user?.role?.toLowerCase()
+      return role === 'rh' || role === 'manager'
+    },
+  },
 }
 </script>
 
@@ -183,7 +184,9 @@ export default {
   padding: 10px 12px;
   color: #6b7280;
   text-decoration: none;
-  transition: background 0.18s ease, color 0.18s ease;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease;
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
@@ -266,7 +269,9 @@ svg {
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
 }
 
 .btn-logout:hover {

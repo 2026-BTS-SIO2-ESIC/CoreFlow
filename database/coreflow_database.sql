@@ -181,6 +181,8 @@ CREATE TABLE `evenements` (
   `statut`           ENUM('planifie','en_cours','termine','annule') DEFAULT 'planifie',
   `created_at`       TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
   `updated_at`       TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  `niveau` ENUM('1', '2') DEFAULT '1',
   PRIMARY KEY (`id`),
   KEY `idx_organisateur` (`organisateur_id`),
   KEY `idx_dates`        (`date_debut`, `date_fin`),

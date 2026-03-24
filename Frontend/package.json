@@ -17,6 +17,7 @@
     "axios": "^1.13.6",
     "dayjs": "^1.11.20",
     "lucide-vue-next": "^0.576.0",
+    "choco": "^0.2.1",
     "pinia": "^3.0.4",
     "sweetalert2": "^11.26.24",
     "tailwind": "^4.0.0",
