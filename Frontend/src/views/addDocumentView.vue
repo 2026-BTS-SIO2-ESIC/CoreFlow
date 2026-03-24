@@ -1,6 +1,11 @@
 <template>
   <main class="min-h-screen bg-[#F0FDFA] flex justify-center p-12">
-    
+      <DashboardSidebar
+        :user="user"
+        :loading="false"
+        @logout="logout"
+      />
+      
     <div class="w-full max-w-2xl">
       
       <div class="mb-10">
@@ -113,7 +118,13 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import DashboardSidebar from '@/components/DashboardSidebar.vue';
+
+import { onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+const user = ref(null);
 
 // Variables
 const titre = ref('');
@@ -126,6 +137,25 @@ const inputFichier = ref(null);
 const message = ref('');
 const isSuccess = ref(false);
 const isLoading = ref(false);
+
+onMounted(() => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    router.push('/login');
+    return;
+  }
+
+  const userStr = localStorage.getItem('user');
+  if (userStr) {
+    user.value = JSON.parse(userStr);
+  }
+});
+
+const logout = () => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  router.push('/login');
+};
 
 // Fonctions d'interaction fichier
 const declencherInputFichier = () => inputFichier.value.click();

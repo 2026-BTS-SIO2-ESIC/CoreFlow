@@ -25,6 +25,88 @@ exports.findCongesByUserId = async (userId) => {
   return rows;
 };
 
+// Récupérer tous les congés (pour les RH)
+exports.findAllConges = async () => {
+  const [rows] = await pool.query(
+    `
+    SELECT 
+      c.id,
+      c.user_id,
+      u.nom,
+      u.prenom,
+      c.type_conge,
+      c.date_debut,
+      c.date_fin,
+      c.nb_jours,
+      c.motif,
+      c.statut,
+      c.commentaire_validateur,
+      c.created_at
+    FROM conges c
+    JOIN utilisateurs u ON c.user_id = u.id
+    ORDER BY c.created_at DESC
+    `
+  );
+
+  return rows;
+};
+
+// Récupérer les congés en attente (pour les RH)
+exports.findPendingConges = async () => {
+  const [rows] = await pool.query(
+    `
+    SELECT 
+      c.id,
+      c.user_id,
+      u.nom,
+      u.prenom,
+      c.type_conge,
+      c.date_debut,
+      c.date_fin,
+      c.nb_jours,
+      c.motif,
+      c.statut,
+      c.commentaire_validateur,
+      c.created_at
+    FROM conges c
+    JOIN utilisateurs u ON c.user_id = u.id
+    WHERE c.statut = 'en_attente'
+    ORDER BY c.created_at DESC
+    `
+  );
+
+  return rows;
+};
+
+// Update du statut d'un congé
+exports.updateStatut = async (congeId, statut) => {
+  const [result] = await pool.query(
+    `
+    UPDATE conges
+    SET statut = ?
+    WHERE id = ?
+    `,
+    [statut, congeId]
+  );
+  return result;
+};
+
+// Statistiques des congés
+exports.getStats = async () => {
+  const [rows] = await pool.query(
+    ` 
+    SELECT
+      COUNT(*) as total,
+      SUM(statut = 'en_attente') as en_attente,
+      SUM(statut = 'approuve') as valide,
+      SUM(statut = 'refuse') as refuse,
+      SUM(statut = 'annule') as annule
+    FROM conges
+    `
+  );
+  return rows[0];
+};
+
 // Récupérer le solde d'un utilisateur pour une année
 exports.findSoldeByUserIdAndYear = async (userId, annee) => {
   const [rows] = await pool.query(
@@ -229,4 +311,29 @@ exports.findOverlappingCongeByUserId = async (userId, dateDebut, dateFin) => {
   );
 
   return rows[0] || null;
+};
+
+// Validation d'une demande de congé (approuver ou refuser)
+
+exports.findPending = async () => {
+  const [rows] = await pool.query(
+    "SELECT * FROM conges WHERE statut = 'en_attente'"
+  );
+  return rows;
+};
+
+exports.updateStatut = async (id, statut) => {
+  // Ne changer le statut que si la demande est encore en attente
+  const [result] = await pool.query(
+    "UPDATE conges SET statut = ? WHERE id = ? AND statut = 'en_attente'",
+    [statut, id]
+  );
+  return result;
+};
+
+exports.countPending = async () => {
+  const [rows] = await pool.query(
+    "SELECT COUNT(*) as total FROM conges WHERE statut = 'en_attente'"
+  );
+  return rows[0].total;
 };

@@ -1,9 +1,10 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 require("dotenv").config();
 const { testConnection } = require("./config/database");
 
-// Import de tes routes (Ton code)
+// Import de routes 
 const documentRoutes = require('./routes/documentRoutes');
 
 const app = express();
@@ -22,33 +23,28 @@ const eventRouter = require("./routes/eventRoutes");
 app.use("/api/event", eventRouter);
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
-const congesRoutes = require('./routes/congesRoutes');
+const ticketRoutes = require("./routes/ticketRoutes");
+const congesRoutes = require('./routes/congesRoutes')
+
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/ticket", ticketRoutes);
 app.use('/api/conges', congesRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 
 // AJOUT : Rendre le dossier "uploads" accessible publiquement
 // "__dirname" c'est ton dossier "src". On fait "../uploads" pour remonter d'un cran.
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
-// AJOUT : Branchement des APIs
-// Dès qu'une requête commence par /api/documents, on l'envoie vers documentRoutes.js
-app.use('/api/documents', documentRoutes);
-
-
-// --- TES ROUTES DE TEST (On les garde !) ---
-app.get('/', (req, res) => {
-  res.json({ 
-    message: 'Bienvenue sur l\'API CoreFlow !',
-    status: 'OK',
-    timestamp: new Date().toISOString()
+// Route de test santé
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'healthy',
+    uptime: process.uptime()
   });
 });
 
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'healthy',
-    uptime: process.uptime()
 // Route de test
 app.get("/", (req, res) => {
   res.json({
@@ -66,22 +62,16 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-app.get("/api/conges", (req, res) => {
+// Note: L'API /api/conges est déjà gérée par congesRoutes, pas besoin de doublon ci-dessous
+// app.get("/api/conges", (req, res) => {
+//   res.json({
+//     message: "API de gestion des congés",
+//     status: "OK",
+//     timestamp: new Date().toISOString(),
+//   }); 
+// })
 
-  const conges = [
-    {
-      id: 1,
-      nom: "Sophie Martin",
-      type: "Congé payé",
-      periode: "15 - 25 Déc 2024",
-      duree: "11 jours"
-    }
-  ]
-
-  res.json(conges)
-})
-// Middleware de gestion d'erreurs (TOUJOURS EN DERNIER)
-const { notFound, errorHandler } = require("./middlewares/errorMiddleware");
+const { notFound, errorHandler } = require('./middlewares/errorMiddleware');
 app.use(notFound);
 app.use(errorHandler);
 

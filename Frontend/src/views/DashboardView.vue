@@ -194,7 +194,12 @@ export default {
       localStorage.removeItem('user');
       this.$router.push('/login');
     },
-
+    goToAdminPanel() {
+      this.$router.push('/admin/users');
+    },
+    goToGestionTicket() {
+      this.$router.push('/gestionTicket');
+    },
     openPasswordModal() {
       this.modalError = null;
       this.modalSuccess = null;
@@ -226,6 +231,7 @@ export default {
 
       const token = localStorage.getItem('token');
       this.modalLoading = true;
+    
       try {
         const res = await fetch(`${API_URL}/api/users/password`, {
           method: 'PUT',

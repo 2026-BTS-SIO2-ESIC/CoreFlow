@@ -1,101 +1,132 @@
 <template>
     <div class="conges-page">
-        <DashboardSidebar
-            :user="user"
-            :loading="false"
-            @logout="logout"
-        />
+        <DashboardSidebar :user="user" :loading="false" @logout="logout" />
 
         <div class="conges-container">
-        <h1>Nouvelle demande de congé</h1>
-        <div v-if="solde" class="solde-box">
-            <div class="solde-item">
-                <strong>RTT restants :</strong> {{ solde.rtt_restants }}
+            <h1>Nouvelle demande de congé</h1>
+            <div v-if="solde" class="solde-box">
+                <div class="solde-item">
+                    <strong>RTT restants :</strong> {{ solde.rtt_restants }}
+                </div>
+            </div>
+            <div v-if="message" :class="['message', messageType]">
+                {{ message }}
+            </div>
+
+            <form class="form" @submit.prevent="submit">
+                <div class="form-group">
+                    <label for="date-debut">Date de début <span class="required">*</span></label>
+                    <input id="date-debut" type="date" v-model="dateDebut" :min="today" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="date-fin">Date de fin <span class="required">*</span></label>
+                    <input id="date-fin" type="date" v-model="dateFin" :min="dateDebut || today" required />
+                </div>
+
+                <div v-if="erreurDates" class="erreur">
+                    ⚠️ La date de fin doit être après ou égale à la date de début.
+                </div>
+
+                <div class="duree" v-if="duree !== null">
+                    Durée : <strong>{{ duree }}</strong> jour(s)
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="motif">Motif (optionnel)</label>
+                    <textarea id="motif" v-model="motif" placeholder="Ex : Vacances, rendez-vous..."></textarea>
+                </div>
+
+                <div class="actions">
+                    <button type="button" class="btn btn-secondary" @click="resetForm">Annuler</button>
+                    <button type="submit " class="btn btn-primary"> Soumettre la demande</button>
+                </div>
+            </form>
+            <!-- Liste des demandes (sous le formulaire) -->
+            <div class="liste">
+                <div class="liste-header">
+                    <h2>Mes demandes</h2>
+                    <button type="button" class="btn btn-secondary" @click="chargerDemandes">
+                         Rafraîchir
+                    </button>
+                </div>
+
+                <div v-if="loading" class="empty">
+                    Chargement des demandes...
+                </div>
+
+                <div v-else-if="demandes.length === 0" class="empty">
+                    Aucune demande pour le moment.
+                </div>
+
+                <div v-else>
+                    <!-- Demandes en attente -->
+                    <div v-if="demandesEnAttente.length > 0" class="section">
+                        <h3 class="section-title"> Demandes en attente</h3>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Date demande</th>
+                                    <th>Date début</th>
+                                    <th>Date fin</th>
+                                    <th>Motif</th>
+                                    <th>Statut</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="d in demandesEnAttente" :key="d.id">
+                                    <td>{{ formatDateTime(d.created_at) }}</td>
+                                    <td>{{ formatDate(d.date_debut) }}</td>
+                                    <td>{{ formatDate(d.date_fin) }}</td>
+                                    <td>{{ d.motif || '-' }}</td>
+                                    <td>
+                                        <span :class="['badge', 'badge-en_attente']">
+                                            En attente
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-small btn-danger" @click="annuler(d.id)">
+                                            Annuler
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Demandes traitées -->
+                    <div v-if="demandesTraitees.length > 0" class="section">
+                        <h3 class="section-title"> Demandes traitées</h3>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Date demande</th>
+                                    <th>Date début</th>
+                                    <th>Date fin</th>
+                                    <th>Motif</th>
+                                    <th>Statut final</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="d in demandesTraitees" :key="d.id"
+                                    :class="{ 'row-refused': d.statut === 'refuse', 'row-approved': d.statut === 'approuve' }">
+                                    <td>{{ formatDateTime(d.created_at) }}</td>
+                                    <td>{{ formatDate(d.date_debut) }}</td>
+                                    <td>{{ formatDate(d.date_fin) }}</td>
+                                    <td>{{ d.motif || '-' }}</td>
+                                    <td>
+                                        <span :class="['badge', `badge-${d.statut}`]">
+                                            {{ formatStatut(d.statut) }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
-        <div v-if="message" :class="['message', messageType]">
-            {{ message }}
-        </div>
-
-        <form class="form" @submit.prevent="submit">
-            <div class="form-group">
-                <label for="date-debut">Date de début <span class="required">*</span></label>
-                <input id="date-debut" type="date" v-model="dateDebut" :min="today" required />
-            </div>
-
-            <div class="form-group">
-                <label for="date-fin">Date de fin <span class="required">*</span></label>
-                <input id="date-fin" type="date" v-model="dateFin" :min="dateDebut || today" required />
-            </div>
-
-            <div v-if="erreurDates" class="erreur">
-                ⚠️ La date de fin doit être après ou égale à la date de début.
-            </div>
-
-            <div class="duree" v-if="duree !== null">
-                Durée : <strong>{{ duree }}</strong> jour(s)
-            </div>
-
-            <div class="form-group full-width">
-                <label for="motif">Motif (optionnel)</label>
-                <textarea id="motif" v-model="motif" placeholder="Ex : Vacances, rendez-vous..."></textarea>
-            </div>
-
-            <div class="actions">
-                <button type="button" class="btn btn-secondary" @click="resetForm">Annuler</button>
-                <button type="submit " class="btn btn-primary">📤 Soumettre la demande</button>
-            </div>
-        </form>
-        <!-- Liste des demandes (sous le formulaire) -->
-        <div class="liste">
-            <div class="liste-header">
-                <h2>Mes demandes</h2>
-                <button type="button" class="btn btn-secondary" @click="chargerDemandes">
-                    🔄 Rafraîchir
-                </button>
-            </div>
-
-            <div v-if="loading" class="empty">
-                Chargement des demandes...
-            </div>
-
-            <div v-else-if="demandes.length === 0" class="empty">
-                Aucune demande pour le moment.
-            </div>
-
-            <table v-else class="table">
-                <thead>
-                    <tr>
-                        <th>Date demande</th>
-                        <th>Date début</th>
-                        <th>Date fin</th>
-                        <th>Motif</th>
-                        <th>Statut</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    <tr v-for="d in demandes" :key="d.id">
-                        <td>{{ formatDateTime(d.created_at) }}</td>
-                        <td>{{ formatDate(d.date_debut) }}</td>
-                        <td>{{ formatDate(d.date_fin) }}</td>
-                        <td>{{ d.motif || '-' }}</td>
-                        <td>
-                            <span :class="['badge', d.statut]">
-                                {{ formatStatut(d.statut) }}
-                            </span>
-                        </td>
-                        <td>
-                            <button v-if="d.statut === 'en_attente'" class="btn btn-secondary" @click="annuler(d.id)">
-                                Annuler
-                            </button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
     </div>
 </template>
 
@@ -177,6 +208,15 @@ const duree = computed(() => {
     return diffJours
 })
 
+/* -- Séparer les demandes en attente et traitées -- */
+const demandesEnAttente = computed(() => {
+    return demandes.value.filter(d => d.statut === 'en_attente')
+})
+
+const demandesTraitees = computed(() => {
+    return demandes.value.filter(d => d.statut !== 'en_attente')
+})
+
 /* -- Réinitialiser le formulaire -- */
 function resetForm() {
     dateDebut.value = ''
@@ -230,7 +270,7 @@ async function submit() {
         })
 
         messageType.value = "success"
-        message.value = "✅ Demande envoyée."
+        message.value = " Demande envoyée."
 
         dateDebut.value = ""
         dateFin.value = ""
@@ -248,7 +288,7 @@ async function annuler(id) {
         await annulerConge(id);
 
         messageType.value = "success";
-        message.value = "✅ Demande annulée avec succès.";
+        message.value = " Demande annulée avec succès.";
 
         await chargerDemandes();
     } catch (e) {
@@ -335,30 +375,75 @@ async function chargerSolde() {
 
 .badge {
     display: inline-block;
-    padding: 6px 10px;
-    border-radius: 999px;
+    padding: 6px 12px;
+    border-radius: 20px;
     font-size: 12px;
-    font-weight: 700;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    border: 1px solid;
 }
 
-.badge.en_attente {
-    background: #fef3c7;
+.badge-en_attente {
+    background: #fed7aa;
     color: #92400e;
+    border-color: #fbbf24;
 }
 
-.badge.approuve {
-    background: #d1fae5;
-    color: #065f46;
+.badge-approuve {
+    background: #dcfce7;
+    color: #166534;
+    border-color: #22c55e;
 }
 
-.badge.refuse {
+.badge-refuse {
     background: #fee2e2;
     color: #991b1b;
+    border-color: #ef4444;
 }
 
-.badge.annule {
+.badge-annule {
     background: #e5e7eb;
     color: #374151;
+    border-color: #d1d5db;
+}
+
+.section {
+    margin-bottom: 28px;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.section-title {
+    margin: 0 0 16px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #111827;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.liste-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.liste-header h2 {
+    margin: 0;
+    font-size: 18px;
+    color: #111827;
+}
+
+.row-refused {
+    background: #fef2f2;
+}
+
+.row-approved {
+    background: #f0fdf4;
 }
 
 .empty {
