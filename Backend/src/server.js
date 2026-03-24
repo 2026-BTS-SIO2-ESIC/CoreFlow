@@ -35,11 +35,7 @@ app.use('/api/users', userRoutes);
 
 // AJOUT : Rendre le dossier "uploads" accessible publiquement
 // "__dirname" c'est ton dossier "src". On fait "../uploads" pour remonter d'un cran.
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-
-// AJOUT : Branchement des APIs
-// Dès qu'une requête commence par /api/documents, on l'envoie vers documentRoutes.js
-app.use('/api/documents', documentRoutes);
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 // Route de test santé
 app.get('/api/health', (req, res) => {
@@ -75,8 +71,6 @@ app.get("/api/health", (req, res) => {
 //   }); 
 // })
 
-
-const { notFound, errorHandler } = require("./middlewares/errorMiddleware");
 app.use(notFound);
 app.use(errorHandler);
 

@@ -1,29 +1,73 @@
 const { pool } = require('../config/database');
-const bcrypt = require('bcrypt');
 
+const TicketRepository = {
+    // 1. Créer un nouveau ticket
+    create: async (ticketData) => {
+        const sql = `INSERT INTO tickets 
+            (titre, description, categorie, statut, priorite, demandeur_id) 
+            VALUES (?, ?, ?, ?, ?, ?)`;
 
-async function getAllTickets() {
-	const [rows] = await pool.query(
-		"SELECT id, titre, description, categorie, statut, demandeur_id, assigne_a_id, updated_at FROM tickets ORDER by id ASC"
-	);
-	return rows;
-}
+        const values = [
+            ticketData.titre,
+            ticketData.description,
+            ticketData.categorie || "Informatique",
+            "ouvert",
+            "normale",
+            ticketData.demandeur_id,
+        ];
 
-async function getItTickets() {
- const [rows] = await pool.query(
-		"SELECT id, titre, description, statut, demandeur_id, updated_at FROM tickets WHERE categorie = 'it' ORDER by id ASC"
-	);
-	return rows;
-}
-async function getRhTickets() {
- const [rows] = await pool.query(
-		"SELECT id, titre, description, statut, demandeur_id, updated_at FROM tickets WHERE categorie = 'rh' ORDER by id ASC"
-	);
-	return rows;
-}
+        const [result] = await pool.query(sql, values);
+        return result.insertId;
+    },
 
-module.exports = {
-    getAllTickets,
-    getItTickets,
-    getRhTickets,
-}
+    // 2. Liste de TOUS les tickets (Admin)
+    getAllTickets: async () => {
+        const [rows] = await pool.query(
+            "SELECT id, titre, description, categorie, statut, demandeur_id, assigne_a_id, updated_at FROM tickets ORDER by id ASC"
+        );
+        return rows;
+    },
+
+    // 3. Liste des tickets IT
+    getItTickets: async () => {
+        const [rows] = await pool.query(
+            "SELECT id, titre, description, statut, demandeur_id, updated_at FROM tickets WHERE categorie = 'it' ORDER by id ASC"
+        );
+        return rows;
+    },
+
+    // 4. Liste des tickets RH
+    getRhTickets: async () => {
+        const [rows] = await pool.query(
+            "SELECT id, titre, description, statut, demandeur_id, updated_at FROM tickets WHERE categorie = 'rh' ORDER by id ASC"
+        );
+        return rows;
+    },
+
+    // 5. Récupérer les tickets d'un utilisateur spécifique (Client)
+    getByUserId: async (userId) => {
+        const sql = `
+            SELECT t.*, u.nom, u.prenom, u.departement
+            FROM tickets t
+            JOIN utilisateurs u ON t.demandeur_id = u.id
+            WHERE t.demandeur_id = ?
+            ORDER BY t.created_at DESC`;
+
+        const [rows] = await pool.query(sql, [userId]);
+        return rows;
+    },
+
+    // 6. Détails d'un ticket précis
+    getById: async (idTicket) => {
+        const sql = `
+            SELECT t.*, u.nom, u.prenom, u.departement
+            FROM tickets t
+            JOIN utilisateurs u ON t.demandeur_id = u.id
+            WHERE t.id = ?`;
+
+        const [rows] = await pool.query(sql, [idTicket]);
+        return rows[0];
+    }
+};
+
+module.exports = TicketRepository;
