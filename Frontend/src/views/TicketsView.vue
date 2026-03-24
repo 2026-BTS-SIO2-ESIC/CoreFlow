@@ -228,6 +228,17 @@ export default {
   },
 
   async mounted() {
+    const token = localStorage.getItem('token')
+    if (!token) {
+      this.$router.push('/login')
+      return
+    }
+
+    const userStr = localStorage.getItem('user')
+    if (userStr) {
+      this.user = JSON.parse(userStr)
+    }
+
     await this.fetchTickets()
     // const API = 'http://localhost:3000/api/ticket/tickets' // on définit l'URL de l'API pour récupérer les tickets
     // const API_It = 'http://localhost:3000/api/ticket/itTickets' // on définit l'URL de l'API pour récupérer les tickets
@@ -270,7 +281,7 @@ export default {
     // 1. La méthode fetchTickets mise à jour pour prendre en compte le filtre "Mes tickets" vs "Tous les tickets"
     async fetchTickets() {
       const userStr = localStorage.getItem('user')
-      const stockedUser = JSON.parse(localStorage.getItem('user'))
+      const stockedUser = userStr ? JSON.parse(userStr) : null
       const role = stockedUser?.role
       if (!userStr) {
         this.$router.push('/login')

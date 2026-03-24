@@ -71,6 +71,7 @@ app.get("/api/health", (req, res) => {
 //   }); 
 // })
 
+const { notFound, errorHandler } = require('./middlewares/errorMiddleware');
 app.use(notFound);
 app.use(errorHandler);
 

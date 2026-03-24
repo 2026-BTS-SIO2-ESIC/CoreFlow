@@ -65,7 +65,6 @@
       </RouterLink>
 
       <RouterLink 
-        v-if="canAccessSupport"
         to="/tickets" class="nav-item">
         <div class="nav-icon">
           <svg viewBox="0 0 24 24">

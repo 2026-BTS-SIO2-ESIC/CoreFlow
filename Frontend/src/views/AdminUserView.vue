@@ -203,11 +203,7 @@
               Création du compte
             </div>
             <div class="info-box-content">
-<<<<<<< HEAD
               Un solde de congés par défaut sera automatiquement créé (10 jours de RTT).
-=======
-              Un solde de congés par défaut sera automatiquement créé (25 jours de congés payés + 10 RTT).
->>>>>>> feature/gestion-tickets-CT
             </div>
           </div>
 
