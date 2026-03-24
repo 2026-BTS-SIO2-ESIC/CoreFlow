@@ -2,7 +2,7 @@ const { db } = require("../config/database");
 
 const Event = {
   // fonction listAll qui permet de recuperer tous les evenements de la base de donnees
-  listAll: (userId, userRole, callback) => {
+  listAll: (userId, userRole, typeFilter, callback) => {
     // requette sql pour recuperer tous les evenements
     const adminsql = "SELECT * FROM evenements;"; // pour admin
 
@@ -60,7 +60,7 @@ const Event = {
         console.error("DB ERROR :", err);
         return callback(err, null, null, null);
       }
-      return callback(null, resultsLvlOne, resultsLvlTwo || []);
+      return callback(null, results || []);
     });
   },
 
@@ -364,26 +364,29 @@ const Event = {
   // ... tes autres fonctions ...
 
   // Récupérer les événements passés (date_fin < maintenant)
-  listPast: (userId, callback) => {
-    const sql = `
-      SELECT e.* FROM evenements e 
-      JOIN participations p ON e.id = p.evenement_id 
-      WHERE p.user_id = ? AND e.date_fin < NOW()
-      ORDER BY e.date_fin DESC
-    `;
-    db.query(sql, [userId], callback);
-  },
+// Récupérer les événements passés
+listPast: (userId, callback) => {
+  const sql = `
+    SELECT DISTINCT e.* FROM evenements e 
+    LEFT JOIN participations p ON e.id = p.evenement_id 
+    WHERE (p.user_id = ? OR e.organisateur_id = ?) 
+    AND e.date_fin < NOW()
+    ORDER BY e.date_fin DESC
+  `;
+  db.query(sql, [userId, userId], callback);
+},
 
-  // Récupérer les événements à venir (date_debut > maintenant)
-  listFuture: (userId, callback) => {
-    const sql = `
-      SELECT e.* FROM evenements e 
-      JOIN participations p ON e.id = p.evenement_id 
-      WHERE p.user_id = ? AND e.date_debut > NOW()
-      ORDER BY e.date_debut ASC
-    `;
-    db.query(sql, [userId], callback);
-  },
+// Récupérer les événements à venir
+listFuture: (userId, callback) => {
+  const sql = `
+    SELECT DISTINCT e.* FROM evenements e 
+    LEFT JOIN participations p ON e.id = p.evenement_id 
+    WHERE (p.user_id = ? OR e.organisateur_id = ?) 
+    AND e.date_debut > NOW()
+    ORDER BY e.date_debut ASC
+  `;
+  db.query(sql, [userId, userId], callback);
+},
 
   updateParticipation: (eventId, userId, status, callback) => {
   const sql = "UPDATE participations SET statut = ?, updated_at = NOW() WHERE evenement_id = ? AND user_id = ?";

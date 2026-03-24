@@ -169,13 +169,13 @@
           </div>
 
           <div v-if="canDelete" class="modal-footer">
-  <button @click="handleDelete" :disabled="deleting" class="btn-delete-full">
-    <svg v-if="!deleting" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-    </svg>
-    <span>{{ deleting ? 'Suppression...' : 'Supprimer cet événement' }}</span>
-  </button>
-</div>
+            <button @click="handleDelete" :disabled="deleting" class="btn-delete-full">
+              <svg v-if="!deleting" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              <span>{{ deleting ? 'Suppression...' : 'Supprimer cet événement' }}</span>
+            </button>
+          </div>
 
         </div>
       </div>
@@ -218,27 +218,44 @@ export default {
       deleting: false,
     }
   },
-  computed: {
-    canDelete() {
-      if (!this.event) return false;
+computed: {
+  canDelete() {
+    console.log("===== DEBUG canDelete SIMPLE TOKEN =====");
 
-      const token = localStorage.getItem('token');
-      if (!token) return false;
+    if (!this.event) return false;
 
-      try {
-        // Décode le milieu du JWT (le payload) qui contient id et role
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        
-        // Vérifie si l'ID utilisateur du token match l'organisateur_id de la DB
-        const isOwner = this.event.organisateur_id === payload.id;
-        const isAdmin = payload.role === 'admin' || payload.role === 'manager';
+    const token = localStorage.getItem('token');
+    if (!token) return false;
 
-        return isOwner || isAdmin;
-      } catch (e) {
-        return false;
-      }
+    try {
+      // Décodage DIRECT (pas de split)
+      const payload = JSON.parse(atob(token));
+
+      console.log("Payload :", payload);
+
+      const currentUserId = Number(payload.userId);
+
+      const organisateurId = Number(
+        this.event.organisateur_id ||
+        this.event.organisateurId ||
+        this.event.user_id
+      );
+
+      console.log("User ID :", currentUserId);
+      console.log("Organisateur ID :", organisateurId);
+
+      const isOwner = currentUserId === organisateurId;
+
+      console.log("Résultat :", isOwner);
+
+      return isOwner;
+
+    } catch (e) {
+      console.error("Erreur canDelete:", e);
+      return false;
     }
-  },
+  }
+},
   watch: {
     eventId: {
       handler(newId) {
@@ -269,6 +286,7 @@ export default {
         })
         const data = await res.json()
         if (res.ok && data.event && data.event.length) {
+          console.log("DEBUG EVENT DATA:", data.event[0]);
           this.event = data.event[0]
         } else if (data.error?.message) {
           this.error = data.error.message
@@ -303,42 +321,60 @@ export default {
     },
 
     async handleDelete() {
-  if (!confirm("Voulez-vous vraiment supprimer cet événement ?")) return;
+  console.log("===== CLICK DELETE =====");
+
+  if (!confirm("Voulez-vous vraiment supprimer cet événement ?")) {
+    console.log("❌ Suppression annulée");
+    return;
+  }
 
   try {
     const token = localStorage.getItem('token');
-    if (!token) return alert("Session expirée");
+    console.log("TOKEN :", token);
 
-    // 1. Décodage du token pour récupérer tes infos (id et role)
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    const currentUserId = payload.id;
-    const currentUserRole = payload.role;
+    if (!token) {
+      alert("Session expirée");
+      return;
+    }
 
-    // 2. Construction de l'URL exacte qui a marché dans ton test
-    // Format: /delete/:id/:userRole/:user_id/
+    // ⚠️ ton token n'est PAS un JWT → décodage simple
+    const payload = JSON.parse(atob(token));
+    console.log("Payload :", payload);
+
+    const currentUserId = payload.userId;
+    const currentUserRole = payload.role || "user"; // fallback
+
+    console.log("User ID :", currentUserId);
+    console.log("User Role :", currentUserRole);
+
     const deleteUrl = `${API_URL}/event/delete/${this.event.id}/${currentUserRole}/${currentUserId}`;
-
-    console.log("Tentative de suppression via :", deleteUrl);
+    console.log("URL DELETE :", deleteUrl);
 
     this.deleting = true;
+
     const res = await fetch(deleteUrl, {
       method: 'DELETE',
-      headers: { 
+      headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
     });
 
+    console.log("STATUS HTTP :", res.status);
+
+    const data = await res.json();
+    console.log("RESPONSE :", data);
+
     if (res.ok) {
-      alert("Événement supprimé avec succès !");
-      this.$emit('close'); 
-      location.reload(); // Pour rafraîchir le dashboard et libérer la salle (Point 4)
+      alert("✅ Événement supprimé !");
+      this.$emit('close');
+      location.reload();
     } else {
-      const data = await res.json();
       alert(data.error || "Erreur lors de la suppression");
     }
+
   } catch (e) {
-    console.error("Erreur suppression:", e);
+    console.error("❌ Erreur suppression:", e);
     alert("Erreur technique lors de la suppression.");
   } finally {
     this.deleting = false;
