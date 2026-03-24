@@ -1,5 +1,10 @@
 <template>
   <div class="page">
+    <DashboardSidebar
+      :user="null"
+      :loading="false"
+      @logout="logout"
+    />
 
     <header class="header">
       <div class="logo">
@@ -128,6 +133,8 @@
 </template>
 
 <script>
+import DashboardSidebar from '@/components/DashboardSidebar.vue';
+
 import axios from "axios"
 
 export default {

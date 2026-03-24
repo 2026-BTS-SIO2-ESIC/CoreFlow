@@ -4,7 +4,7 @@ const path = require("path");
 require("dotenv").config();
 const { testConnection } = require("./config/database");
 
-// Import de tes routes (Ton code)
+// Import de routes 
 const documentRoutes = require('./routes/documentRoutes');
 
 const app = express();
