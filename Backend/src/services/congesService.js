@@ -54,19 +54,19 @@ exports.createConge = async (userId, congeData) => {
 
   const annee = new Date().getFullYear();
 
-const congeChevauchant = await congesRepository.findOverlappingCongeByUserId(
-  userId,
-  date_debut,
-  date_fin
-);
-
-if (congeChevauchant) {
-  const error = new Error(
-    'Une demande de congé existe déjà sur cette période (en attente ou approuvée)'
+  const congeChevauchant = await congesRepository.findOverlappingCongeByUserId(
+    userId,
+    date_debut,
+    date_fin
   );
-  error.statusCode = 400;
-  throw error;
-}
+
+  if (congeChevauchant) {
+    const error = new Error(
+      'Une demande de congé existe déjà sur cette période (en attente ou approuvée)'
+    );
+    error.statusCode = 400;
+    throw error;
+  }
 
   const solde = await congesRepository.findSoldeByUserIdAndYear(userId, annee);
 
@@ -140,4 +140,61 @@ exports.annulerConge = async (userId, congeId) => {
   const updatedConge = await congesRepository.findCongeById(congeId);
 
   return updatedConge;
+};
+
+exports.getStats = async () => {
+  const stats = await congesRepository.getStats();
+  return stats;
+};
+
+exports.getAllConges = async () => {
+  return await congesRepository.findAllConges();
+};
+
+exports.valider = async (id) => {
+  const conge = await congesRepository.findCongeById(id);
+  if (!conge) {
+    const error = new Error('Congé introuvable');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (conge.statut !== 'en_attente') {
+    const error = new Error('La demande ne peut pas être traitée car elle n\'est plus en attente');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const result = await congesRepository.updateStatut(id, 'approuve');
+  if (result.affectedRows === 0) {
+    const error = new Error('La demande ne peut pas être modifiée');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  return await congesRepository.findCongeById(id);
+};
+
+exports.refuser = async (id) => {
+  const conge = await congesRepository.findCongeById(id);
+  if (!conge) {
+    const error = new Error('Congé introuvable');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (conge.statut !== 'en_attente') {
+    const error = new Error('La demande ne peut pas être traitée car elle n\'est plus en attente');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const result = await congesRepository.updateStatut(id, 'refuse');
+  if (result.affectedRows === 0) {
+    const error = new Error('La demande ne peut pas être modifiée');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  return await congesRepository.findCongeById(id);
 };
