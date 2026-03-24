@@ -67,20 +67,14 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-app.get("/api/conges", (req, res) => {
-
-  const conges = [
-    {
-      id: 1,
-      nom: "Sophie Martin",
-      type: "Congé payé",
-      periode: "15 - 25 Déc 2024",
-      duree: "11 jours"
-    }
-  ]
-
-  res.json(conges)  
-})
+// Note: L'API /api/conges est déjà gérée par congesRoutes, pas besoin de doublon ci-dessous
+// app.get("/api/conges", (req, res) => {
+//   res.json({
+//     message: "API de gestion des congés",
+//     status: "OK",
+//     timestamp: new Date().toISOString(),
+//   }); 
+// })
 
 
 const { notFound, errorHandler } = require("./middlewares/errorMiddleware");

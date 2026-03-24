@@ -8,7 +8,12 @@
     <nav class="nav-menu">
       <RouterLink to="/dashboard" class="nav-item">
         <div class="nav-icon">
-          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          <svg viewBox="0 0 24 24">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
         </div>
         Tableau de bord
       </RouterLink>
@@ -17,15 +22,21 @@
         <li>
           <RouterLink to="/conges/demande" class="nav-item">
             <div class="nav-icon">
-              <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              <svg viewBox="0 0 24 24">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
             </div>
             Demande Congés
           </RouterLink>
         </li>
-        <li>
-          <RouterLink to="/conges" class="nav-item">
+        <li v-if="canValidateConges">
+          <RouterLink to="/conges/validation" class="nav-item">
             <div class="nav-icon">
-              <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              <svg viewBox="0 0 24 24">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
             </div>
             Validation Congés
           </RouterLink>
@@ -34,32 +45,43 @@
 
       <a href="#" class="nav-item" @click.prevent>
         <div class="nav-icon">
-          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          <svg viewBox="0 0 24 24">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
         </div>
         Événements
       </a>
 
       <RouterLink to="/Documents/add" class="nav-item">
         <div class="nav-icon">
-          <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+          <svg viewBox="0 0 24 24">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+          </svg>
         </div>
         Documents
       </RouterLink>
 
       <RouterLink to="/gestionTicket" class="nav-item">
         <div class="nav-icon">
-          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+          <svg viewBox="0 0 24 24">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+          </svg>
         </div>
         Tickets & Support
       </RouterLink>
 
-      <RouterLink
-        v-if="canManageUsers"
-        to="/admin/users"
-        class="nav-item"
-      >
+      <RouterLink v-if="canManageUsers" to="/admin/users" class="nav-item">
         <div class="nav-icon">
-          <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          <svg viewBox="0 0 24 24">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
         </div>
         Gestion utilisateurs
       </RouterLink>
@@ -94,6 +116,10 @@ export default {
     canManageUsers() {
       const role = this.user?.role?.toLowerCase();
       return role === 'admin' || role === 'manager';
+    },
+    canValidateConges() {
+      const role = this.user?.role?.toLowerCase();
+      return role === 'rh' || role === 'manager';
     }
   }
 }
@@ -110,7 +136,7 @@ export default {
   position: fixed;
   left: 0;
   top: 0;
-  box-shadow: 2px 0 12px rgba(0,0,0,0.04);
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.04);
 }
 
 .logo {
@@ -132,7 +158,7 @@ export default {
   color: white;
   font-weight: 700;
   font-size: 18px;
-  box-shadow: 0 4px 10px rgba(20,184,166,0.35);
+  box-shadow: 0 4px 10px rgba(20, 184, 166, 0.35);
   flex-shrink: 0;
 }
 
@@ -207,9 +233,27 @@ svg {
   background: #fafafa;
 }
 
-.user-loading { font-size: 13px; color: #9ca3af; }
-.user-name { font-size: 14px; font-weight: 600; color: #111827; text-align: center; line-height: 1.3; }
-.user-role { font-size: 11px; color: #9ca3af; text-align: center; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.4px; }
+.user-loading {
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+.user-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.user-role {
+  font-size: 11px;
+  color: #9ca3af;
+  text-align: center;
+  margin-bottom: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
 
 .btn-logout {
   width: 100%;
