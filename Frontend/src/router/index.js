@@ -6,6 +6,7 @@ import DemandeCongeView from '../views/DemandeCongeView.vue'
 import AdminUserView from '../views/AdminUserView.vue'
 import gestionTicket from '../views/gestionTicket.vue'
 import addDocumentView from '@/views/addDocumentView.vue'
+import listDocumentView from '@/views/listDocumentView.vue'
 import TicketsView from '../views/TicketsView.vue'
 
 const router = createRouter({
@@ -56,6 +57,11 @@ const router = createRouter({
       name: 'tickets',
       component: TicketsView,
     },
+    {
+      path: '/documents/list',
+      name: 'list-document',
+      component: listDocumentView
+    }
   ],
 })
 
