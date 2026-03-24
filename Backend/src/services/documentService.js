@@ -19,8 +19,16 @@ class DocumentService {
         };
         //on enregistre le document dans la base de données
         const documentId = await documentRepository.createDocument(newDocument);
-        return {id: documentId, filename: fichierData.filename}; // Retourne l'ID du document créé et le nom du fichier
+        return { id: documentId, filename: fichierData.filename }; // Retourne l'ID du document créé et le nom du fichier
+    }
+    async getAllDocuments() {
+        const documents = await documentRepository.findAllDocuments();
+        return documents.map(doc => ({
+            ...doc,
+            auteur_complet: `${doc.auteur_prenom} ${doc.auteur_nom}`,
+            taille_ko: Math.round(doc.taille / 1024)
+
+        }));
     }
 }
-
 module.exports = new DocumentService();

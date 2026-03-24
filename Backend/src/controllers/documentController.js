@@ -16,6 +16,15 @@ class DocumentController {
             res.status(400).json({ message: 'Erreur interne du serveur' });
         }
     }
+    async getDocuments(req,res) {
+        try {
+            const documents = await documentService.getAllDocuments();
+            res.status(200).json(documents);
+        } catch (error) {
+            console.error('Erreur lors de la récupération des documents :', error);
+            res.status(500).json({ message: 'Erreur interne du serveur' });
+        }
+    }
 }
 
 module.exports = new DocumentController();

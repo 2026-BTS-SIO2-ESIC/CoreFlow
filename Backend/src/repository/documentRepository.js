@@ -16,6 +16,22 @@ class DocumentRepository {
         const [result] = await db.query(sql, values);
         return result.insertId;// Retourne l'ID du document créé
     }
+    async findAllDocuments() {
+        const sql = `SELECT
+            d.id,
+            d.titre,
+            d.description,
+            d.fichier_path,
+            d.type_fichier,
+            d.taille,
+            d.cible_role,
+            u.nom AS auteur_nom,
+            u.prenom AS auteur_prenom
+        FROM documents d
+        INNER JOIN utilisateurs u ON d.auteur_id = u.id`;
+        const [rows] = await db.query(sql);
+    return rows;
+    }
 }
 
 module.exports = new DocumentRepository();
