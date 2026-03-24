@@ -252,6 +252,16 @@
               </form>
             </div>
           </div>
+
+          <div v-if="canDelete" class="modal-footer">
+            <button @click="handleDelete" :disabled="deleting" class="btn-delete-full">
+              <svg v-if="!deleting" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              <span>{{ deleting ? 'Suppression...' : 'Supprimer cet événement' }}</span>
+            </button>
+          </div>
+
         </div>
       </div>
     </Transition>
@@ -291,22 +301,7 @@ export default {
       event: null,
       loading: false,
       error: null,
-      editMode: false,
-      editForm: {},
-      updateLoading: false,
-      updateError: null,
     }
-  },
-  computed: {
-    currentUser() {
-      return this.user || JSON.parse(localStorage.getItem('user') || '{}')
-    },
-    canEdit() {
-      if (!this.event || !this.currentUser?.id) return false
-      const role = (this.currentUser.role || '').toLowerCase()
-      if (role !== 'admin' && role !== 'manager') return false
-      return Number(this.currentUser.id) === Number(this.event.organisateur_id)
-    },
   },
   watch: {
     eventId: {
@@ -341,6 +336,7 @@ export default {
         })
         const data = await res.json()
         if (res.ok && data.event && data.event.length) {
+          console.log("DEBUG EVENT DATA:", data.event[0]);
           this.event = data.event[0]
         } else if (data.error?.message) {
           this.error = data.error.message
@@ -372,89 +368,6 @@ export default {
         hour: '2-digit',
         minute: '2-digit',
       })
-    },
-    toDatetimeLocal(str) {
-      if (!str) return ''
-      const d = new Date(str.replace(' ', 'T'))
-      if (isNaN(d.getTime())) return ''
-      const pad = (n) => String(n).padStart(2, '0')
-      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
-    },
-    toBackendDatetime(str) {
-      if (!str) return null
-      const normalized = String(str).replace('T', ' ')
-      return normalized.length === 16 ? `${normalized}:00` : normalized.slice(0, 19)
-    },
-    startEdit() {
-      if (!this.event) return
-      this.editForm = {
-        titre: this.event.titre || '',
-        description: this.event.description || '',
-        type_evenement: this.event.type_evenement || 'reunion',
-        date_debut: this.toDatetimeLocal(this.event.date_debut),
-        date_fin: this.toDatetimeLocal(this.event.date_fin),
-        lieu: this.event.lieu || '',
-        statut: this.event.statut || 'planifie',
-        niveau: String(this.event.niveau ?? '1'),
-        nb_places_max: this.event.nb_places_max ?? 0,
-        est_obligatoire: this.event.est_obligatoire ?? 0,
-      }
-      this.updateError = null
-      this.editMode = true
-    },
-    cancelEdit() {
-      this.editMode = false
-      this.editForm = {}
-      this.updateError = null
-    },
-    async handleUpdate() {
-      if (!this.event || !this.event.organisateur_id) return
-      this.updateError = null
-      this.updateLoading = true
-      const token = localStorage.getItem('token')
-      if (!token) {
-        this.updateError = 'Session expirée. Veuillez vous reconnecter.'
-        this.updateLoading = false
-        return
-      }
-      const body = {
-        id: this.event.id,
-        organisateur_id: this.event.organisateur_id,
-        titre: this.editForm.titre,
-        description: this.editForm.description || '',
-        type_evenement: this.editForm.type_evenement,
-        date_debut: this.toBackendDatetime(this.editForm.date_debut),
-        date_fin: this.toBackendDatetime(this.editForm.date_fin),
-        lieu: this.editForm.lieu || '',
-        statut: this.editForm.statut,
-        niveau: this.editForm.niveau,
-        nb_places_max: this.editForm.nb_places_max ?? 0,
-        est_obligatoire: this.editForm.est_obligatoire ?? 0,
-      }
-      try {
-        const res = await fetch(`${API_URL}/event/update`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(body),
-        })
-        const data = await res.json().catch(() => ({}))
-        if (!res.ok) {
-          this.updateError = data?.error?.message || "Erreur lors de la mise à jour."
-          return
-        }
-        this.updateLoading = false
-        this.editMode = false
-        await this.fetchEvent(this.eventId)
-        this.$emit('updated')
-      } catch (e) {
-        this.updateError = "Erreur réseau. Vérifiez que le serveur est démarré."
-        console.error(e)
-      } finally {
-        this.updateLoading = false
-      }
     },
   },
 }
@@ -863,4 +776,53 @@ export default {
 .modal-leave-to .modal-box {
   transform: scale(0.95) translateY(8px);
 }
+
+/* --- NOUVEAU STYLE POUR LE BOUTON DE SUPPRESSION --- */
+
+.modal-footer {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0; /* Même couleur que le séparateur des sections */
+  display: flex;
+  justify-content: center;
+}
+
+.btn-delete-full {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.875rem;
+  
+  /* On réutilise les couleurs de ton design pour le hover de close */
+  background: #fff;
+  color: #dc2626; /* Rouge clair pour le texte */
+  
+  /* On réutilise tes styles de bordures existants */
+  border: 1px solid #fecaca;
+  border-radius: 12px; /* Même arrondi que tes sections detail-section */
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  /* Style d'ombre léger comme tes modals-box */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.btn-delete-full:hover:not(:disabled) {
+  /* On s'assure que le rouge ne jure pas avec ton vert émeraude */
+  background: #fef2f2;
+  border-color: #dc2626;
+  color: #b91c1c; /* Rouge plus foncé au hover */
+  transform: translateY(-1px);
+}
+
+.btn-delete-full:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* --- FIN DU NOUVEAU STYLE --- */
+
 </style>

@@ -3,6 +3,8 @@ var Event = require("../repository/eventRepository");
 const {
   validateEvent,
   validateUpdateEvent,
+  validateDeleteEvent,
+  validateEventList,
 } = require("../services/eventService");
 
 const logSuccess = (code, msg) => {
@@ -69,10 +71,12 @@ exports.event_list = async function (req, res) {
   // Ainsi déclare err pour afficher les erreurs rencontrées dans la DB
   const userId = req.params.user_id;
   const userRole = req.params.userRole;
+  const typeFilter = req.query.type;
 
   Event.listAll(
     userId,
     userRole,
+    typeFilter,
     (err, resultsAdmin, resultsLvlOne, resultsLvlTwo) => {
       // Vérifie si le header est bien Content-Type: application/json
       // Renvoie une erreur en cas d'une mauvaise requête vers la DB
@@ -362,83 +366,108 @@ exports.event_update = async (req, res) => {
 
 // Fonction qui permet de supprimer un événement, prend l'id de l'événement à supprimer depuis les paramètres de l'URL
 exports.event_delete = async (req, res) => {
-  const eventId = req.params.id;
-  Event.delete(eventId, (err) => {   
-    if (err && err.code === "EVENT_NOT_FOUND") {
-      logError(
-        404,
-        "NOT_FOUND",
-        "Événement introuvable (ID: " + eventId + ")",
-      );
-      return res.status(404).json({
-        error: {    
-          error: "NOT_FOUND",
-          message: "L'événement n'existe pas",
-          details: err.message,
-        },
-      });
-    } 
-    if (err && err.code === "EVENT_NOT_OWNED") {
-      logError(
-        403,
-        "PERMISSION_ERROR",
-        "Droits insuffisants sur l'événement ID: " + eventId,
-      );
-      return res.status(403).json({
-        error: {
-          error: "PERMISSION_ERROR",
-          message: "Vous ne possédez pas les droits sur cet événement",
-          details: err.message,
-        },
-      });
+    // 1. Récupération de l'ID depuis l'URL (ex: /delete/9)
+    const eventId = req.params.id;
+    const userId = req.user.id; // Récupéré via le Middleware Auth (Token JWT)
+    const userRole = req.user.role;
+    console.log(`[REQUEST] Suppression de l'événement ID: ${eventId} par l'utilisateur ${userId} (Role: ${userRole})`);
+
+    // 2. Validation via ton Service (on passe un nombre pour éviter l'erreur "ID invalide")
+    const { isValid, errors } = validateDeleteEvent(Number(eventId));
+    
+    console.log("Validation du champ ID:", { eventId, isValid, errors });
+    if (!isValid) {
+        console.error("[VALIDATION_ERROR]", errors);
+        return res.status(400).json({ error: "ID invalide", details: errors });
     }
-  });
+     console.log("ID validé, vérification de l'existence de l'événement et des droits de l'utilisateur...");
+    // 3. Appel au Repository pour vérifier l'existence et obtenir le créateur
+    // On adapte le premier appel pour récupérer les données de l'événement
+    Event.delete(eventId, (err, eventInfo) => {
+      console.log("Résultat de la vérification de l'événement:", { err, eventInfo });
+        if (err) {
+            if (err.code === "EVENT_NOT_FOUND") {
+                console.error(`[NOT_FOUND] Événement ${eventId} inexistant.`);
+                return res.status(404).json({ error: "Événement introuvable" });
+            }
+            console.log("error",err)
+            return res.status(500).json({ error: "Erreur lors de la suppression", err });
+        }
+        console.log("action faite pass to confirm organizateur")
+        // --- PROTECTION DE PROPRIÉTÉ ---
+        // Seul le créateur (organisateur_id) ou un Admin peut supprimer
+        if (eventInfo.organisateur_id !== userId && userRole !== "admin") {
+            console.warn(`[FORBIDDEN] L'utilisateur ${userId} a tenté de supprimer l'événement de ${eventInfo.organisateur_id}`);
+            return res.status(403).json({ 
+                error: "Droit refusé : Vous ne pouvez supprimer que vos propres événements." 
+            });
+        }
+
+        // 4. Si la vérification passe, on procède à la suppression réelle
+        console.log("action faite pass to confirm dellete")
+        console.log("SUCESS")
+        console.log(`[SUCCESS] Événement ${eventId} supprimé par son créateur (${userId})`);
+        return res.status(200).json({ 
+            message: "Événement supprimé avec succès", 
+            id: eventId 
+        });
+        // Event.confirmDelete(eventId, (deleteErr) => {
+        //     if (deleteErr) {
+        //         return res.status(500).json({ error: "Erreur lors de la suppression finale" });
+        //     }
+
+        //     // 5. Succès
+        // });
+    });
 };
 
 
 // methode Get pour afficher les evenements passés, prend l'id de l'utilisateur depuis les paramètres de l'URL
-exports.past_events = function (req, res) {
-  const userId = req.params.user_id;
-  Event.listPastEvents(userId, (err, results) => {
+exports.past_events = async (req, res) => {
+  const userId = req.params.user_id || req.user.id;
+
+  const { isValid, err } = await validateEventList(userId);
+  if (!isValid) return res.status(400).json({ error: err });
+
+  Event.listPast(userId, (err, results) => {
     if (err) {
-      logError(
-        500,
-        "DB_ERROR",
-        "Erreur lors de la récupération des événements passés: " + err.message,
-      );
-      return res.status(500).json({
-        error: {
-          error: "DB_ERROR",
-          message: "Erreur lors de la récupération des événements passés",
-          detail: err.message,
-        },
-      });
+      console.error("[DB_ERROR]", err.message);
+      return res.status(500).json({ error: "Erreur lors de la récupération des archives" });
     }
-    res.status(200).json(results);
+    res.status(200).json({ success: true, count: results.length, data: results });
   });
 };
 
 // methode Get pour afficher les evenements à venir, prend l'id de l'utilisateur depuis les paramètres de l'URL
 
-exports.future_events = function (req, res) {
-  const userId = req.params.user_id;
-  Event.listFutureEvents(userId, (err, results) => {  
+exports.future_events = async (req, res) => {
+  const userId = req.params.user_id || req.user.id;
+
+  const { isValid, err } = await validateEventList(userId);
+  if (!isValid) return res.status(400).json({ error: err });
+
+  Event.listFuture(userId, (err, results) => {
     if (err) {
-      logError(
-        500,
-        "DB_ERROR",
-        "Erreur lors de la récupération des événements à venir: " + err.message,
-      );
-      return res.status(500).json({
-        error: {
-          error: "DB_ERROR",
-          message: "Erreur lors de la récupération des événements à venir",
-          detail: err.message,
-        },
-      });
+      console.error("[DB_ERROR]", err.message);
+      return res.status(500).json({ error: "Erreur lors de la récupération des événements à venir" });
     }
-    res.status(200).json(results);
+    res.status(200).json({ success: true, count: results.length, data: results });
   });
 };
+
+
+exports.event_respond = async (req, res) => {
+  const { eventId, userId, status } = req.body;
+  
+  Event.updateParticipation(eventId, userId, status, (err, results) => {
+    if (err) {
+      logError(500, "DB_ERROR", "Erreur participation: " + err.message);
+      return res.status(500).json({ error: "Erreur lors de la réponse" });
+    }
+    logSuccess(200, `Utilisateur ${userId} a répondu ${status} à l'event ${eventId}`);
+    res.status(200).json({ message: "Réponse enregistrée" });
+  });
+};
+
 
 // La logique de validation métier est déportée dans services/eventService.js

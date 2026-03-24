@@ -2,7 +2,7 @@ const { db } = require("../config/database");
 
 const Event = {
   // fonction listAll qui permet de recuperer tous les evenements de la base de donnees
-  listAll: (userId, userRole, callback) => {
+  listAll: (userId, userRole, typeFilter, callback) => {
     // requette sql pour recuperer tous les evenements
     const adminsql = "SELECT * FROM evenements;"; // pour admin
 
@@ -58,9 +58,9 @@ const Event = {
       // en cas d'erreur renvoi l'erreur
       if (err) {
         console.error("DB ERROR :", err);
-        return callback(err, null);
+        return callback(err, null, null, null);
       }
-      return callback(null, results);
+      return callback(null, results || []);
     });
   },
 
@@ -337,42 +337,108 @@ const Event = {
 
   // fonction delete qui supprime un evenement de la table evenements a partir de son id
   delete: (eventId, callback) => {
-    // requette sql qui supprime l'evenement a partir du id donner(eventId) dans la table evenements
-    const sql = "DELETE FROM evenements WHERE id = ?";
-    // execute la query en lui donnant la requette (sql) et le eventId comme parametre
-    db.query(sql, [eventId], (err, results) => {
-      // en cas d'erreur renvoi l'erreur
+  db.promise()
+    .query("SELECT id, organisateur_id FROM evenements WHERE id = ?", [eventId])
+    .then(([rows]) => {
+      if (rows.length === 0) {
+        const err = new Error("EVENT_NOT_FOUND");
+        err.code = "EVENT_NOT_FOUND";
+        throw err; // ⚠️ important
+      }
+
+      return db.promise().query(
+        "DELETE FROM evenements WHERE id = ?",
+        [eventId]
+      );
+    })
+    .then(([results]) => {
+      return callback(null, {id: eventId});
+    })
+    .catch((err) => {
+      console.error("DB ERROR :", err);
+      return callback(err, null);
+    });
+  },
+
+
+  // ... tes autres fonctions ...
+
+  // Récupérer les événements passés (date_fin < maintenant)
+// Récupérer les événements passés
+listPast: (userId, callback) => {
+  const sql = `
+    SELECT DISTINCT e.* FROM evenements e 
+    LEFT JOIN participations p ON e.id = p.evenement_id 
+    WHERE (p.user_id = ? OR e.organisateur_id = ?) 
+    AND e.date_fin < NOW()
+    ORDER BY e.date_fin DESC
+  `;
+  db.query(sql, [userId, userId], callback);
+},
+
+// Récupérer les événements à venir
+listFuture: (userId, callback) => {
+  const sql = `
+    SELECT DISTINCT e.* FROM evenements e 
+    LEFT JOIN participations p ON e.id = p.evenement_id 
+    WHERE (p.user_id = ? OR e.organisateur_id = ?) 
+    AND e.date_debut > NOW()
+    ORDER BY e.date_debut ASC
+  `;
+  db.query(sql, [userId, userId], callback);
+},
+
+  updateParticipation: (eventId, userId, status, callback) => {
+  const sql = "UPDATE participations SET statut = ?, updated_at = NOW() WHERE evenement_id = ? AND user_id = ?";
+  db.query(sql, [status, eventId, userId], (err, res) => {
+    if (err) return callback(err, null);
+    if (res.affectedRows === 0) return callback({ code: "PARTICIPATION_NOT_FOUND" }, null);
+    callback(null, res);
+  });
+},
+
+
+updateStatus: (eventId, newStatus, callback) => {
+  const sql = "UPDATE evenements SET statut = ?, updated_at = NOW() WHERE id = ?";
+  db.query(sql, [newStatus, eventId], (err, res) => {
+    if (err) return callback(err, null);
+    callback(null, res);
+  });
+},
+
+checkRoomConflict: async (location, startDate, endDate, eventId = null) => {
+    try { // <--- IL MANQUAIT CELUI-LÀ
+      let sql = `
+        SELECT id FROM evenements 
+        WHERE lieu = ? 
+        AND (
+          (date_debut < ? AND date_fin > ?)
+        )
+      `;
+      const params = [location, endDate, startDate];
+      
+      // Si c'est un update, on exclut l'événement actuel
+      if (eventId) {
+        sql += " AND id != ?";
+        params.push(eventId);
+      }
+
+      const [rows] = await db.promise().query(sql, params);
+      return rows.length > 0;
+    } catch (error) { // <--- MAINTENANT LE CATCH EST VALIDE
+      console.error("Erreur SQL dans checkRoomConflict:", error);
+      throw error;
+    }
+    db.query(sql, params, (err, results) => {
       if (err) {
         console.error("DB ERROR :", err);
         return callback(err, null);
       }
-      return callback(null, results);
+      callback(null, results.length > 0);
     });
-  },
 
-  // fonction qui verifie les evenements passés
-  verifyPastEvents: (events) => {
-    const today = Date.now();
-    const pastEvents = [];
-    events.forEach((event) => {
-      if (Date.parse(event.startDate) < today) {
-        pastEvents.push(event);
-      }
-    });
-    return pastEvents;
-  },
+  }, // <--- UNE SEULE ACCOLADE ICI (pour fermer la fonction)
 
-  // fonction qui verifie les evenements a venir
-  verifyFutureEvents: (events) => {
-    const today = Date.now();
-    const futureEvents = [];
-    events.forEach((event) => {
-      if (Date.parse(event.startDate) >= today) {
-        futureEvents.push(event);
-      }
-    });
-    return futureEvents;
-  },
 
   // fonction qui lance  une requette pour verfier si utilisateurs dans champ inviter existe deans la DB
   checkIfUserExist: async (userMail) => {

@@ -43,10 +43,19 @@
         </div>
         <div class="stat-card">
           <span class="icon">🗓️</span>
-          <div class="stat-info">
+          <div class="events-dashboard-section">
+          <CreateEventModal v-if="user && (user.role === 'admin' || user.role === 'manager')" />
+          
+            <div class="events-container">
+              <EventList title="🚀 Événements à venir" :events="upcomingEvents" />
+              <div class="spacer-v"></div>
+              <EventList title="📜 Historique" :events="pastEvents" class="past-events-style" />
+            </div>
+        </div>
+          <!-- <div class="stat-info">
             <label>Prochain Événement</label>
             <p>Aucun événement planifié</p>
-          </div>
+          </div> -->
         </div>
       </div>
 
@@ -124,10 +133,14 @@ import DashboardSidebar from '../components/DashboardSidebar.vue'
 
 const API_URL = 'http://localhost:3000'
 
+import axios from 'axios';
+import CreateEventModal from '@/components/CreateEventModal.vue';
+import EventList from '@/components/EventList.vue';
+
 export default {
   name: 'DashboardView',
   components: {
-    DashboardSidebar,
+    DashboardSidebar,CreateEventModal, EventList
   },
 
   // ── Données réactives ────────────────────────────────
@@ -136,6 +149,10 @@ export default {
       user: null,
       loading: true,
       error: null,
+
+      upcomingEvents: [],
+      pastEvents: [],
+
       // Modal mot de passe
       showPasswordModal: false,
       modalLoading: false,
@@ -191,10 +208,19 @@ export default {
 
   // ── Actions ──────────────────────────────────────────
   methods: {
+    async fetchEvents() {
+      try {
+        const response = await axios.get('http://localhost:3000/api/event/all');
+        const now = new Date();
+        this.upcomingEvents = response.data.filter(e => new Date(e.startDate) >= now);
+        this.pastEvents = response.data.filter(e => new Date(e.startDate) < now);
+      } catch (error) {
+        console.error("Erreur API:", error);
+      }
+    },
     logout() {
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      this.$router.push('/login')
+      localStorage.clear();
+      this.$router.push('/login');
     },
     goToAdminPanel() {
       this.$router.push('/admin/users')
@@ -585,6 +611,8 @@ export default {
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
 }
 .btn-cancel:hover {
   background: #f3f4f6;
