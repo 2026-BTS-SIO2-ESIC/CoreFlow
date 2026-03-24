@@ -7,5 +7,9 @@ const documentController = require('../controllers/documentController');
 //L'URL de base pour les documents est /api/documents
 // Route pour créer un document avec un fichier
 router.post('/', upload.single('fichier'), (req, res) => documentController.createDocument(req, res));
+// Route pour récupérer tous les documents
+router.get('/', documentController.getDocuments);
+// Route pour supprimer un document par ID
+router.delete('/:id', (req, res) => documentController.deleteDocument(req, res));
 
 module.exports = router;
