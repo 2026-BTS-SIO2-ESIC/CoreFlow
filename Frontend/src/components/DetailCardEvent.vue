@@ -140,7 +140,12 @@
                       d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
                     />
                   </svg>
-                  <span>{{ event.nb_places_max }} place{{ event.nb_places_max > 1 ? 's' : '' }} max</span>
+                  <span
+                    >{{ event.nb_places_max }} place{{
+                      event.nb_places_max > 1 ? 's' : ''
+                    }}
+                    max</span
+                  >
                 </div>
                 <div class="meta-item">
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -169,7 +174,12 @@
               <div v-if="canEdit" class="detail-actions">
                 <button type="button" class="btn-edit" @click="startEdit">
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
                   </svg>
                   Modifier
                 </button>
@@ -255,13 +265,23 @@
 
           <div v-if="canDelete" class="modal-footer">
             <button @click="handleDelete" :disabled="deleting" class="btn-delete-full">
-              <svg v-if="!deleting" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              <svg
+                v-if="!deleting"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                width="20"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                />
               </svg>
               <span>{{ deleting ? 'Suppression...' : 'Supprimer cet événement' }}</span>
             </button>
           </div>
-
         </div>
       </div>
     </Transition>
@@ -301,7 +321,21 @@ export default {
       event: null,
       loading: false,
       error: null,
+      deleting: false,
+      editMode: false,
+      editForm: {},
+      updateError: null,
+      updateLoading: false,
     }
+  },
+  computed: {
+    canDelete() {
+      const role = this.user?.role?.toLowerCase()
+      return !!this.event && (role === 'admin' || role === 'manager')
+    },
+    canEdit() {
+      return this.canDelete
+    },
   },
   watch: {
     eventId: {
@@ -321,9 +355,11 @@ export default {
       this.event = null
       this.loading = false
       this.error = null
+      this.deleting = false
       this.editMode = false
       this.editForm = {}
       this.updateError = null
+      this.updateLoading = false
     },
     async fetchEvent(id) {
       if (!id) return
@@ -336,7 +372,7 @@ export default {
         })
         const data = await res.json()
         if (res.ok && data.event && data.event.length) {
-          console.log("DEBUG EVENT DATA:", data.event[0]);
+          console.log('DEBUG EVENT DATA:', data.event[0])
           this.event = data.event[0]
         } else if (data.error?.message) {
           this.error = data.error.message
@@ -368,6 +404,56 @@ export default {
         hour: '2-digit',
         minute: '2-digit',
       })
+    },
+    async handleDelete() {
+      if (!this.event?.id || !this.canDelete || this.deleting) return
+
+      const confirmed = window.confirm('Êtes-vous sûr de vouloir supprimer cet événement ?')
+      if (!confirmed) return
+
+      this.deleting = true
+      try {
+        const token = localStorage.getItem('token')
+        const role = this.user?.role
+        const userId = this.user?.id
+
+        if (!token || !role || !userId) {
+          throw new Error('Informations utilisateur manquantes')
+        }
+
+        const res = await fetch(`${API_URL}/event/delete/${this.event.id}/${role}/${userId}`, {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok) {
+          throw new Error(data?.error || data?.message || 'Erreur lors de la suppression')
+        }
+
+        this.$emit('updated')
+        this.$emit('close')
+      } catch (e) {
+        alert(e?.message || "Impossible de supprimer l'événement.")
+      } finally {
+        this.deleting = false
+      }
+    },
+    startEdit() {
+      if (!this.event) return
+      this.editMode = true
+      this.editForm = { ...this.event }
+      this.updateError = null
+    },
+    cancelEdit() {
+      this.editMode = false
+      this.editForm = {}
+      this.updateError = null
+    },
+    async handleUpdate() {
+      alert("La modification d'événement n'est pas disponible pour le moment.")
     },
   },
 }
@@ -473,7 +559,9 @@ export default {
   animation: spin 0.8s linear infinite;
 }
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .detail-error {
@@ -673,7 +761,9 @@ export default {
   border: 1px solid #99f6e4;
   border-radius: 8px;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s;
 }
 .btn-edit:hover {
   background: #99f6e4;
@@ -739,23 +829,23 @@ export default {
   cursor: pointer;
   transition: background 0.2s;
 }
-.detail-edit-form .form-actions button[type="button"] {
+.detail-edit-form .form-actions button[type='button'] {
   background: #f1f5f9;
   color: #475569;
   border: 1px solid #e2e8f0;
 }
-.detail-edit-form .form-actions button[type="button"]:hover {
+.detail-edit-form .form-actions button[type='button']:hover {
   background: #e2e8f0;
 }
-.detail-edit-form .form-actions button[type="submit"] {
+.detail-edit-form .form-actions button[type='submit'] {
   background: #0d9488;
   color: #fff;
   border: none;
 }
-.detail-edit-form .form-actions button[type="submit"]:hover:not(:disabled) {
+.detail-edit-form .form-actions button[type='submit']:hover:not(:disabled) {
   background: #0f766e;
 }
-.detail-edit-form .form-actions button[type="submit"]:disabled {
+.detail-edit-form .form-actions button[type='submit']:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }
@@ -794,18 +884,18 @@ export default {
   gap: 0.75rem;
   width: 100%;
   padding: 0.875rem;
-  
+
   /* On réutilise les couleurs de ton design pour le hover de close */
   background: #fff;
   color: #dc2626; /* Rouge clair pour le texte */
-  
+
   /* On réutilise tes styles de bordures existants */
   border: 1px solid #fecaca;
   border-radius: 12px; /* Même arrondi que tes sections detail-section */
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  
+
   /* Style d'ombre léger comme tes modals-box */
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
@@ -824,5 +914,4 @@ export default {
 }
 
 /* --- FIN DU NOUVEAU STYLE --- */
-
 </style>
