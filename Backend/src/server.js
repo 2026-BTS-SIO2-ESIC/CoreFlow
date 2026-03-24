@@ -4,13 +4,8 @@ const path = require("path");
 require("dotenv").config();
 const { testConnection } = require("./config/database");
 
-const authRoutes = require("./routes/authRoutes");
-const userRoutes = require("./routes/userRoutes");
-const ticketRoutes = require("./routes/ticketRoutes");
-const congesRoutes = require("./routes/congesRoutes");
-const eventRouter = require("./routes/eventRoutes");
-const documentRoutes = require("./routes/documentRoutes");
-const { notFound, errorHandler } = require("./middlewares/errorMiddleware");
+// Import de routes 
+const documentRoutes = require('./routes/documentRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -26,19 +21,21 @@ app.use(express.urlencoded({ extended: true }));
 // Routes API
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api/ticket", ticketRoutes);
-app.use("/api/conges", congesRoutes);
-app.use("/api/event", eventRouter);
-app.use("/api/documents", documentRoutes);
+app.use("/api/ticket", ticketRoutes)
+
+const congesRoutes = require('./routes/congesRoutes');
+app.use('/api/conges', congesRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 
 // AJOUT : Rendre le dossier "uploads" accessible publiquement
 // "__dirname" c'est ton dossier "src". On fait "../uploads" pour remonter d'un cran.
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 // Route de test santé
-app.get("/api/health", (req, res) => {
+app.get('/api/health', (req, res) => {
   res.json({
-    status: "healthy",
+    status: 'healthy',
     uptime: process.uptime()
   });
 });
@@ -52,20 +49,22 @@ app.get("/", (req, res) => {
   });
 });
 
-app.get("/api/conges", (req, res) => {
+// Route de santé (health check)
+app.get("/api/health", (req, res) => {
+  res.json({
+    status: "healthy",
+    uptime: process.uptime(),
+  });
+});
 
-  const conges = [
-    {
-      id: 1,
-      nom: "Sophie Martin",
-      type: "Congé payé",
-      periode: "15 - 25 Déc 2024",
-      duree: "11 jours"
-    }
-  ]
-
-  res.json(conges)  
-})
+// Note: L'API /api/conges est déjà gérée par congesRoutes, pas besoin de doublon ci-dessous
+// app.get("/api/conges", (req, res) => {
+//   res.json({
+//     message: "API de gestion des congés",
+//     status: "OK",
+//     timestamp: new Date().toISOString(),
+//   }); 
+// })
 
 app.use(notFound);
 app.use(errorHandler);

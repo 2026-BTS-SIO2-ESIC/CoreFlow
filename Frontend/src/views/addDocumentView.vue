@@ -118,6 +118,7 @@
 
 <script setup>
 import DashboardSidebar from '@/components/DashboardSidebar.vue';
+
 import { ref } from 'vue';
 
 // Variables

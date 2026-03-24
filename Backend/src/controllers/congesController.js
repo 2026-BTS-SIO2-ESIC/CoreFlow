@@ -3,9 +3,13 @@ const congesService = require('../services/congesService');
 // GET /api/conges
 exports.getMyConges = async (req, res) => {
   try {
-    const userId = req.user.id;
+    let conges;
 
-    const conges = await congesService.getMyConges(userId);
+    if (req.user?.role?.toUpperCase() === 'RH' || req.user?.role?.toUpperCase() === 'ADMIN') {
+      conges = await congesService.getAllConges();
+    } else {
+      conges = await congesService.getMyConges(req.user.id);
+    }
 
     return res.status(200).json({
       success: true,
@@ -13,9 +17,9 @@ exports.getMyConges = async (req, res) => {
     });
   } catch (error) {
     console.error('Erreur getMyConges :', error.message);
-    return res.status(500).json({
+    return res.status(error.statusCode || 500).json({
       success: false,
-      message: "Erreur serveur lors de la récupération des congés"
+      message: error.message || "Erreur serveur lors de la récupération des congés"
     });
   }
 };
@@ -64,6 +68,45 @@ exports.annulerConge = async (req, res) => {
     });
   }
 };
+
+exports.valider = async (req, res) => {
+  try {
+    await congesService.valider(req.params.id)
+    res.json({ message: "Congé validé" })
+  } catch (error) {
+    console.error('Erreur valider :', error.message);
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Erreur serveur lors de la validation du congé"
+    });
+  }
+}
+
+exports.refuser = async (req, res) => {
+  try {
+    await congesService.refuser(req.params.id)
+    res.json({ message: "Congé refusé" })
+  } catch (error) {
+    console.error('Erreur refuser :', error.message);
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Erreur serveur lors du refus du congé"
+    });
+  }
+}
+
+exports.getStats = async (req, res) => {
+  try {
+    const stats = await congesService.getStats()
+    res.json({ success: true, data: stats })
+  } catch (error) {
+    console.error('Erreur getStats :', error.message);
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Erreur serveur lors de la récupération des statistiques"
+    });
+  }
+}
 
 
 // GET /api/conges/solde

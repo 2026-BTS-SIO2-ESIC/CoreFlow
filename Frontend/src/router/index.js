@@ -26,9 +26,9 @@ const router = createRouter({
       component: DashboardView,
     },
     {
-      path: '/conges',
-      name: 'conges',
-      component: CongesValidation,
+      path: '/conges/validation',
+      name: 'congesValidation',
+      component: CongesValidation
     },
     {
       path: '/conges/demande',
