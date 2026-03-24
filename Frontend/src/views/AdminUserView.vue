@@ -26,11 +26,6 @@
         <p>Créez, modifiez et gérez les comptes utilisateurs de votre organisation</p>
       </div>
 
-<<<<<<< HEAD
-=======
-
-
->>>>>>> feature/gestion-tickets-CT
       <!-- Content -->
       <div class="content-section">
         <!-- Toolbar -->

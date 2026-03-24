@@ -26,7 +26,7 @@ app.use(express.urlencoded({ extended: true }));
 // Routes API
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api/tickets", ticketRoutes);
+app.use("/api/ticket", ticketRoutes);
 app.use("/api/conges", congesRoutes);
 app.use("/api/event", eventRouter);
 app.use("/api/documents", documentRoutes);

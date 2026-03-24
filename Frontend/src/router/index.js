@@ -40,11 +40,11 @@ const router = createRouter({
       name: 'admin-users',
       component: AdminUserView,
     },
-    {
-      path: '/gestionTicket',
-      name: 'gestionTicket',
-      component: gestionTicket,
-    },
+    // {
+    //   path: '/gestionTicket',
+    //   name: 'gestionTicket',
+    //   component: gestionTicket,
+    // },
     {
       path: '/documents/add',
       name: 'add-document',

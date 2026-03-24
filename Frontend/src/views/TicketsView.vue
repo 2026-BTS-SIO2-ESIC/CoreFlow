@@ -1,80 +1,6 @@
 <template>
   <div class="container">
-    <!-- Barre latérale =============================================== -->
-    <div class="sidebar">
-      <div class="logo">
-        <div class="logo-icon">C</div>
-        <div class="logo-text">CoreFlow</div>
-      </div>
-      <nav class="nav-menu">
-        <a href="#" class="nav-item">
-          <div class="nav-icon">
-            <svg viewBox="0 0 24 24">
-              <rect x="3" y="3" width="7" height="7"></rect>
-              <rect x="14" y="3" width="7" height="7"></rect>
-              <rect x="14" y="14" width="7" height="7"></rect>
-              <rect x="3" y="14" width="7" height="7"></rect>
-            </svg>
-          </div>
-          Tableau de bord
-        </a>
-
-        <a href="#" class="nav-item">
-          <div class="nav-icon">
-            <svg viewBox="0 0 24 24">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
-            </svg>
-          </div>
-          Mes Congés
-        </a>
-
-        <a href="#" class="nav-item">
-          <div class="nav-icon">
-            <svg viewBox="0 0 24 24">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-              <line x1="16" y1="2" x2="16" y2="6"></line>
-              <line x1="8" y1="2" x2="8" y2="6"></line>
-              <line x1="3" y1="10" x2="21" y2="10"></line>
-            </svg>
-          </div>
-          Événements
-        </a>
-
-        <!-- Remplacer la balise a par un router-link -->
-        <router-link to="/tickets" class="nav-item" :class="{ active: $route.path === '/tickets' }">
-          <div class="nav-icon">
-            <svg viewBox="0 0 24 24">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-              <line x1="16" y1="13" x2="8" y2="13"></line>
-              <line x1="16" y1="17" x2="8" y2="17"></line>
-              <polyline points="10 9 9 9 8 9"></polyline>
-            </svg>
-          </div>
-          Tickets & Support
-        </router-link>
-
-        <div v-if="user && (user.role === 'admin' || user.role === 'manager')">
-          <a href="#" class="nav-item">
-            <div class="nav-icon">
-              <svg viewBox="0 0 24 24">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>
-            </div>
-            Gestion utilisateurs
-          </a>
-        </div>
-      </nav>
-      <div class="user-profile">
-        <div v-if="user">
-          <div class="user-name">{{ user.nom }}</div>
-          <div class="user-role">{{ user.role }}</div>
-        </div>
-        <button @click="logout" class="btn-logout">Déconnexion</button>
-      </div>
-    </div>
+    <DashboardSidebar :user="user" @logout="logout" />
 
     <!-- Coprs de la page ============================================= -->
 
@@ -92,6 +18,16 @@
           @click="currentFilter = f"
         >
           {{ formatStatus(f) }}
+        </button>
+      </div>
+
+      <!-- Filtre par rôle -->
+      <div class="roleFilter">
+        <button :class="['role-filter-btn', { active: myTickets }]" @click="myTickets = true">
+          Mes tickets
+        </button>
+        <button :class="['role-filter-btn', { active: !myTickets }]" @click="myTickets = false">
+          Tous les tickets
         </button>
       </div>
 
@@ -113,12 +49,7 @@
               <td>{{ ticket.titre }}</td>
               <td>{{ ticket.prenom }} {{ ticket.nom }}</td>
               <td>
-                <span
-                  :class="[
-                    'status-badge',
-                    (ticket.statut || 'en-attente').toLowerCase().replace(/\s+/g, '-'),
-                  ]"
-                >
+                <span :class="['status-badge', getStatusClass(ticket.statut)]">
                   {{ ticket.statut || 'En attente' }}
                 </span>
               </td>
@@ -195,51 +126,57 @@
     <!-- Détails du ticket =================================================== -->
 
     <transition name="fade">
-  <div v-if="selectedTicket" class="modal-overlay" @click.self="selectedTicket = null">
-    <div class="modal-content details-modal">
-      <div class="modal-header">
-        <h2>Ticket #{{ selectedTicket.id }}</h2>
-        <button @click="selectedTicket = null" class="close-btn">&times;</button>
-      </div>
-
-      <div class="details-body">
-        <div class="detail-section">
-          <label>Titre</label>
-          <p class="detail-value">{{ selectedTicket.titre }}</p>
-        </div>
-
-        <div class="detail-row">
-          <div class="detail-section">
-            <label>Statut</label>
-            <span :class="['status-badge', (selectedTicket.statut || 'ouvert').toLowerCase().replace('_', '-')]">
-              {{ formatStatus(selectedTicket.statut) }}
-            </span>
+      <div v-if="selectedTicket" class="modal-overlay" @click.self="selectedTicket = null">
+        <div class="modal-content details-modal">
+          <div class="modal-header">
+            <h2>Ticket #{{ selectedTicket.id }}</h2>
+            <button @click="selectedTicket = null" class="close-btn">&times;</button>
           </div>
-          <div class="detail-section">
-            <label>Catégorie</label>
-            <p class="detail-value text-uppercase">{{ selectedTicket.categorie }}</p>
+
+          <div class="details-body">
+            <div class="detail-section">
+              <label>Titre</label>
+              <p class="detail-value">{{ selectedTicket.titre }}</p>
+            </div>
+
+            <div class="detail-row">
+              <div class="detail-section">
+                <label>Statut</label>
+                <span :class="['status-badge', getStatusClass(selectedTicket.statut)]">
+                  {{ formatStatus(selectedTicket.statut) }}
+                </span>
+              </div>
+              <div class="detail-section">
+                <label>Catégorie</label>
+                <p class="detail-value text-uppercase">{{ selectedTicket.categorie }}</p>
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <label>Description</label>
+              <div class="description-box">
+                {{ selectedTicket.description }}
+              </div>
+            </div>
+
+            <div class="detail-section info-footer">
+              <p>
+                <strong>Demandeur :</strong> {{ selectedTicket.prenom }}
+                {{ selectedTicket.nom }} ({{ selectedTicket.departement }})
+              </p>
+              <p>
+                <strong>Créé le :</strong>
+                {{ dayjs(selectedTicket.created_at).format('DD MMMM YYYY à HH:mm') }}
+              </p>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button @click="selectedTicket = null" class="btn-cancel">Fermer</button>
           </div>
         </div>
-
-        <div class="detail-section">
-          <label>Description</label>
-          <div class="description-box">
-            {{ selectedTicket.description }}
-          </div>
-        </div>
-
-        <div class="detail-section info-footer">
-          <p><strong>Demandeur :</strong> {{ selectedTicket.prenom }} {{ selectedTicket.nom }} ({{ selectedTicket.departement }})</p>
-          <p><strong>Créé le :</strong> {{ dayjs(selectedTicket.created_at).format('DD MMMM YYYY à HH:mm') }}</p>
-        </div>
       </div>
-
-      <div class="modal-actions">
-        <button @click="selectedTicket = null" class="btn-cancel">Fermer</button>
-      </div>
-    </div>
-  </div>
-</transition>
+    </transition>
   </div>
 </template>
 
@@ -248,6 +185,7 @@
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import Swal from 'sweetalert2'
+import DashboardSidebar from '@/components/DashboardSidebar.vue'
 import 'dayjs/locale/fr' // Pour avoir les textes en français
 
 // 2. Configuration du plugin
@@ -256,6 +194,9 @@ dayjs.locale('fr')
 
 export default {
   name: 'TicketsView',
+  components: {
+    DashboardSidebar,
+  },
   data() {
     return {
       user: null,
@@ -269,15 +210,7 @@ export default {
       tickets: [],
       selectedTicket: null,
       dayjs: dayjs,
-      currentFilter: 'Tout',
-    filters: ['Tout', 'En attente', 'En cours', 'Résolu', 'Fermé'],
-
-    statusMap: {
-      'En attente': 'ouvert',
-      'En cours': 'en_cours',
-      'Résolu': 'resolu',
-      'Fermé': 'ferme'
-    }
+      myTickets: true, // Par défaut, on affiche les tickets de l'utilisateur connecté. Peut être ajusté selon le rôle.
     }
   },
   computed: {
@@ -286,32 +219,115 @@ export default {
       return this.tickets.filter((t) => t.statut === this.currentFilter)
     },
   },
+
+  watch: {
+    // Dès que myTickets change, on recharge les données
+    myTickets: {
+      handler: 'fetchTickets',
+    },
+  },
+
   async mounted() {
-    const userStr = localStorage.getItem('user')
-    if (userStr) {
-      this.user = JSON.parse(userStr)
-    } else {
-      this.$router.push('/login')
-    }
+    await this.fetchTickets()
+    // const API = 'http://localhost:3000/api/ticket/tickets' // on définit l'URL de l'API pour récupérer les tickets
+    // const API_It = 'http://localhost:3000/api/ticket/itTickets' // on définit l'URL de l'API pour récupérer les tickets
+    // const API_Rh = 'http://localhost:3000/api/ticket/rhTickets'
+    // let url = 'http://localhost:3000/api/tickets/my-tickets'
+    // if (role === 'it') {
+    //   url = API_It
+    // } else if (role === 'rh') {
+    //   url = API_Rh
+    // } else if (role === 'admin' || role === 'manager') {
+    //   url = API_Rh // tous les tickets
+    // }
 
-    try {
-      const token = localStorage.getItem('token')
-      const response = await fetch('http://localhost:3000/api/tickets/my-tickets', {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+    // if (userStr) {
+    //   this.user = JSON.parse(userStr)
+    // } else {
+    //   this.$router.push('/login')
+    // }
 
-      const result = await response.json()
-      if (response.ok) {
-        this.tickets = Array.isArray(result.data) ? result.data : []
-      }
-    } catch (err) {
-      console.error('Erreur de chargement des tickets', err)
-    }
+    // try {
+    //   const token = localStorage.getItem('token')
+    //   //'http://localhost:3000/api/tickets/my-tickets'
+    //   const response = await fetch(url, {
+    //     method: 'GET',
+    //     headers: {
+    //       Authorization: `Bearer ${token}`,
+    //     },
+    //   })
+
+    //   const result = await response.json()
+    //   if (response.ok) {
+    //     console.log('Tickets chargés :', result.data)
+    //     this.tickets = Array.isArray(result.data) ? result.data : []
+    //   }
+    // } catch (err) {
+    //   console.error('Erreur de chargement des tickets', err)
+    // }
   },
   methods: {
+    // 1. La méthode fetchTickets mise à jour pour prendre en compte le filtre "Mes tickets" vs "Tous les tickets"
+    async fetchTickets() {
+      const userStr = localStorage.getItem('user')
+      const stockedUser = JSON.parse(localStorage.getItem('user'))
+      const role = stockedUser?.role
+      if (!userStr) {
+        this.$router.push('/login')
+        return
+      }
+
+      if (this.myTickets) {
+        // Afficher les tickets de l'utilisateur connecté
+        try {
+          const token = localStorage.getItem('token')
+          const response = await fetch('http://localhost:3000/api/ticket/my-tickets', {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          })
+
+          const result = await response.json()
+          if (response.ok) {
+            this.tickets = Array.isArray(result.data) ? result.data : []
+          } else {
+            alert('Impossible de charger vos tickets.')
+          }
+        } catch (err) {
+          console.error('Erreur de chargement des tickets', err)
+        }
+      } else {
+        const API = 'http://localhost:3000/api/ticket/tickets' // tous les tickets (admin/manager)
+        const API_It = 'http://localhost:3000/api/ticket/itTickets' // tickets IT
+        const API_Rh = 'http://localhost:3000/api/ticket/rhTickets' // tickets RH
+        let url = 'http://localhost:3000/api/ticket/my-tickets'
+        if (role === 'it') {
+          url = API_It
+        } else if (role === 'rh') {
+          url = API_Rh
+        } else if (role === 'admin' || role === 'manager') {
+          url = API // tous les tickets
+        }
+        try {
+          const token = localStorage.getItem('token')
+          const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          })
+          const result = await response.json()
+          if (response.ok) {
+            this.tickets = Array.isArray(result.data) ? result.data : []
+          } else {
+            alert('Impossible de charger les tickets.')
+          }
+        } catch (err) {
+          console.error('Erreur de chargement des tickets', err)
+        }
+      }
+    },
     // 3. La fameuse méthode formatDate mise à jour
     formatDate(date) {
       if (!date) return "À l'instant"
@@ -337,6 +353,24 @@ export default {
       return map[status] || status
     },
 
+    getStatusClass(status) {
+      const normalized = String(status || 'ouvert')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, '_')
+
+      const classMap = {
+        ouvert: 'status-open',
+        en_attente: 'status-open',
+        en_cours: 'status-progress',
+        resolu: 'status-resolved',
+        ferme: 'status-closed',
+      }
+
+      return classMap[normalized] || 'status-open'
+    },
+
     showToast(icon, title) {
       Swal.fire({
         toast: true,
@@ -352,29 +386,30 @@ export default {
     // Détails du ticket
     async showDetails(id) {
       try {
-        const token = localStorage.getItem('token');
-        const response = await fetch(`http://localhost:3000/api/tickets/${id}`, {
+        const token = localStorage.getItem('token')
+        const response = await fetch(`http://localhost:3000/api/ticket/${id}`, {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+            Authorization: `Bearer ${token}`,
+          },
+        })
 
-        const result = await response.json();
+        const result = await response.json()
         if (response.ok) {
-          this.selectedTicket = result.data;
+          this.selectedTicket = result.data
         } else {
-          alert("Impossible de charger les détails du ticket.");
+          alert('Impossible de charger les détails du ticket.')
         }
       } catch (error) {
-        console.error("Erreur détails:", error);
+        console.error('Erreur détails:', error)
       }
     },
 
     async submitTicket() {
       try {
         const token = localStorage.getItem('token')
-        const response = await fetch('http://localhost:3000/api/tickets', {
+        const userStr = JSON.parse(localStorage.getItem('user'))
+        const response = await fetch('http://localhost:3000/api/ticket', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -385,27 +420,27 @@ export default {
 
         const result = await response.json()
 
-        if (response.ok && result.success) {
+        if (response.ok) {
           // AJOUT DYNAMIQUE : On s'assure que les clés correspondent au v-for du tableau
           const createdTicket = {
             id: result.id,
             titre: this.newTicket.titre,
-            prenom: this.user.prenom, // On utilise les infos de l'utilisateur connecté
-            nom: this.user.nom,
-            statut: 'En attente',
+            nom: userStr.nom,
+            prenom: userStr.prenom,
+            statut: 'ouvert',
             created_at: new Date().toISOString(), // Dayjs formatera cela en "il y a quelques secondes"
           }
 
           this.tickets.unshift(createdTicket)
           this.showModal = false
           this.newTicket = { titre: '', categorie: 'Informatique', description: '' }
-          this.showToast('success', 'Ticket ajoute avec succes')
+          this.showToast('success', 'Ticket créé avec succès')
         } else {
-          this.showToast('error', result.message || 'Erreur lors de la creation')
+          this.showToast('error', result.message || 'Erreur lors de la création du ticket')
         }
       } catch (error) {
         console.error('Erreur :', error)
-        this.showToast('error', 'Erreur lors de la creation du ticket')
+        this.showToast('error', 'Erreur lors de la création du ticket')
       }
     },
     logout() {
@@ -427,8 +462,8 @@ export default {
 /* Corps de la page ============================================ */
 
 .main-content {
-  width: 100%;
-  margin-left: 140px;
+  width: calc(100% - 248px);
+  margin-left: 248px;
   padding: 40px;
 }
 
@@ -489,11 +524,48 @@ export default {
   background-color: #0d9488;
 }
 
+/* Filtre role (Mes tickets / Tous les tickets) */
+.roleFilter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 22px;
+  padding: 6px;
+  border-radius: 999px;
+  border: 1px solid #dbe3ea;
+  background: linear-gradient(180deg, #f8fbfc 0%, #f1f5f9 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.role-filter-btn {
+  border: none;
+  background: transparent;
+  color: #4b5563;
+  border-radius: 999px;
+  padding: 9px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.role-filter-btn:hover {
+  background: rgba(13, 148, 136, 0.09);
+  color: #0f766e;
+}
+
+.role-filter-btn.active {
+  color: #ffffff;
+  background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+  box-shadow: 0 6px 12px rgba(15, 118, 110, 0.25);
+}
+
 /* Tableau */
 .table-container {
   background: white;
   border-radius: 12px;
-  overflow: hidden;
+  overflow-x: auto;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   margin-bottom: 40px;
 }
@@ -531,19 +603,19 @@ tr {
   font-weight: 600;
 }
 
-.fermé {
+.status-closed {
   background-color: #fee2e2;
   color: #ef4444;
 }
-.en-attente {
+.status-open {
   background-color: #f3f4f6;
   color: #6b7280;
 }
-.résolu {
+.status-resolved {
   background-color: #dcfce7;
   color: #22c55e;
 }
-.en-cours {
+.status-progress {
   background-color: #fef3c7;
   color: #d97706;
 }
@@ -703,7 +775,7 @@ tr {
 
 /* On rend la modale de détails plus large que celle du formulaire */
 .details-modal {
-  width: 700px !important; 
+  width: 700px !important;
   max-width: 95%;
   max-height: 90vh;
   overflow-y: auto;
@@ -796,128 +868,31 @@ tr {
   color: #ef4444;
 }
 
-/* Barre lattérale =================================================== */
+@media (max-width: 1024px) {
+  .main-content {
+    width: 100%;
+    margin-left: 0;
+    padding: 20px;
+  }
 
-.sidebar {
-  width: 240px;
-  height: 100vh;
-  background-color: #fafafa;
-  border-right: 1px solid #e5e7eb;
-  display: flex;
-  flex-direction: column;
-  position: fixed;
-  left: 0;
-  top: 0;
-}
+  .content-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
 
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 24px 16px;
-}
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
 
-.logo-icon {
-  width: 36px;
-  height: 36px;
-  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: bold;
-  font-size: 18px;
-}
+  .detail-row {
+    grid-template-columns: 1fr;
+  }
 
-.logo-text {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.nav-menu {
-  flex: 1;
-  padding: 16px 0;
-  overflow-y: auto;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  color: #6b7280;
-  text-decoration: none;
-  transition: all 0.2s ease;
-  cursor: pointer;
-  font-size: 15px;
-  border-left: 3px solid transparent;
-}
-
-.nav-item:hover {
-  background-color: #f3f4f6;
-  color: #14b8a6;
-}
-
-.nav-item.active {
-  background-color: transparent;
-  color: #14b8a6;
-  border-left: 3px solid #14b8a6;
-}
-
-.nav-icon {
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.user-profile {
-  padding: 16px;
-  border-top: 1px solid #e5e7eb;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-}
-
-.user-name {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 2px;
-}
-
-.user-role {
-  font-size: 12px;
-  color: #9ca3af;
-  margin-bottom: 12px;
-}
-
-/* SVG Icons */
-svg {
-  width: 20px;
-  height: 20px;
-  stroke: currentColor;
-  fill: none;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.btn-logout {
-  padding: 10px 20px;
-  background: #dc3545;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.btn-logout:hover {
-  background: #c82333;
+  .roleFilter {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
 }
 </style>
