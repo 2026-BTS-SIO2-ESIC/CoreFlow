@@ -3,6 +3,7 @@ import LoginView from '../views/LoginView.vue'
 import DashboardView from '../views/DashboardView.vue'
 import AdminUserView from '../views/AdminUserView.vue'
 import addDocumentView from '@/views/addDocumentView.vue'
+import listDocumentView from '@/views/listDocumentView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -31,6 +32,11 @@ const router = createRouter({
       name: 'add-document',
       component: addDocumentView
     },
+    {
+      path: '/documents/list',
+      name: 'list-document',
+      component: listDocumentView
+    }
    
     
   ],
