@@ -37,7 +37,8 @@ const router = createRouter({
     {
       path: '/admin/users',
       name: 'admin-users',
-      component: AdminUserView
+      component: AdminUserView,
+      meta: { requiresRoles: ['admin', 'manager'] }
     },
     {
       path: '/gestionTicket',
@@ -53,5 +54,40 @@ const router = createRouter({
     
   ],
 })
+
+router.beforeEach((to, from, next) => {
+  const requiredRoles = to.meta?.requiresRoles;
+
+  if (!requiredRoles) {
+    next();
+    return;
+  }
+
+  const token = localStorage.getItem('token');
+  if (!token) {
+    next('/login');
+    return;
+  }
+
+  const userStr = localStorage.getItem('user');
+  if (!userStr) {
+    next('/dashboard');
+    return;
+  }
+
+  try {
+    const user = JSON.parse(userStr);
+    const role = user?.role?.toLowerCase();
+
+    if (requiredRoles.includes(role)) {
+      next();
+      return;
+    }
+  } catch (error) {
+    // Données utilisateur invalides dans le stockage local.
+  }
+
+  next('/dashboard');
+});
 
 export default router
