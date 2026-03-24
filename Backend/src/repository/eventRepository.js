@@ -335,7 +335,7 @@ const Event = {
     });
   },
 
-    // fonction delete qui supprime un evenement de la table evenements a partir de son id
+  // fonction delete qui supprime un evenement de la table evenements a partir de son id
   delete: (eventId, callback) => {
   db.promise()
     .query("SELECT id, organisateur_id FROM evenements WHERE id = ?", [eventId])

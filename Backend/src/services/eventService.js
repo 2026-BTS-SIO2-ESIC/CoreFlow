@@ -96,7 +96,9 @@ const validateUpdateEvent = async (event) => {
     event.organizerId === undefined ||
     !Number.isInteger(Number(event.organizerId))
   ) {
-    err.push("Champ organisateur_id est invalide ou requis pour la mise à jour");
+    err.push(
+      "Champ organisateur_id est invalide ou requis pour la mise à jour",
+    );
   }
 
   // Vérification inviter si fourni
@@ -139,7 +141,6 @@ const validateUpdateEvent = async (event) => {
   };
 };
 
-
 // valide les champs necessaires pour supprimer un evenement
 const validateDeleteEvent = (id) => {
   const errors = [];
@@ -176,4 +177,3 @@ module.exports = {
   validateDeleteEvent,
   validateEventList,
 };
-

@@ -1,6 +1,6 @@
 <template>
   <div class="event-view">
-    <AppSidebar :user="user" active-item="events" @logout="logout" />
+    <DashboardSidebar :user="user" :loading="false" @logout="logout" />
     <div class="event-main">
       <div class="page-header">
         <h1>Calendrier des événements</h1>
@@ -79,21 +79,23 @@
       <DetailCardEvent
         :show="showDetailModal"
         :event-id="selectedEventId"
+        :user="user"
         @close="closeDetailModal"
+        @updated="onEventUpdated"
       />
     </div>
   </div>
 </template>
 
 <script>
-import AppSidebar from '../components/AppSidebar.vue'
 import CreateEventModal from '../components/CreateEventModal.vue'
 import DetailCardEvent from '../components/DetailCardEvent.vue'
 import { fetchUserFromToken, hasRole, API_URL } from '../composables/useAuth'
+import DashboardSidebar from '../components/DashboardSidebar.vue'
 
 export default {
   name: 'EventView',
-  components: { AppSidebar, CreateEventModal, DetailCardEvent },
+  components: { CreateEventModal, DetailCardEvent, DashboardSidebar },
   data() {
     const monthNames = [
       'Janvier',
@@ -162,6 +164,9 @@ export default {
     },
     async onEventCreated() {
       this.closeModal()
+      await this.fetchEvents()
+    },
+    async onEventUpdated() {
       await this.fetchEvents()
     },
     async fetchEvents() {

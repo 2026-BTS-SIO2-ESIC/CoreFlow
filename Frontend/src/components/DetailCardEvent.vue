@@ -50,7 +50,7 @@
               </svg>
               {{ error }}
             </div>
-            <div v-else-if="event" class="detail-content">
+            <div v-else-if="event && !editMode" class="detail-content">
               <div class="detail-hero">
                 <span class="detail-type-badge">{{ formatType(event.type_evenement) }}</span>
                 <h3 class="detail-title">{{ event.titre }}</h3>
@@ -165,6 +165,91 @@
                   <span>{{ event.niveau === '1' ? 'Entreprise' : 'Département' }}</span>
                 </div>
               </div>
+
+              <div v-if="canEdit" class="detail-actions">
+                <button type="button" class="btn-edit" @click="startEdit">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Modifier
+                </button>
+              </div>
+            </div>
+
+            <!-- Edit form -->
+            <div v-else-if="event && editMode" class="detail-edit-form">
+              <form @submit.prevent="handleUpdate">
+                <div class="form-section">
+                  <label>Titre *</label>
+                  <input v-model="editForm.titre" type="text" required />
+                </div>
+                <div class="form-section">
+                  <label>Description</label>
+                  <textarea v-model="editForm.description" rows="2" />
+                </div>
+                <div class="form-section">
+                  <label>Type *</label>
+                  <select v-model="editForm.type_evenement" required>
+                    <option value="reunion">Réunion</option>
+                    <option value="formation">Formation</option>
+                    <option value="afterwork">Afterwork</option>
+                    <option value="seminaire">Séminaire</option>
+                    <option value="autre">Autre</option>
+                  </select>
+                </div>
+                <div class="form-section form-grid-2">
+                  <div>
+                    <label>Date/heure début *</label>
+                    <input v-model="editForm.date_debut" type="datetime-local" required />
+                  </div>
+                  <div>
+                    <label>Date/heure fin *</label>
+                    <input v-model="editForm.date_fin" type="datetime-local" required />
+                  </div>
+                </div>
+                <div class="form-section">
+                  <label>Lieu</label>
+                  <input v-model="editForm.lieu" type="text" />
+                </div>
+                <div class="form-section form-grid-2">
+                  <div>
+                    <label>Statut</label>
+                    <select v-model="editForm.statut">
+                      <option value="planifie">Planifié</option>
+                      <option value="en_cours">En cours</option>
+                      <option value="termine">Terminé</option>
+                      <option value="annule">Annulé</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label>Niveau</label>
+                    <select v-model="editForm.niveau">
+                      <option value="1">Entreprise</option>
+                      <option value="2">Département</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-section form-grid-2">
+                  <div>
+                    <label>Places max</label>
+                    <input v-model.number="editForm.nb_places_max" type="number" min="0" />
+                  </div>
+                  <div>
+                    <label>Obligatoire</label>
+                    <select v-model.number="editForm.est_obligatoire">
+                      <option :value="0">Optionnel</option>
+                      <option :value="1">Obligatoire</option>
+                    </select>
+                  </div>
+                </div>
+                <div v-if="updateError" class="form-error">{{ updateError }}</div>
+                <div class="form-actions">
+                  <button type="button" @click="cancelEdit">Annuler</button>
+                  <button type="submit" :disabled="updateLoading">
+                    {{ updateLoading ? 'Enregistrement...' : 'Enregistrer' }}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
 
@@ -208,54 +293,16 @@ export default {
   props: {
     show: { type: Boolean, default: false },
     eventId: { type: [Number, String], default: null },
+    user: { type: Object, default: null },
   },
-  emits: ['close'],
+  emits: ['close', 'updated'],
   data() {
     return {
       event: null,
       loading: false,
       error: null,
-      deleting: false,
     }
   },
-computed: {
-  canDelete() {
-    console.log("===== DEBUG canDelete SIMPLE TOKEN =====");
-
-    if (!this.event) return false;
-
-    const token = localStorage.getItem('token');
-    if (!token) return false;
-
-    try {
-      // Décodage DIRECT (pas de split)
-      const payload = JSON.parse(atob(token));
-
-      console.log("Payload :", payload);
-
-      const currentUserId = Number(payload.userId);
-
-      const organisateurId = Number(
-        this.event.organisateur_id ||
-        this.event.organisateurId ||
-        this.event.user_id
-      );
-
-      console.log("User ID :", currentUserId);
-      console.log("Organisateur ID :", organisateurId);
-
-      const isOwner = currentUserId === organisateurId;
-
-      console.log("Résultat :", isOwner);
-
-      return isOwner;
-
-    } catch (e) {
-      console.error("Erreur canDelete:", e);
-      return false;
-    }
-  }
-},
   watch: {
     eventId: {
       handler(newId) {
@@ -274,6 +321,9 @@ computed: {
       this.event = null
       this.loading = false
       this.error = null
+      this.editMode = false
+      this.editForm = {}
+      this.updateError = null
     },
     async fetchEvent(id) {
       if (!id) return
@@ -319,72 +369,8 @@ computed: {
         minute: '2-digit',
       })
     },
-
-    async handleDelete() {
-  console.log("===== CLICK DELETE =====");
-
-  if (!confirm("Voulez-vous vraiment supprimer cet événement ?")) {
-    console.log("❌ Suppression annulée");
-    return;
-  }
-
-  try {
-    const token = localStorage.getItem('token');
-    console.log("TOKEN :", token);
-
-    if (!token) {
-      alert("Session expirée");
-      return;
-    }
-
-    // ⚠️ ton token n'est PAS un JWT → décodage simple
-    const payload = JSON.parse(atob(token));
-    console.log("Payload :", payload);
-
-    const currentUserId = payload.userId;
-    const currentUserRole = payload.role || "user"; // fallback
-
-    console.log("User ID :", currentUserId);
-    console.log("User Role :", currentUserRole);
-
-    const deleteUrl = `${API_URL}/event/delete/${this.event.id}/${currentUserRole}/${currentUserId}`;
-    console.log("URL DELETE :", deleteUrl);
-
-    this.deleting = true;
-
-    const res = await fetch(deleteUrl, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-    });
-
-    console.log("STATUS HTTP :", res.status);
-
-    const data = await res.json();
-    console.log("RESPONSE :", data);
-
-    if (res.ok) {
-      alert("✅ Événement supprimé !");
-      this.$emit('close');
-      location.reload();
-    } else {
-      alert(data.error || "Erreur lors de la suppression");
-    }
-
-  } catch (e) {
-    console.error("❌ Erreur suppression:", e);
-    alert("Erreur technique lors de la suppression.");
-  } finally {
-    this.deleting = false;
-  }
-}
-
   },
 }
-
-
 </script>
 
 <style scoped>
@@ -668,6 +654,110 @@ computed: {
   width: 1.125rem;
   height: 1.125rem;
   color: #14b8a6;
+}
+
+.detail-actions {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+.btn-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #0d9488;
+  background: #ccfbf1;
+  border: 1px solid #99f6e4;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.btn-edit:hover {
+  background: #99f6e4;
+  color: #0f766e;
+}
+.btn-edit svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.detail-edit-form {
+  padding: 1rem 0;
+}
+.detail-edit-form .form-section {
+  margin-bottom: 1rem;
+}
+.detail-edit-form label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #475569;
+  margin-bottom: 0.35rem;
+}
+.detail-edit-form input,
+.detail-edit-form select,
+.detail-edit-form textarea {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9375rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+}
+.detail-edit-form textarea {
+  resize: vertical;
+  min-height: 4rem;
+}
+.detail-edit-form .form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.detail-edit-form .form-error {
+  color: #b91c1c;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background: #fef2f2;
+  border-radius: 8px;
+}
+.detail-edit-form .form-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+.detail-edit-form .form-actions button {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.detail-edit-form .form-actions button[type="button"] {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+.detail-edit-form .form-actions button[type="button"]:hover {
+  background: #e2e8f0;
+}
+.detail-edit-form .form-actions button[type="submit"] {
+  background: #0d9488;
+  color: #fff;
+  border: none;
+}
+.detail-edit-form .form-actions button[type="submit"]:hover:not(:disabled) {
+  background: #0f766e;
+}
+.detail-edit-form .form-actions button[type="submit"]:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .modal-enter-active,
