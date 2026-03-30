@@ -91,6 +91,19 @@ exports.updateStatut = async (congeId, statut) => {
   return result;
 };
 
+// Update du statut et commentaire d'un congé
+exports.updateStatutWithComment = async (congeId, statut, commentaire) => {
+  const [result] = await pool.query(
+    `
+    UPDATE conges
+    SET statut = ?, commentaire_validateur = ?
+    WHERE id = ?
+    `,
+    [statut, commentaire, congeId]
+  );
+  return result;
+};
+
 // Statistiques des congés
 exports.getStats = async () => {
   const [rows] = await pool.query(
@@ -336,4 +349,30 @@ exports.countPending = async () => {
     "SELECT COUNT(*) as total FROM conges WHERE statut = 'en_attente'"
   );
   return rows[0].total;
+};
+
+// Annuler une validation (remettre en attente et décrémenter le solde)
+exports.cancelValidation = async (congeId) => {
+  const [result] = await pool.query(
+    `
+    UPDATE conges
+    SET statut = 'en_attente', commentaire_validateur = NULL
+    WHERE id = ? AND statut = 'approuve'
+    `,
+    [congeId]
+  );
+  return result;
+};
+
+// Annuler un refus (remettre en attente)
+exports.cancelRefus = async (congeId) => {
+  const [result] = await pool.query(
+    `
+    UPDATE conges
+    SET statut = 'en_attente', commentaire_validateur = NULL
+    WHERE id = ? AND statut = 'refuse'
+    `,
+    [congeId]
+  );
+  return result;
 };

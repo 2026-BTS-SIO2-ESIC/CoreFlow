@@ -151,7 +151,7 @@ exports.getAllConges = async () => {
   return await congesRepository.findAllConges();
 };
 
-exports.valider = async (id) => {
+exports.valider = async (id, commentaire = null) => {
   const conge = await congesRepository.findCongeById(id);
   if (!conge) {
     const error = new Error('Congé introuvable');
@@ -165,7 +165,7 @@ exports.valider = async (id) => {
     throw error;
   }
 
-  const result = await congesRepository.updateStatut(id, 'approuve');
+  const result = await congesRepository.updateStatutWithComment(id, 'approuve', commentaire);
   if (result.affectedRows === 0) {
     const error = new Error('La demande ne peut pas être modifiée');
     error.statusCode = 400;
@@ -175,7 +175,7 @@ exports.valider = async (id) => {
   return await congesRepository.findCongeById(id);
 };
 
-exports.refuser = async (id) => {
+exports.refuser = async (id, commentaire = null) => {
   const conge = await congesRepository.findCongeById(id);
   if (!conge) {
     const error = new Error('Congé introuvable');
@@ -189,11 +189,77 @@ exports.refuser = async (id) => {
     throw error;
   }
 
-  const result = await congesRepository.updateStatut(id, 'refuse');
+  const result = await congesRepository.updateStatutWithComment(id, 'refuse', commentaire);
   if (result.affectedRows === 0) {
     const error = new Error('La demande ne peut pas être modifiée');
     error.statusCode = 400;
     throw error;
+  }
+
+  // Restaurer le solde car il a été réservé lors de la création de la demande.
+  const annee = new Date().getFullYear();
+  if (conge.type_conge === 'rtt') {
+    await congesRepository.decrementRttPris(conge.user_id, annee, conge.nb_jours);
+  } else {
+    await congesRepository.decrementCongesPayesPris(conge.user_id, annee, conge.nb_jours);
+  }
+
+  return await congesRepository.findCongeById(id);
+};
+
+// Annuler une validation (remettre en attente)
+exports.annulerValidation = async (id) => {
+  const conge = await congesRepository.findCongeById(id);
+  if (!conge) {
+    const error = new Error('Congé introuvable');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (conge.statut !== 'approuve') {
+    const error = new Error('La demande ne peut pas être annulée car elle n\'est pas approuvée');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const result = await congesRepository.cancelValidation(id);
+  if (result.affectedRows === 0) {
+    const error = new Error('La validation ne peut pas être annulée');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  return await congesRepository.findCongeById(id);
+};
+
+// Annuler un refus (remettre en attente)
+exports.annulerRefus = async (id) => {
+  const conge = await congesRepository.findCongeById(id);
+  if (!conge) {
+    const error = new Error('Congé introuvable');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (conge.statut !== 'refuse') {
+    const error = new Error('La demande ne peut pas être annulée car elle n\'est pas refusée');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const result = await congesRepository.cancelRefus(id);
+  if (result.affectedRows === 0) {
+    const error = new Error('Le refus ne peut pas être annulé');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  // Re-réserver le solde en remettant la demande en attente.
+  const annee = new Date().getFullYear();
+  if (conge.type_conge === 'rtt') {
+    await congesRepository.incrementRttPris(conge.user_id, annee, conge.nb_jours);
+  } else {
+    await congesRepository.incrementCongesPayesPris(conge.user_id, annee, conge.nb_jours);
   }
 
   return await congesRepository.findCongeById(id);

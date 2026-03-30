@@ -85,10 +85,11 @@ export async function getStatsConges() {
   return json.data ?? json;
 }
 
-export async function validerConge(id) {
+export async function validerConge(id, commentaire = null) {
   const res = await fetch(`${API_BASE}/api/conges/${id}/valider`, {
     method: "PUT",
     headers: getAuthHeaders(),
+    body: JSON.stringify({ commentaire })
   });
 
   const json = await res.json();
@@ -100,10 +101,11 @@ export async function validerConge(id) {
   return json.data;
 }
 
-export async function refuserConge(id) {
+export async function refuserConge(id, commentaire = null) {
   const res = await fetch(`${API_BASE}/api/conges/${id}/refuser`, {
     method: "PUT",
     headers: getAuthHeaders(),
+    body: JSON.stringify({ commentaire })
   });
 
   const json = await res.json();
@@ -111,6 +113,37 @@ export async function refuserConge(id) {
   if (!res.ok) {
     throw new Error(json.message || "Erreur lors du refus");
   }
+
+  return json.data;
+}
+
+export async function annulerValidationConge(id) {
+  const res = await fetch(`${API_BASE}/api/conges/${id}/annuler-validation`, {
+    method: "PUT",
+    headers: getAuthHeaders()
+  });
+
+  const json = await res.json();
+
+  if (!res.ok) {
+    throw new Error(json.message || "Erreur lors de l'annulation de la validation");
+  }
+
+  return json.data;
+}
+
+export async function annulerRefusConge(id) {
+  const res = await fetch(`${API_BASE}/api/conges/${id}/annuler-refus`, {
+    method: "PUT",
+    headers: getAuthHeaders()
+  });
+
+  const json = await res.json();
+
+  if (!res.ok) {
+    throw new Error(json.message || "Erreur lors de l'annulation du refus");
+  }
+
   return json.data;
 }
 

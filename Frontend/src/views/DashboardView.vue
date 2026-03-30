@@ -27,8 +27,8 @@
             <label>Solde Congés</label>
             <p>
               {{
-                user?.['solde_congés'] != null
-                  ? user['solde_congés'] + ' jours restants'
+                solde?.rtt_restants != null
+                  ? solde.rtt_restants + ' jours restants'
                   : 'Non disponible'
               }}
             </p>
@@ -44,14 +44,14 @@
         <div class="stat-card">
           <span class="icon">🗓️</span>
           <div class="events-dashboard-section">
-          <CreateEventModal v-if="user && (user.role === 'admin' || user.role === 'manager')" />
-          
+            <CreateEventModal v-if="user && (user.role === 'admin' || user.role === 'manager')" />
+
             <div class="events-container">
               <EventList title="🚀 Événements à venir" :events="upcomingEvents" />
               <div class="spacer-v"></div>
               <EventList title="📜 Historique" :events="pastEvents" class="past-events-style" />
             </div>
-        </div>
+          </div>
           <!-- <div class="stat-info">
             <label>Prochain Événement</label>
             <p>Aucun événement planifié</p>
@@ -136,11 +136,12 @@ const API_URL = 'http://localhost:3000'
 import axios from 'axios';
 import CreateEventModal from '@/components/CreateEventModal.vue';
 import EventList from '@/components/EventList.vue';
+import { getSoldeConges } from '../services/congesApi';
 
 export default {
   name: 'DashboardView',
   components: {
-    DashboardSidebar,CreateEventModal, EventList
+    DashboardSidebar, CreateEventModal, EventList
   },
 
   // ── Données réactives ────────────────────────────────
@@ -149,6 +150,7 @@ export default {
       user: null,
       loading: true,
       error: null,
+      solde: null,
 
       upcomingEvents: [],
       pastEvents: [],
@@ -197,6 +199,10 @@ export default {
       const data = await response.json()
       this.user = data.data
       localStorage.setItem('user', JSON.stringify(data.data))
+
+      // Charger le solde et les événements après avoir l'utilisateur
+      await this.loadSolde()
+      await this.fetchEvents()
     } catch (err) {
       this.error = 'Impossible de contacter le serveur.'
       const userStr = localStorage.getItem('user')
@@ -208,6 +214,14 @@ export default {
 
   // ── Actions ──────────────────────────────────────────
   methods: {
+    async loadSolde() {
+      try {
+        this.solde = await getSoldeConges();
+      } catch (e) {
+        console.error('Erreur chargement solde:', e);
+        // Ne pas afficher d'erreur pour le solde, juste laisser null
+      }
+    },
     async fetchEvents() {
       try {
         const response = await axios.get('http://localhost:3000/api/event/all');
@@ -329,11 +343,13 @@ export default {
   font-size: 14px;
   color: #9ca3af;
 }
+
 .header-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
+
 .header-left h1 {
   font-size: 24px;
   font-weight: 700;
@@ -341,12 +357,14 @@ export default {
   margin: 0 0 5px 0;
   letter-spacing: -0.4px;
 }
+
 .header-subtitle {
   font-size: 13px;
   color: #9ca3af;
   margin: 0;
   text-transform: capitalize;
 }
+
 .header-badge {
   background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
   color: white;
@@ -391,6 +409,7 @@ export default {
     transform 0.2s ease;
   border: 1px solid #f3f4f6;
 }
+
 .stat-card:hover {
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
   transform: translateY(-1px);
@@ -407,6 +426,7 @@ export default {
   border-radius: 12px;
   flex-shrink: 0;
 }
+
 .stat-info label {
   font-size: 11px;
   color: #9ca3af;
@@ -415,6 +435,7 @@ export default {
   font-weight: 600;
   display: block;
 }
+
 .stat-info p {
   font-weight: 700;
   margin: 5px 0 0;
@@ -438,6 +459,7 @@ export default {
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
   border: 1px solid #f3f4f6;
 }
+
 .actions-panel h3,
 .profile-security-card h3,
 .company-life h3 {
@@ -448,15 +470,18 @@ export default {
   padding-bottom: 12px;
   border-bottom: 1px solid #f3f4f6;
 }
+
 .empty-state {
   padding: 28px 0;
   text-align: center;
   color: #c4c9d4;
   font-size: 13px;
 }
+
 .empty-state p {
   margin: 0;
 }
+
 .side-panels {
   display: flex;
   flex-direction: column;
@@ -467,6 +492,7 @@ export default {
   display: flex;
   flex-direction: column;
 }
+
 .secure-info p {
   margin: 0;
   padding: 8px 0;
@@ -476,9 +502,11 @@ export default {
   display: flex;
   gap: 6px;
 }
+
 .secure-info p:last-child {
   border-bottom: none;
 }
+
 .secure-info strong {
   color: #6b7280;
   font-weight: 600;
@@ -501,6 +529,7 @@ export default {
     opacity 0.2s ease,
     transform 0.15s ease;
 }
+
 .btn-password:hover {
   opacity: 0.88;
   transform: translateY(-1px);
@@ -516,6 +545,7 @@ export default {
   justify-content: center;
   z-index: 1000;
 }
+
 .modal-card {
   background: white;
   border-radius: 16px;
@@ -524,18 +554,21 @@ export default {
   max-width: 90vw;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
 }
+
 .modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 20px;
 }
+
 .modal-header h3 {
   margin: 0;
   font-size: 16px;
   font-weight: 700;
   color: #111827;
 }
+
 .modal-close {
   background: none;
   border: none;
@@ -546,6 +579,7 @@ export default {
   border-radius: 6px;
   transition: background 0.15s;
 }
+
 .modal-close:hover {
   background: #f3f4f6;
   color: #374151;
@@ -560,6 +594,7 @@ export default {
   font-size: 13px;
   margin-bottom: 16px;
 }
+
 .modal-success {
   background: #f0fdfa;
   color: #0d9488;
@@ -573,6 +608,7 @@ export default {
 .form-group {
   margin-bottom: 16px;
 }
+
 .form-group label {
   display: block;
   font-size: 13px;
@@ -580,6 +616,7 @@ export default {
   color: #374151;
   margin-bottom: 6px;
 }
+
 .form-group input {
   width: 100%;
   padding: 10px 12px;
@@ -591,6 +628,7 @@ export default {
   transition: border-color 0.15s;
   box-sizing: border-box;
 }
+
 .form-group input:focus {
   border-color: #14b8a6;
   box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.12);
@@ -601,6 +639,7 @@ export default {
   gap: 10px;
   margin-top: 24px;
 }
+
 .btn-cancel {
   flex: 1;
   padding: 10px;
@@ -614,9 +653,11 @@ export default {
   cursor: pointer;
   transition: 0.2s;
 }
+
 .btn-cancel:hover {
   background: #f3f4f6;
 }
+
 .btn-save {
   flex: 1;
   padding: 10px;
@@ -629,9 +670,11 @@ export default {
   font-weight: 600;
   transition: opacity 0.2s;
 }
+
 .btn-save:hover:not(:disabled) {
   opacity: 0.88;
 }
+
 .btn-save:disabled {
   opacity: 0.55;
   cursor: not-allowed;

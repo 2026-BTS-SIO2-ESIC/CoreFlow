@@ -1,17 +1,9 @@
 <template>
   <div class="page">
 
-    <DashboardSidebar 
-    :user="user" 
-    :loading="false" 
-    @logout="logout" />
+    <DashboardSidebar :user="user" :loading="false" @logout="logout" />
 
     <header class="header">
-      <div class="logo">
-        <span class="logo-icon">C</span>
-        <h2>CoreFlow</h2>
-      </div>
-
       <div class="user-role">
         RH
       </div>
@@ -81,19 +73,79 @@
         "{{ c.motif }}"
       </div>
 
+      <!-- Afficher le commentaire du validateur s'il existe -->
+      <div v-if="c.commentaire_validateur" class="commentaire-validateur">
+        <strong>💬 Commentaire RH :</strong> {{ c.commentaire_validateur }}
+      </div>
+
       <div class="actions">
         <template v-if="c.statut === 'en_attente'">
-          <button class="refuse" @click="refuser(c.id)">
+          <!-- Modal pour validation avec commentaire -->
+          <div v-if="showValidationModal && selectedConge?.id === c.id" class="modal-overlay"
+            @click.self="closeValidationModal">
+            <div class="modal-card">
+              <div class="modal-header">
+                <h3>✅ Approuver la demande</h3>
+                <button class="modal-close" @click="closeValidationModal">✕</button>
+              </div>
+              <div class="modal-body">
+                <p>Confirmer l'approbation de la demande de congé de <strong>{{ c.prenom }} {{ c.nom }}</strong></p>
+                <div class="form-group">
+                  <label>Commentaire (optionnel)</label>
+                  <textarea v-model="validationComment"
+                    placeholder="Ajouter un commentaire pour l'employé..."></textarea>
+                </div>
+              </div>
+              <div class="modal-actions">
+                <button @click="closeValidationModal" class="btn-cancel">Annuler</button>
+                <button @click="confirmValider(c.id)" class="btn-approve">Approuver</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Modal pour refus avec commentaire -->
+          <div v-if="showRefusModal && selectedConge?.id === c.id" class="modal-overlay" @click.self="closeRefusModal">
+            <div class="modal-card">
+              <div class="modal-header">
+                <h3>❌ Refuser la demande</h3>
+                <button class="modal-close" @click="closeRefusModal">✕</button>
+              </div>
+              <div class="modal-body">
+                <p>Confirmer le refus de la demande de congé de <strong>{{ c.prenom }} {{ c.nom }}</strong></p>
+                <div class="form-group">
+                  <label>Commentaire (requis)</label>
+                  <textarea v-model="refusComment" placeholder="Expliquer le motif du refus..." required></textarea>
+                </div>
+              </div>
+              <div class="modal-actions">
+                <button @click="closeRefusModal" class="btn-cancel">Annuler</button>
+                <button @click="confirmRefuser(c.id)" class="btn-refuse">Refuser</button>
+              </div>
+            </div>
+          </div>
+
+          <button class="refuse" @click="openRefusModal(c)">
             Refuser
           </button>
 
-          <button class="approve" @click="valider(c.id)">
+          <button class="approve" @click="openValidationModal(c)">
             Approuver
           </button>
         </template>
 
         <template v-else>
-          <button class="disabled" disabled>
+          <!-- Boutons pour annuler validation/refus -->
+          <template v-if="c.statut === 'approuve'">
+            <button class="cancel-approve" @click="annulerValidation(c.id)">
+              Annuler validation
+            </button>
+          </template>
+          <template v-if="c.statut === 'refuse'">
+            <button class="cancel-refuse" @click="annulerRefus(c.id)">
+              Annuler refus
+            </button>
+          </template>
+          <button class="disabled" disabled v-if="c.statut === 'annule'">
             Statut traité
           </button>
         </template>
@@ -119,7 +171,13 @@ export default {
       conges: [],
       stats: {},
       loading: false,
-      error: null
+      error: null,
+      // Modals
+      showValidationModal: false,
+      showRefusModal: false,
+      selectedConge: null,
+      validationComment: '',
+      refusComment: ''
     }
   },
 
@@ -183,8 +241,10 @@ export default {
         const response = await fetch(`http://localhost:3000/api/conges/${id}/valider`, {
           method: 'PUT',
           headers: {
-            'Authorization': `Bearer ${token}`
-          }
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ commentaire: this.validationComment })
         })
 
         if (!response.ok) {
@@ -193,6 +253,7 @@ export default {
         }
 
         await this.loadData()
+        this.closeValidationModal()
       } catch (err) {
         this.error = err.message || 'Erreur lors de la validation du congé.'
       }
@@ -205,8 +266,10 @@ export default {
         const response = await fetch(`http://localhost:3000/api/conges/${id}/refuser`, {
           method: 'PUT',
           headers: {
-            'Authorization': `Bearer ${token}`
-          }
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ commentaire: this.refusComment })
         })
 
         if (!response.ok) {
@@ -215,6 +278,7 @@ export default {
         }
 
         await this.loadData()
+        this.closeRefusModal()
       } catch (err) {
         this.error = err.message || 'Erreur lors du refus du congé.'
       }
@@ -226,15 +290,98 @@ export default {
       this.$router.push('/login')
     },
 
-    formatStatut(statut) {
-      const statusMap = {
-        'en_attente': 'En attente',
-        'approuve': 'Approuvé',
-        'refuse': 'Refusé',
-        'annule': 'Annulé'
+    // Gestion des modals
+    openValidationModal(conge) {
+      this.selectedConge = conge
+      this.validationComment = ''
+      this.showValidationModal = true
+    },
+
+    closeValidationModal() {
+      this.showValidationModal = false
+      this.selectedConge = null
+      this.validationComment = ''
+    },
+
+    openRefusModal(conge) {
+      this.selectedConge = conge
+      this.refusComment = ''
+      this.showRefusModal = true
+    },
+
+    closeRefusModal() {
+      this.showRefusModal = false
+      this.selectedConge = null
+      this.refusComment = ''
+    },
+
+    // Méthodes de confirmation
+    confirmValider(id) {
+      this.valider(id)
+    },
+
+    confirmRefuser(id) {
+      if (!this.refusComment.trim()) {
+        this.error = 'Un commentaire est requis pour refuser une demande.'
+        return
       }
-      return statusMap[statut] || statut
-    }
+      this.refuser(id)
+    },
+
+    formatStatut(statut) {
+      const map = {
+        en_attente: 'En attente',
+        approuve: 'Approuvé',
+        refuse: 'Refusé',
+        annule: 'Annulé'
+      }
+      return map[statut] || statut
+    },
+
+    // Annuler validation/refus
+    async annulerValidation(id) {
+      const token = localStorage.getItem('token')
+
+      try {
+        const response = await fetch(`http://localhost:3000/api/conges/${id}/annuler-validation`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.message || 'Erreur lors de l\'annulation de la validation')
+        }
+
+        await this.loadData()
+      } catch (err) {
+        this.error = err.message || 'Erreur lors de l\'annulation de la validation.'
+      }
+    },
+
+    async annulerRefus(id) {
+      const token = localStorage.getItem('token')
+
+      try {
+        const response = await fetch(`http://localhost:3000/api/conges/${id}/annuler-refus`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.message || 'Erreur lors de l\'annulation du refus')
+        }
+
+        await this.loadData()
+      } catch (err) {
+        this.error = err.message || 'Erreur lors de l\'annulation du refus.'
+      }
+    },
   }
 }
 </script>
@@ -248,7 +395,7 @@ export default {
   margin-left: 248px;
   padding: 32px 24px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  /* background: linear-gradient(135deg, #ffffff 0%, #e3f4f5 100%); */
   min-height: 100vh;
 }
 
@@ -559,57 +706,197 @@ export default {
   content: '💬 ';
 }
 
-.actions {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-  flex-wrap: wrap;
+.commentaire-validateur {
+  margin: 12px 0;
+  padding: 10px 12px;
+  background: #e0f2fe;
+  border-left: 3px solid #0ea5e9;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #0c4a6e;
+  line-height: 1.5;
 }
 
-.refuse,
-.approve {
+.commentaire-validateur strong {
+  color: #0369a1;
+}
+
+/* Modal styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-card {
+  background: white;
+  border-radius: 12px;
+  padding: 0;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #111827;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.modal-close:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.modal-body {
+  padding: 20px 24px;
+}
+
+.modal-body p {
+  margin: 0 0 16px 0;
+  color: #374151;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #374151;
+  font-size: 14px;
+}
+
+.form-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  min-height: 80px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.form-group textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 24px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.btn-cancel,
+.btn-approve,
+.btn-refuse {
   padding: 8px 16px;
   border: none;
-  border-radius: 8px;
-  font-size: 13px;
+  border-radius: 6px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  min-width: 100px;
+  transition: all 0.2s;
 }
 
-.refuse {
+.btn-cancel {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.btn-cancel:hover {
+  background: #e5e7eb;
+}
+
+.btn-approve {
+  background: #10b981;
+  color: white;
+}
+
+.btn-approve:hover {
+  background: #059669;
+}
+
+.btn-refuse {
   background: #ef4444;
   color: white;
-  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
 }
 
-.refuse:hover {
+.btn-refuse:hover {
   background: #dc2626;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
-.refuse:active {
-  transform: translateY(0);
+/* Boutons d'annulation */
+.cancel-approve,
+.cancel-refuse {
+  padding: 6px 12px;
+  border: 1px solid;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  background: white;
 }
 
-.approve {
-  background: #22c55e;
-  color: white;
-  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.2);
+.cancel-approve {
+  border-color: #f59e0b;
+  color: #92400e;
 }
 
-.approve:hover {
-  background: #16a34a;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+.cancel-approve:hover {
+  background: #fef3c7;
 }
 
-.approve:active {
-  transform: translateY(0);
+.cancel-refuse {
+  border-color: #f97316;
+  color: #9a3412;
+}
+
+.cancel-refuse:hover {
+  background: #fed7aa;
 }
 
 /* Responsive Design */
@@ -687,5 +974,40 @@ export default {
     font-size: 12px;
     padding: 6px 12px;
   }
+}
+
+/* Boutons principaux Approuver/Refuser (hors modale) */
+.approve {
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: 8px;
+  transition: background 0.2s;
+}
+
+.approve:hover {
+  background: #059669;
+}
+
+.refuse {
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: 8px;
+  transition: background 0.2s;
+}
+
+.refuse:hover {
+  background: #dc2626;
 }
 </style>
