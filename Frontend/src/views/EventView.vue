@@ -382,7 +382,7 @@ export default {
   flex-direction: column;
   align-items: stretch;
   justify-content: flex-start;
-  padding: 2rem;
+  padding: 0.6rem;
   cursor: pointer;
   border-radius: 8px;
   font-weight: 500;
@@ -465,5 +465,41 @@ export default {
 }
 .calendar-cell.cell-past:hover {
   background: transparent;
+}
+
+@media (max-width: 1024px) {
+  .event-main {
+    margin-left: 0;
+    padding: 1rem;
+  }
+
+  .page-header {
+    padding: 24px;
+  }
+
+  .calendar {
+    padding: 1rem;
+    min-height: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .page-header h1 {
+    font-size: 24px;
+  }
+
+  .calendar-nav h2 {
+    font-size: 1rem;
+  }
+
+  .calendar-weekdays,
+  .calendar-grid {
+    gap: 0.25rem;
+  }
+
+  .cell-event {
+    font-size: 0.625rem;
+    padding: 4px 6px;
+  }
 }
 </style>

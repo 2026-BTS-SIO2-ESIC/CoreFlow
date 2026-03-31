@@ -76,22 +76,22 @@
                 :key="user.id"
                 :class="{ 'inactive-row': !user.est_actif }"
               >
-                <td class="id-cell">{{ user.id }}</td>
-                <td class="user-cell">
+                <td class="id-cell" data-label="ID">{{ user.id }}</td>
+                <td class="user-cell" data-label="Utilisateur">
                   <div class="user-avatar">{{ user.prenom.charAt(0) }}{{ user.nom.charAt(0) }}</div>
                   <div class="user-details">
                     <div class="user-name">{{ user.prenom }} {{ user.nom }}</div>
                     <div class="user-poste">{{ user.poste || 'Non renseigné' }}</div>
                   </div>
                 </td>
-                <td class="email-cell">{{ user.email }}</td>
-                <td>
+                <td class="email-cell" data-label="Email">{{ user.email }}</td>
+                <td data-label="Rôle">
                   <span class="role-badge" :class="`role-${user.role}`">
                     {{ getRoleLabel(user.role) }}
                   </span>
                 </td>
-                <td class="dept-cell">{{ user.departement || '-' }}</td>
-                <td>
+                <td class="dept-cell" data-label="Département">{{ user.departement || '-' }}</td>
+                <td data-label="Statut">
                   <span
                     class="status-badge"
                     :class="user.est_actif ? 'status-active' : 'status-inactive'"
@@ -99,7 +99,7 @@
                     {{ user.est_actif ? 'Actif' : 'Inactif' }}
                   </span>
                 </td>
-                <td class="actions-cell">
+                <td class="actions-cell" data-label="Actions">
                   <button @click="editUser(user)" class="action-btn edit-btn" title="Modifier">
                     ✏️
                   </button>
@@ -385,7 +385,7 @@ export default {
       try {
         const token = localStorage.getItem('token')
 
-        const response = await fetch('${import.meta.env.VITE_API_BASE}/api/users', {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE}/api/users`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -1211,6 +1211,21 @@ export default {
   transform: translateY(-1px);
 }
 
+@media (max-width: 1024px) {
+  .admin-container {
+    margin-left: 0;
+    padding: 16px;
+  }
+
+  .page-header {
+    padding: 28px;
+  }
+
+  .content-section {
+    padding: 24px;
+  }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .admin-container {
@@ -1259,11 +1274,68 @@ export default {
   }
 
   .table-container {
-    overflow-x: auto;
+    overflow: visible;
+    border: none;
+    background: transparent;
   }
 
   .users-table {
-    min-width: 800px;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .users-table thead {
+    display: none;
+  }
+
+  .users-table,
+  .users-table tbody,
+  .users-table tr,
+  .users-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .users-table tbody tr {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+
+  .users-table td {
+    border: none;
+    border-bottom: 1px dashed #e5e7eb;
+    padding: 10px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    text-align: right;
+  }
+
+  .users-table td::before {
+    content: attr(data-label);
+    font-weight: 700;
+    color: #334155;
+    text-align: left;
+  }
+
+  .users-table td:last-child {
+    border-bottom: none;
+  }
+
+  .user-cell {
+    align-items: flex-start;
+  }
+
+  .user-cell .user-details {
+    text-align: left;
+  }
+
+  .actions-cell {
+    justify-content: flex-end;
   }
 
   .form-grid {

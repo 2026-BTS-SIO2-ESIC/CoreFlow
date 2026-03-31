@@ -612,6 +612,17 @@ export default {
   transform: translateY(0);
 }
 
+@media (max-width: 1024px) {
+  .page {
+    margin-left: 0;
+    padding: 20px 16px;
+  }
+
+  .stat {
+    padding-right: 28px;
+  }
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .page {

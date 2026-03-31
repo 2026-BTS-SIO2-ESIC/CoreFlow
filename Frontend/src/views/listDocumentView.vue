@@ -1,8 +1,8 @@
 <template>
   <div class="flex min-h-screen bg-[#F0FDFA]">
     <DashboardSidebar :user="user" @logout="logout" />
-    <main class="flex-1 p-10 overflow-auto">
-      <div class="flex items-center justify-between mb-8">
+    <main class="flex-1 lg:ml-[248px] p-4 sm:p-6 lg:p-10 overflow-auto">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <h1 class="text-gray-900 font-bold text-[32px] font-['Poppins']">
           Documents
         </h1>
@@ -15,8 +15,8 @@
         </button>
       </div>
 
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
-        <div class="flex items-center gap-4">
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-4">
           <div class="flex items-center gap-2 text-gray-700 font-semibold font-['Mulish'] text-[14px]">
             <Filter :size="20" />
             Filtres :
@@ -30,8 +30,9 @@
         </div>
       </div>
 
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-        <table class="w-full">
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
+        <div class="overflow-x-auto">
+        <table class="w-full min-w-[760px]">
           <thead>
             <tr class="border-b border-gray-200 text-left">
               <th class="pb-4 text-gray-600 font-semibold font-['Mulish'] text-[14px]">Nom du fichier</th>
@@ -67,6 +68,7 @@
             </tr>
           </tbody>
         </table>
+        </div>
 
         <div v-if="documents.length === 0" class="text-center py-10 text-gray-400 italic">
           Aucun document trouvé.

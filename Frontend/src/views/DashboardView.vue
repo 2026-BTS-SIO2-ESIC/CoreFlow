@@ -636,4 +636,51 @@ export default {
   opacity: 0.55;
   cursor: not-allowed;
 }
+
+@media (max-width: 1024px) {
+  .main-content {
+    margin-left: 0;
+    padding: 20px;
+  }
+
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-core {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-card {
+    width: min(520px, 94vw);
+    padding: 22px;
+  }
+}
+
+@media (max-width: 640px) {
+  .main-content {
+    padding: 14px;
+  }
+
+  .dashboard-header,
+  .actions-panel,
+  .profile-security-card,
+  .company-life {
+    padding: 16px;
+  }
+
+  .header-left h1 {
+    font-size: 20px;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
+}
 </style>

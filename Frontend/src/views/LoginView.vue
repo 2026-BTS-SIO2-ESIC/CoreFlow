@@ -435,5 +435,40 @@ input:focus {
   .login-right {
     padding: 40px 30px;
   }
+
+  .right-content h2 {
+    font-size: 28px;
+  }
+
+  h1 {
+    font-size: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-page {
+    padding: 10px;
+  }
+
+  .login-left {
+    padding: 26px 18px;
+  }
+
+  .login-right {
+    display: none;
+  }
+
+  .logo {
+    margin-bottom: 20px;
+  }
+
+  .logo-text {
+    font-size: 20px;
+  }
+
+  .dev-info {
+    font-size: 12px;
+    padding: 14px;
+  }
 }
 </style>
