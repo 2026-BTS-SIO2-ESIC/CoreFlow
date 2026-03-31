@@ -56,7 +56,7 @@
                   <button @click="telecharger(doc)" class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Télécharger">
                     <Download :size="18" class="text-gray-600" />
                   </button>
-                  <a :href="`http://localhost:3000/uploads/${doc.fichier_path}`" target="_blank" class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Voir">
+                  <a :href="`${apiBase}/uploads/${doc.fichier_path}`" target="_blank" class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Voir">
                     <Eye :size="18" class="text-gray-600" />
                   </a>
                   <button @click="confirmerSuppression(doc.id)" class="p-2 hover:bg-red-50 rounded-lg transition-colors" title="Supprimer">
@@ -77,18 +77,21 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { Plus, Filter, Download, Eye, Trash2 } from 'lucide-vue-next';
-import DashboardSidebar from '@/components/DashboardSidebar.vue';
+const apiBase = import.meta.env.VITE_API_BASE;
 
 const router = useRouter();
 const user = ref(null);
 const documents = ref([]);
 
+import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { Plus, Filter, Download, Eye, Trash2 } from 'lucide-vue-next';
+import DashboardSidebar from '@/components/DashboardSidebar.vue';
+
+
 const fetchDocuments = async () => {
   try {
-    const response = await fetch('http://localhost:3000/api/documents');
+    const response = await fetch(`${apiBase}/api/documents`);
     const data = await response.json();
     // Correction cruciale : on assigne directement 'data' car ton backend 
     // renvoie directement un tableau
@@ -103,7 +106,7 @@ const fetchDocuments = async () => {
 const telecharger = async (doc) => {
   // Méthode propre pour forcer le téléchargement malgré les ports différents
   try {
-    const response = await fetch(`http://localhost:3000/uploads/${doc.fichier_path}`);
+    const response = await fetch(`${import.meta.env.VITE_API_BASE}/uploads/${doc.fichier_path}`);
     const blob = await response.blob();
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -120,7 +123,7 @@ const telecharger = async (doc) => {
 //on appelle  pour l'api pour supprimer document api/documents/:id
 const confirmerSuppression = (id) => {
     if (confirm("Êtes-vous sûr de vouloir supprimer ce document ?")) {
-        fetch(`http://localhost:3000/api/documents/${id}`, {
+        fetch(`${import.meta.env.VITE_API_BASE}/api/documents/${id}`, {
         method: 'DELETE'
         })
         .then(response => {

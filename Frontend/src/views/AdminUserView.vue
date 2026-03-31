@@ -330,7 +330,7 @@ export default {
       try {
         const token = localStorage.getItem('token')
 
-        const response = await fetch('http://localhost:3000/api/users', {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE}/api/users`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -385,7 +385,7 @@ export default {
       try {
         const token = localStorage.getItem('token')
 
-        const response = await fetch('http://localhost:3000/api/users', {
+        const response = await fetch('${import.meta.env.VITE_API_BASE}/api/users', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -433,7 +433,7 @@ export default {
       try {
         const token = localStorage.getItem('token')
 
-        const response = await fetch(`http://localhost:3000/api/users/${this.formData.id}`, {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE}/api/users/${this.formData.id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -471,7 +471,7 @@ export default {
       try {
         const token = localStorage.getItem('token')
 
-        const response = await fetch(`http://localhost:3000/api/users/${user.id}/toggle-status`, {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE}/api/users/${user.id}/toggle-status`, {
           method: 'PATCH',
           headers: {
             Authorization: `Bearer ${token}`,
@@ -501,7 +501,7 @@ export default {
       try {
         const token = localStorage.getItem('token')
 
-        const response = await fetch(`http://localhost:3000/api/users/${this.userToDelete.id}`, {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE}/api/users/${this.userToDelete.id}`, {
           method: 'DELETE',
           headers: {
             Authorization: `Bearer ${token}`,

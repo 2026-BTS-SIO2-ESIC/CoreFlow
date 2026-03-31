@@ -131,7 +131,7 @@
 <script>
 import DashboardSidebar from '../components/DashboardSidebar.vue'
 
-const API_URL = 'http://localhost:3000'
+const API_URL = `${import.meta.env.VITE_API_BASE}`
 
 import axios from 'axios';
 import CreateEventModal from '@/components/CreateEventModal.vue';
@@ -210,7 +210,7 @@ export default {
   methods: {
     async fetchEvents() {
       try {
-        const response = await axios.get('http://localhost:3000/api/event/all');
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE}/api/event/all`);
         const now = new Date();
         this.upcomingEvents = response.data.filter(e => new Date(e.startDate) >= now);
         this.pastEvents = response.data.filter(e => new Date(e.startDate) < now);

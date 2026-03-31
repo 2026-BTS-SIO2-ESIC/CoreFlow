@@ -67,7 +67,7 @@ app.use(notFound);
 app.use(errorHandler);
 
 // Démarrage du serveur
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Le Serveur de CoreFlow a démarré sur http://localhost:${PORT}`);
 });
 

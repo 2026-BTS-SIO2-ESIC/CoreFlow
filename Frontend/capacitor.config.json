@@ -1,5 +1,8 @@
 {
   "appId": "fr.esic.coreflow",
   "appName": "coreflow",
-  "webDir": "dist"
+  "webDir": "dist",
+  "android": {
+    "allowMixedContent": true
+}
 }

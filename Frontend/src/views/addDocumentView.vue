@@ -197,7 +197,7 @@ const envoyerDocument = async () => {
   formData.append('fichier', fichierSelectionne.value); 
 
   try {
-    const response = await fetch('http://localhost:3000/api/documents', {
+    const response = await fetch('${import.meta.env.VITE_API_BASE}/api/documents', {
       method: 'POST',
       body: formData
     });
