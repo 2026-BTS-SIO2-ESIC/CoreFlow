@@ -75,8 +75,8 @@ const { notFound, errorHandler } = require('./middlewares/errorMiddleware');
 app.use(notFound);
 app.use(errorHandler);
 
-// Démarrage du serveur
-app.listen(PORT, () => {
+// Démarrage du serveur sur toutes les interfaces réseau 
+app.listen(PORT,"0.0.0.0", () => {
   console.log(`🚀 Le Serveur de CoreFlow a démarré sur http://localhost:${PORT}`);
 });
 

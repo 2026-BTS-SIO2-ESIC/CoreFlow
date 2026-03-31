@@ -95,6 +95,13 @@
 </template>
 
 <script>
+//on importe capacitor pour gérer les différences d'URL entre mobile et desktop
+import { Capacitor } from '@capacitor/core';
+
+const API_BASE = Capacitor.isNativePlatform() 
+  ? 'http:// 192.168.1.91:3000'  // Si on est sur l'émulateur Mobile
+  : 'http://localhost:3000'; // Si on est sur le navigateur Desktop
+
 export default {
   name: 'LoginView',
   data() {
@@ -112,7 +119,7 @@ export default {
       this.error = null
 
       try {
-        const response = await fetch('http://localhost:3000/api/auth/login', {
+        const response = await fetch(`${API_BASE}/api/auth/login`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

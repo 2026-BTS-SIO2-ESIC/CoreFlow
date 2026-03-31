@@ -16,6 +16,7 @@ class DocumentRepository {
         const [result] = await db.query(sql, values);
         return result.insertId;// Retourne l'ID du document créé
     }
+    
     async findAllDocuments() {
         const sql = `SELECT
             d.id,
@@ -32,20 +33,35 @@ class DocumentRepository {
         FROM documents d
         INNER JOIN utilisateurs u ON d.auteur_id = u.id`;
         const [rows] = await db.query(sql);
-    return rows;
+        return rows;
     }
+    
     async getDocumentById(id) {         
-    const query = 'SELECT * FROM documents WHERE id = ?';         
-    const [rows] = await db.query(query, [id]);         
-    return rows[0]; // Renvoie le document s'il existe, sinon undefined    
+        const query = 'SELECT * FROM documents WHERE id = ?';         
+        const [rows] = await db.query(query, [id]);         
+        return rows[0]; // Renvoie le document s'il existe, sinon undefined    
     }     
+    
     // Supprimer la ligne en BDD
     async deleteDocument(id) {         
         const query = 'DELETE FROM documents WHERE id = ?';         
         const [result] = await db.query(query, [id]); 
         return result.affectedRows; // Renvoie 1 si supprimé, 0 si non trouvé 
-        }
-        
+    }
+    
+    // Fonction pour mettre à jour un document en BDD
+    async updateDocument(id, titre, description, cible_role) {
+        // La requête SQL paramétrée pour éviter les injections SQL
+        const query = `
+            UPDATE documents 
+            SET titre = ?, description = ?, cible_role = ? 
+            WHERE id = ?
+        `;
+        // On exécute la requête avec la base de données
+        const [result] = await db.query(query, [titre, description, cible_role, id]);
+        // Si affectedRows est > 0, ça veut dire que le document existait et a été modifié
+        return result.affectedRows > 0;
+    }
 }
 
 module.exports = new DocumentRepository();
