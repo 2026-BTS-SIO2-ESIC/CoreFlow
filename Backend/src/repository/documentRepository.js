@@ -44,7 +44,7 @@ class DocumentRepository {
         const query = 'DELETE FROM documents WHERE id = ?';         
         const [result] = await db.query(query, [id]); 
         return result.affectedRows; // Renvoie 1 si supprimé, 0 si non trouvé 
-        }
+    }
         
 }
 

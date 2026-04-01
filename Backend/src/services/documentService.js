@@ -35,7 +35,6 @@ class DocumentService {
             month: 'short',
             year: 'numeric'
         })
-
         }));
     }
     async deleteDocument(id) {
@@ -48,7 +47,7 @@ class DocumentService {
         await documentRepository.deleteDocument(id);
         // Supprime le fichier du serveur
        if (document.fichier_path) {
-            const filePath = path.join(__dirname, '../uploads', document.fichier_path); // Chemin complet du fichier à supprimer
+            const filePath = path.join(__dirname, '../../uploads', document.fichier_path); // Chemin complet du fichier à supprimer
             try {
                 await fs.unlink(filePath); // Supprime le fichier du serveur
                 console.log(`Fichier supprimé : ${filePath}`);

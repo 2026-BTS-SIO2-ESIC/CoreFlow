@@ -52,6 +52,7 @@
               </td>
               <td class="py-4 text-gray-600 font-['Mulish'] text-[14px]">{{ doc.taille_ko }} Ko</td>
               <td class="py-4 text-gray-600 font-['Mulish'] text-[14px]">{{ doc.date_affichage }}</td>
+              
               <td class="py-4">
                 <div class="flex items-center gap-2">
                   <button @click="telecharger(doc)" class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Télécharger">
@@ -65,6 +66,7 @@
                   </button>
                 </div>
               </td>
+
             </tr>
           </tbody>
         </table>
@@ -106,7 +108,6 @@ const fetchDocuments = async () => {
 };
 
 const telecharger = async (doc) => {
-  // Méthode propre pour forcer le téléchargement malgré les ports différents
   try {
     const response = await fetch(`${import.meta.env.VITE_API_BASE}/uploads/${doc.fichier_path}`);
     const blob = await response.blob();
@@ -117,9 +118,21 @@ const telecharger = async (doc) => {
     document.body.appendChild(link);
     link.click();
     link.remove();
+    
+    // 2. On rafraîchit la liste pour voir apparaître "Consulté le..." instantanément
+    fetchDocuments();
   } catch (e) {
     console.error("Erreur téléchargement", e);
   }
+};
+
+// Fonction appelée quand on clique sur l'œil (Voir)
+// Comme le document s'ouvre dans un nouvel onglet, on attend juste 1 seconde
+// le temps que le backend mette à jour la BDD, puis on actualise l'affichage.
+const rafraichirApresDelai = () => {
+  setTimeout(() => {
+    fetchDocuments();
+  }, 1000);
 };
 
 //on appelle  pour l'api pour supprimer document api/documents/:id
