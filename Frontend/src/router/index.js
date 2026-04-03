@@ -4,7 +4,6 @@ import DashboardView from '../views/DashboardView.vue'
 import CongesValidation from '@/views/congesValidation.vue'
 import DemandeCongeView from '../views/DemandeCongeView.vue'
 import AdminUserView from '../views/AdminUserView.vue'
-import gestionTicket from '../views/gestionTicket.vue'
 import addDocumentView from '@/views/addDocumentView.vue'
 import listDocumentView from '@/views/listDocumentView.vue'
 import TicketsView from '../views/TicketsView.vue'
@@ -47,11 +46,6 @@ const router = createRouter({
       name: 'event-create',
       component: EventView,
     },
-    // {
-    //   path: '/gestionTicket',
-    //   name: 'gestionTicket',
-    //   component: gestionTicket,
-    // },
     {
       path: '/documents/add',
       name: 'add-document',

@@ -62,18 +62,20 @@
         </table>
       </div>
 
+      <!-- Statistiques ========================================================== -->
+
       <div class="stats-grid">
         <div class="stat-card">
           <span class="stat-label">Tickets traité</span>
-          <span class="stat-value highlight">12</span>
+          <span class="stat-value highlight">{{ ticketStats.traites }}</span>
         </div>
         <div class="stat-card">
           <span class="stat-label">Tickets en attente</span>
-          <span class="stat-value highlight">1</span>
+          <span class="stat-value highlight">{{ ticketStats.enAttente }}</span>
         </div>
         <div class="stat-card">
           <span class="stat-label">Note</span>
-          <span class="stat-value highlight">3.2</span>
+          <span class="stat-value highlight">{{ ticketStats.note }}</span>
         </div>
       </div>
     </main>
@@ -218,6 +220,22 @@ export default {
       if (this.currentFilter === 'Tout') return this.tickets
       return this.tickets.filter((t) => t.statut === this.currentFilter)
     },
+    ticketStats() {
+      const tickets = Array.isArray(this.tickets) ? this.tickets : []
+
+      const statuses = tickets.map((ticket) => this.normalizeStatus(ticket?.statut))
+      const traites = statuses.filter((status) => ['resolu', 'ferme'].includes(status)).length
+      const enAttente = statuses.filter((status) => ['ouvert', 'en_cours'].includes(status)).length
+      const total = statuses.length
+
+      const note = total > 0 ? ((traites / total) * 5).toFixed(1) : '0.0'
+
+      return {
+        traites,
+        enAttente,
+        note,
+      }
+    },
   },
 
   watch: {
@@ -292,7 +310,7 @@ export default {
         // Afficher les tickets de l'utilisateur connecté
         try {
           const token = localStorage.getItem('token')
-          const response = await fetch('${import.meta.env.VITE_API_BASE}/api/ticket/my-tickets', {
+          const response = await fetch(`${import.meta.env.VITE_API_BASE}/api/ticket/my-tickets`, {
             method: 'GET',
             headers: {
               Authorization: `Bearer ${token}`,
@@ -309,10 +327,10 @@ export default {
           console.error('Erreur de chargement des tickets', err)
         }
       } else {
-        const API = '${import.meta.env.VITE_API_BASE}/api/ticket/tickets' // tous les tickets (admin/manager)
-        const API_It = '${import.meta.env.VITE_API_BASE}/api/ticket/itTickets' // tickets IT
-        const API_Rh = '${import.meta.env.VITE_API_BASE}/api/ticket/rhTickets' // tickets RH
-        let url = '${import.meta.env.VITE_API_BASE}/api/ticket/my-tickets'
+        const API = `${import.meta.env.VITE_API_BASE}/api/ticket/tickets` // tous les tickets (admin/manager)
+        const API_It = `${import.meta.env.VITE_API_BASE}/api/ticket/itTickets` // tickets IT
+        const API_Rh = `${import.meta.env.VITE_API_BASE}/api/ticket/rhTickets` // tickets RH
+        let url = `${import.meta.env.VITE_API_BASE}/api/ticket/my-tickets` // par défaut, on affiche les tickets de l'utilisateur connecté (pour les rôles autres que admin/manager)
         if (role === 'it') {
           url = API_It
         } else if (role === 'rh') {
@@ -354,6 +372,8 @@ export default {
         status = status.statut || status.value || ''
       }
 
+      const normalized = this.normalizeStatus(status)
+
       const map = {
         ouvert: 'En attente',
         en_cours: 'En cours',
@@ -361,15 +381,19 @@ export default {
         ferme: 'Fermé',
       }
 
-      return map[status] || status
+      return map[normalized] || status
     },
 
-    getStatusClass(status) {
-      const normalized = String(status || 'ouvert')
+    normalizeStatus(status) {
+      return String(status || 'ouvert')
         .toLowerCase()
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
         .replace(/\s+/g, '_')
+    },
+
+    getStatusClass(status) {
+      const normalized = this.normalizeStatus(status)
 
       const classMap = {
         ouvert: 'status-open',
@@ -420,7 +444,7 @@ export default {
       try {
         const token = localStorage.getItem('token')
         const userStr = JSON.parse(localStorage.getItem('user'))
-        const response = await fetch('${import.meta.env.VITE_API_BASE}/api/ticket', {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE}/api/ticket`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
