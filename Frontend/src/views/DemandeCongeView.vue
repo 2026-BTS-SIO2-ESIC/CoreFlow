@@ -47,7 +47,7 @@
                 <div class="liste-header">
                     <h2>Mes demandes</h2>
                     <button type="button" class="btn btn-secondary" @click="chargerDemandes">
-                         Rafraîchir
+                        Rafraîchir
                     </button>
                 </div>
 
@@ -572,39 +572,130 @@ textarea {
     background: #f8faf9;
 }
 
-/* Responsive */
+/* Responsive mobile */
 @media (max-width: 768px) {
     .conges-container {
         margin-left: 0;
-        padding: 16px 12px;
+        max-width: 100%;
+        padding: 14px 12px 24px;
+    }
+
+    h1 {
+        font-size: 22px;
+        line-height: 1.2;
+        margin-bottom: 14px;
+    }
+
+    .solde-box {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 16px;
+        padding: 14px;
+        border-radius: 12px;
+    }
+
+    .solde-item {
+        font-size: 14px;
     }
 
     .form {
-        grid-template-columns: 1fr;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .form-group {
+        width: 100%;
+        margin-bottom: 0;
+    }
+
+    .form-group.full-width {
+        grid-column: auto;
+    }
+
+    label {
+        font-size: 14px;
+        margin-bottom: 6px;
+    }
+
+    .form-group input,
+    .form-group textarea {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        font-size: 16px;
+        padding: 12px 14px;
+        border-radius: 10px;
+    }
+
+    textarea {
+        min-height: 90px;
+    }
+
+    .erreur,
+    .duree,
+    .message {
+        font-size: 13px;
     }
 
     .actions {
-        justify-content: stretch;
-        flex-direction: column-reverse;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 8px;
     }
 
     .btn {
         width: 100%;
+        min-height: 46px;
+        border-radius: 10px;
+        font-size: 15px;
+    }
+
+    .btn-primary {
+        background: #0d9488;
+        color: white;
+    }
+
+    .btn-secondary {
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+        color: #374151;
+    }
+
+    .liste {
+        margin-top: 22px;
     }
 
     .liste-header {
+        display: flex;
         flex-direction: column;
         align-items: stretch;
+        gap: 10px;
+        margin-bottom: 12px;
     }
 
-    .section {
-        overflow: visible;
-        padding: 14px;
+    .liste-header h2 {
+        font-size: 18px;
+        margin: 0;
     }
 
+    .liste-header .btn {
+        width: 100%;
+    }
+
+    .empty {
+        font-size: 14px;
+    }
+
+    /* Version mobile du tableau en cartes */
     .table {
         min-width: 0;
         width: 100%;
+        border-collapse: collapse;
+        background: transparent;
     }
 
     .table thead {
@@ -621,10 +712,11 @@ textarea {
 
     .table tbody tr {
         border: 1px solid #e5e7eb;
-        border-radius: 10px;
-        margin-bottom: 10px;
-        padding: 10px;
+        border-radius: 14px;
+        margin-bottom: 12px;
+        padding: 14px;
         background: #fff;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
     }
 
     .table td {
@@ -636,6 +728,7 @@ textarea {
         align-items: center;
         gap: 10px;
         text-align: right;
+        font-size: 14px;
     }
 
     .table td::before {
@@ -643,25 +736,19 @@ textarea {
         font-weight: 700;
         color: #334155;
         text-align: left;
+        flex-shrink: 0;
     }
 
     .table td:last-child {
         border-bottom: none;
     }
-}
 
-.solde-box {
-    display: flex;
-    gap: 16px;
-    margin-bottom: 20px;
-    padding: 16px;
-    background: #eefaf8;
-    border-radius: 10px;
-    border: 1px solid #d1fae5;
-}
+    .badge {
+        font-size: 12px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        white-space: nowrap;
+    }
 
-.solde-item {
-    font-size: 14px;
-    color: #065f46;
 }
 </style>
