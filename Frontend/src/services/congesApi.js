@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3000";
+import { apiUrl } from "../config/api";
 
 function getAuthHeaders() {
   const token = localStorage.getItem("token");
@@ -22,7 +22,7 @@ function handleResponse(res) {
 }
 
 export async function getMesConges() {
-  const res = await fetch(`${API_BASE}/api/conges`, {
+  const res = await fetch(apiUrl("conges"), {
     headers: getAuthHeaders(),
   });
 
@@ -31,7 +31,7 @@ export async function getMesConges() {
 }
 
 export async function creerConge(payload) {
-  const res = await fetch(`${API_BASE}/api/conges`, {
+  const res = await fetch(apiUrl("conges"), {
     method: "POST",
     headers: getAuthHeaders(),
     body: JSON.stringify(payload),
@@ -48,7 +48,7 @@ export async function creerConge(payload) {
 }
 
 export async function annulerConge(id) {
-  const res = await fetch(`${API_BASE}/api/conges/${id}/annuler`, {
+  const res = await fetch(apiUrl(`conges/${id}/annuler`), {
     method: "PUT",
     headers: getAuthHeaders(),
   });
@@ -63,7 +63,7 @@ export async function annulerConge(id) {
 }
 
 export async function getSoldeConges() {
-  const res = await fetch(`${API_BASE}/api/conges/solde`, {
+  const res = await fetch(apiUrl("conges/solde"), {
     headers: getAuthHeaders(),
   });
 
@@ -77,7 +77,7 @@ export async function getSoldeConges() {
 }
 
 export async function getStatsConges() {
-  const res = await fetch(`${API_BASE}/api/conges/stats`, {
+  const res = await fetch(apiUrl("conges/stats"), {
     headers: getAuthHeaders(),
   });
 
@@ -86,7 +86,7 @@ export async function getStatsConges() {
 }
 
 export async function validerConge(id, commentaire = null) {
-  const res = await fetch(`${API_BASE}/api/conges/${id}/valider`, {
+  const res = await fetch(apiUrl(`conges/${id}/valider`), {
     method: "PUT",
     headers: getAuthHeaders(),
     body: JSON.stringify({ commentaire })
@@ -102,7 +102,7 @@ export async function validerConge(id, commentaire = null) {
 }
 
 export async function refuserConge(id, commentaire = null) {
-  const res = await fetch(`${API_BASE}/api/conges/${id}/refuser`, {
+  const res = await fetch(apiUrl(`conges/${id}/refuser`), {
     method: "PUT",
     headers: getAuthHeaders(),
     body: JSON.stringify({ commentaire })
@@ -118,7 +118,7 @@ export async function refuserConge(id, commentaire = null) {
 }
 
 export async function annulerValidationConge(id) {
-  const res = await fetch(`${API_BASE}/api/conges/${id}/annuler-validation`, {
+  const res = await fetch(apiUrl(`conges/${id}/annuler-validation`), {
     method: "PUT",
     headers: getAuthHeaders()
   });
@@ -133,7 +133,7 @@ export async function annulerValidationConge(id) {
 }
 
 export async function annulerRefusConge(id) {
-  const res = await fetch(`${API_BASE}/api/conges/${id}/annuler-refus`, {
+  const res = await fetch(apiUrl(`conges/${id}/annuler-refus`), {
     method: "PUT",
     headers: getAuthHeaders()
   });
@@ -148,7 +148,7 @@ export async function annulerRefusConge(id) {
 }
 
 export async function getAllConges() {
-  const res = await fetch(`${API_BASE}/api/conges`, {
+  const res = await fetch(apiUrl("conges"), {
     headers: getAuthHeaders(),
   });
 

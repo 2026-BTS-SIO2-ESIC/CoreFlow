@@ -3,23 +3,12 @@
     <Transition name="modal">
       <div v-if="show" class="modal-overlay">
         <div class="modal-backdrop" aria-hidden="true" @click="$emit('close')" />
-        <div
-          class="modal-box"
-          role="dialog"
-          @click.stop
-          aria-labelledby="modal-title"
-          aria-modal="true"
-        >
+        <div class="modal-box" role="dialog" @click.stop aria-labelledby="modal-title" aria-modal="true">
           <div class="modal-header">
             <h2 id="modal-title">Créer un événement</h2>
             <button type="button" aria-label="Fermer" @click="$emit('close')">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M6 18L18 6M6 6l12 12"
-                />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
@@ -31,12 +20,7 @@
                 <div class="form-grid form-grid-2">
                   <div class="form-field form-field-full">
                     <label>Titre *</label>
-                    <input
-                      v-model="formData.titre"
-                      type="text"
-                      required
-                      placeholder="Ex. Réunion équipe"
-                    />
+                    <input v-model="formData.titre" type="text" required placeholder="Ex. Réunion équipe" />
                   </div>
                   <div class="form-field form-field-full">
                     <label>Description</label>
@@ -64,45 +48,21 @@
                 <div class="form-grid form-grid-2">
                   <div class="form-field">
                     <label>Date/heure de début *</label>
-                    <input
-                      v-model="formData.date_debut"
-                      type="datetime-local"
-                      :min="minDateStart"
-                      required
-                    />
+                    <input v-model="formData.date_debut" type="datetime-local" :min="minDateStart" required />
                   </div>
                   <div class="form-field">
                     <label>Date/heure de fin *</label>
-                    <input
-                      v-model="formData.date_fin"
-                      type="datetime-local"
-                      :min="minDateEnd"
-                      required
-                    />
+                    <input v-model="formData.date_fin" type="datetime-local" :min="minDateEnd" required />
                   </div>
                 </div>
               </section>
 
               <section class="form-section">
-                <button
-                  type="button"
-                  class="form-toggle"
-                  @click="showAdvancedOptions = !showAdvancedOptions"
-                >
+                <button type="button" class="form-toggle" @click="showAdvancedOptions = !showAdvancedOptions">
                   <span>Options avancées</span>
-                  <svg
-                    class="chevron"
-                    :class="{ open: showAdvancedOptions }"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M19 9l-7 7-7-7"
-                    />
+                  <svg class="chevron" :class="{ open: showAdvancedOptions }" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
                 <div v-show="showAdvancedOptions" class="form-grid form-grid-2 form-section-inner">
@@ -127,12 +87,7 @@
                   </div>
                   <div class="form-field">
                     <label>Places max</label>
-                    <input
-                      v-model.number="formData.nb_places_max"
-                      type="number"
-                      min="0"
-                      placeholder="0"
-                    />
+                    <input v-model.number="formData.nb_places_max" type="number" min="0" placeholder="0" />
                   </div>
                   <div class="form-field">
                     <label>Statut</label>
@@ -151,28 +106,11 @@
                 <div class="form-grid form-grid-2">
                   <div class="form-field form-field-full inviter-field-wrapper">
                     <label>Emails (séparés par virgules)</label>
-                    <input
-                      v-model="formData.inviter"
-                      type="text"
-                      placeholder="Tapez 2 lettres pour rechercher..."
-                      autocomplete="off"
-                      @input="onInviterInput"
-                      @focus="onInviterFocus"
-                      @blur="onInviterBlur"
-                    />
-                    <div
-                      v-show="showUserDropdown && userSearchResults.length > 0"
-                      class="user-dropdown"
-                      role="listbox"
-                    >
-                      <button
-                        v-for="u in userSearchResults"
-                        :key="u.id"
-                        type="button"
-                        role="option"
-                        class="user-dropdown-item"
-                        @mousedown.prevent="selectUser(u)"
-                      >
+                    <input v-model="formData.inviter" type="text" placeholder="Tapez 2 lettres pour rechercher..."
+                      autocomplete="off" @input="onInviterInput" @focus="onInviterFocus" @blur="onInviterBlur" />
+                    <div v-show="showUserDropdown && userSearchResults.length > 0" class="user-dropdown" role="listbox">
+                      <button v-for="u in userSearchResults" :key="u.id" type="button" role="option"
+                        class="user-dropdown-item" @mousedown.prevent="selectUser(u)">
                         {{ u.email }}
                       </button>
                     </div>
@@ -215,6 +153,8 @@
 </template>
 
 <script>
+import { apiUrl } from '@/config/api'
+
 export default {
   name: 'CreateEventModal',
   props: {
@@ -378,7 +318,7 @@ export default {
       }
 
       try {
-        const res = await fetch(`http://localhost:3000/api/event/create/${role}`, {
+        const res = await fetch(apiUrl(`event/create/${role}`), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -450,7 +390,7 @@ export default {
       this.userSearchLoading = true
       this.userSearchResults = []
       try {
-        const res = await fetch('http://localhost:3000/api/event/user_list_by_email', {
+        const res = await fetch(apiUrl('event/user_list_by_email'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -499,12 +439,14 @@ export default {
   justify-content: center;
   padding: 1.5rem;
 }
+
 .modal-backdrop {
   position: fixed;
   inset: 0;
   cursor: pointer;
   background: rgba(0, 0, 0, 0.45);
 }
+
 .modal-box {
   position: relative;
   z-index: 10;
@@ -519,6 +461,7 @@ export default {
   border-radius: 12px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
 }
+
 .modal-header {
   display: flex;
   align-items: center;
@@ -527,12 +470,14 @@ export default {
   background: #f8fafc;
   border-bottom: 1px solid #e2e8f0;
 }
+
 .modal-header h2 {
   font-size: 1.25rem;
   font-weight: 600;
   margin: 0;
   color: #1e293b;
 }
+
 .modal-header button {
   width: 2.25rem;
   height: 2.25rem;
@@ -546,25 +491,30 @@ export default {
   cursor: pointer;
   color: #64748b;
 }
+
 .modal-header button:hover {
   background: #e2e8f0;
   color: #1e293b;
 }
+
 .modal-header button svg {
   width: 1.25rem;
   height: 1.25rem;
 }
+
 .modal-form {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   padding: 1.5rem;
 }
+
 .modal-body {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
 }
+
 .form-section {
   display: flex;
   flex-direction: column;
@@ -574,6 +524,7 @@ export default {
   border-radius: 8px;
   border: 1px solid #e2e8f0;
 }
+
 .form-section h3 {
   font-size: 0.8125rem;
   font-weight: 600;
@@ -582,36 +533,44 @@ export default {
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
+
 .form-hint {
   font-size: 0.875rem;
   margin: 0;
   color: #64748b;
 }
+
 .niveau-hint {
   font-size: 0.75rem;
   margin: 0.25rem 0 0.5rem 0;
   color: #64748b;
   line-height: 1.4;
 }
+
 .niveau-hint strong {
   color: #475569;
   font-weight: 600;
 }
+
 .form-grid {
   display: grid;
   gap: 1rem;
 }
+
 .form-grid-2 {
   grid-template-columns: repeat(2, 1fr);
 }
+
 @media (max-width: 640px) {
   .form-grid-2 {
     grid-template-columns: 1fr;
   }
 }
+
 .form-field-full {
   grid-column: 1 / -1;
 }
+
 .form-field label {
   display: block;
   font-size: 0.875rem;
@@ -619,6 +578,7 @@ export default {
   margin-bottom: 0.35rem;
   color: #334155;
 }
+
 .form-field input,
 .form-field select,
 .form-field textarea {
@@ -630,6 +590,7 @@ export default {
   background: #fff;
   transition: border-color 0.15s ease;
 }
+
 .form-field input:focus,
 .form-field select:focus,
 .form-field textarea:focus {
@@ -637,9 +598,11 @@ export default {
   border-color: #14b8a6;
   box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.2);
 }
+
 .inviter-field-wrapper {
   position: relative;
 }
+
 .user-dropdown {
   position: absolute;
   left: 0;
@@ -654,6 +617,7 @@ export default {
   overflow-y: auto;
   z-index: 20;
 }
+
 .user-dropdown-item {
   display: block;
   width: 100%;
@@ -666,14 +630,17 @@ export default {
   color: #334155;
   transition: background 0.15s ease;
 }
+
 .user-dropdown-item:hover {
   background: #f1f5f9;
 }
+
 .user-dropdown-loading {
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
   color: #64748b;
 }
+
 .form-toggle {
   width: 100%;
   display: flex;
@@ -690,18 +657,22 @@ export default {
   color: #334155;
   transition: background 0.15s ease;
 }
+
 .form-toggle:hover {
   background: #f1f5f9;
 }
+
 .form-toggle .chevron {
   width: 1.25rem;
   height: 1.25rem;
   color: #64748b;
   transition: transform 0.2s ease;
 }
+
 .form-toggle .chevron.open {
   transform: rotate(180deg);
 }
+
 .form-section-inner {
   padding: 1rem 1.25rem;
   background: #fff;
@@ -709,6 +680,7 @@ export default {
   margin-top: 0.5rem;
   border: 1px solid #e2e8f0;
 }
+
 .form-error {
   padding: 0.75rem 1rem;
   font-size: 0.875rem;
@@ -717,18 +689,22 @@ export default {
   border: 1px solid #fecaca;
   border-radius: 8px;
 }
+
 .form-error ul {
   margin: 0.25rem 0 0 0;
   padding-left: 1.25rem;
 }
+
 .form-error li {
   margin: 0.2rem 0;
 }
+
 .form-actions {
   display: flex;
   gap: 0.75rem;
   padding-top: 0.5rem;
 }
+
 .form-actions button {
   padding: 0.5rem 1.25rem;
   border-radius: 8px;
@@ -739,22 +715,27 @@ export default {
     opacity 0.15s ease,
     background 0.15s ease;
 }
+
 .form-actions button[type='button'] {
   background: #fff;
   border: 1px solid #cbd5e1;
   color: #475569;
 }
+
 .form-actions button[type='button']:hover {
   background: #f1f5f9;
 }
+
 .form-actions button[type='submit'] {
   background: #14b8a6;
   color: #fff;
   border: none;
 }
+
 .form-actions button[type='submit']:hover:not(:disabled) {
   background: #0d9488;
 }
+
 .form-actions button[type='submit']:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -764,14 +745,17 @@ export default {
 .modal-leave-active {
   transition: opacity 0.2s ease;
 }
+
 .modal-enter-from,
 .modal-leave-to {
   opacity: 0;
 }
+
 .modal-enter-active .modal-box,
 .modal-leave-active .modal-box {
   transition: transform 0.2s ease;
 }
+
 .modal-enter-from .modal-box,
 .modal-leave-to .modal-box {
   transform: scale(0.96);

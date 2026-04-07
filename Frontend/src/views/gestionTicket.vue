@@ -1,11 +1,12 @@
 <script setup>
 import { ref, onMounted } from "vue";
+import { apiUrl } from "@/config/api";
 
 
 const token = localStorage.getItem("token");
-const API = "http://localhost:3000/api/ticket/tickets"; // on définit l'URL de l'API pour récupérer les tickets
-const API_It = "http://localhost:3000/api/ticket/itTickets"; // on définit l'URL de l'API pour récupérer les tickets
-const API_Rh = "http://localhost:3000/api/ticket/rhTickets"; // on définit l'URL de l'API pour récupérer les tickets
+const API = apiUrl("ticket/tickets"); // on définit l'URL de l'API pour récupérer les tickets
+const API_It = apiUrl("ticket/itTickets"); // on définit l'URL de l'API pour récupérer les tickets
+const API_Rh = apiUrl("ticket/rhTickets"); // on définit l'URL de l'API pour récupérer les tickets
 
 const tickets = ref([]); // on crée une variable réactive pour stocker les tickets
 const loading = ref(true); // on crée une variable réactive pour indiquer si les données sont en cours de chargement
@@ -23,7 +24,7 @@ async function fetchTickets() {
     url = API_Rh;
   } else if (role === "admin", "manager") {
     url = API; // tous les tickets
-  } 
+  }
 
   try {
     const response = await fetch(url, {
@@ -52,11 +53,7 @@ onMounted(() => {
 
 <template>
   <section class="dashboard-header">
-        <DashboardSidebar
-        :user="user"
-        :loading="false"
-        @logout="logout"
-      />
+    <DashboardSidebar :user="user" :loading="false" @logout="logout" />
     <h1>Gestion des Tickets</h1>
     <!--@click="Créer la fonction nécessaire pour le bon fonctionnement" -->
     <button @click="createTicket" class="btn-create-ticket">+ Ajouter un ticket</button>

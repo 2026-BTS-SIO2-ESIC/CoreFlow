@@ -27,13 +27,8 @@
         <!-- Toolbar -->
         <div class="toolbar">
           <div class="search-section">
-            <input
-              v-model="search"
-              type="text"
-              placeholder="🔍 Rechercher par nom, prénom ou email..."
-              class="search-input"
-              @input="filterUsers"
-            />
+            <input v-model="search" type="text" placeholder="🔍 Rechercher par nom, prénom ou email..."
+              class="search-input" @input="filterUsers" />
           </div>
           <div class="filters-section">
             <select v-model="filterRole" @change="filterUsers" class="filter-select">
@@ -71,11 +66,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr
-                v-for="user in filteredUsers"
-                :key="user.id"
-                :class="{ 'inactive-row': !user.est_actif }"
-              >
+              <tr v-for="user in filteredUsers" :key="user.id" :class="{ 'inactive-row': !user.est_actif }">
                 <td class="id-cell">{{ user.id }}</td>
                 <td class="user-cell">
                   <div class="user-avatar">{{ user.prenom.charAt(0) }}{{ user.nom.charAt(0) }}</div>
@@ -92,10 +83,7 @@
                 </td>
                 <td class="dept-cell">{{ user.departement || '-' }}</td>
                 <td>
-                  <span
-                    class="status-badge"
-                    :class="user.est_actif ? 'status-active' : 'status-inactive'"
-                  >
+                  <span class="status-badge" :class="user.est_actif ? 'status-active' : 'status-inactive'">
                     {{ user.est_actif ? 'Actif' : 'Inactif' }}
                   </span>
                 </td>
@@ -103,19 +91,12 @@
                   <button @click="editUser(user)" class="action-btn edit-btn" title="Modifier">
                     ✏️
                   </button>
-                  <button
-                    @click="toggleUserStatus(user)"
-                    class="action-btn toggle-btn"
-                    :title="user.est_actif ? 'Désactiver' : 'Activer'"
-                  >
+                  <button @click="toggleUserStatus(user)" class="action-btn toggle-btn"
+                    :title="user.est_actif ? 'Désactiver' : 'Activer'">
                     {{ user.est_actif ? '🔒' : '🔓' }}
                   </button>
-                  <button
-                    @click="confirmDelete(user)"
-                    class="action-btn delete-btn"
-                    title="Supprimer"
-                    :disabled="user.id === 1"
-                  >
+                  <button @click="confirmDelete(user)" class="action-btn delete-btn" title="Supprimer"
+                    :disabled="user.id === 1">
                     🗑️
                   </button>
                 </td>
@@ -157,28 +138,14 @@
               </div>
               <div class="form-group full-width">
                 <label>Email <span class="required">*</span></label>
-                <input
-                  v-model="formData.email"
-                  type="email"
-                  placeholder="jean.dupont@coreflow.fr"
-                  required
-                />
+                <input v-model="formData.email" type="email" placeholder="jean.dupont@coreflow.fr" required />
               </div>
               <div class="form-group" v-if="showCreateModal">
                 <label>Mot de passe <span class="required">*</span></label>
                 <div class="password-input-wrapper">
-                  <input
-                    v-model="formData.password"
-                    :type="showPassword ? 'text' : 'password'"
-                    placeholder="••••••••"
-                    required
-                    minlength="6"
-                  />
-                  <button
-                    type="button"
-                    class="toggle-password"
-                    @click="showPassword = !showPassword"
-                  >
+                  <input v-model="formData.password" :type="showPassword ? 'text' : 'password'" placeholder="••••••••"
+                    required minlength="6" />
+                  <button type="button" class="toggle-password" @click="showPassword = !showPassword">
                     {{ showPassword ? '🙈' : '👁️' }}
                   </button>
                 </div>
@@ -210,11 +177,7 @@
               </div>
               <div class="form-group">
                 <label>Département</label>
-                <input
-                  v-model="formData.departement"
-                  type="text"
-                  placeholder="IT, RH, Commercial..."
-                />
+                <input v-model="formData.departement" type="text" placeholder="IT, RH, Commercial..." />
               </div>
               <div class="form-group">
                 <label>Poste</label>
@@ -277,6 +240,8 @@
 
 <script>
 import DashboardSidebar from '../components/DashboardSidebar.vue'
+import { apiUrl } from '../config/api'
+import { confirmAction, showErrorAlert, showSuccessAlert, showWarningAlert } from '../utils/swal'
 
 export default {
   name: 'AdminUserView',
@@ -330,7 +295,7 @@ export default {
       try {
         const token = localStorage.getItem('token')
 
-        const response = await fetch('http://localhost:3000/api/users', {
+        const response = await fetch(apiUrl('users'), {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -344,7 +309,10 @@ export default {
         } else {
           console.error('Erreur:', data.message)
           if (response.status === 401) {
-            alert('Session expirée. Veuillez vous reconnecter.')
+            await showWarningAlert({
+              title: 'Session expirée',
+              text: 'Veuillez vous reconnecter.',
+            })
             this.$router.push('/login')
           }
         }
@@ -385,7 +353,7 @@ export default {
       try {
         const token = localStorage.getItem('token')
 
-        const response = await fetch('http://localhost:3000/api/users', {
+        const response = await fetch(apiUrl('users'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -399,7 +367,10 @@ export default {
         if (data.success) {
           await this.loadUsers()
           this.closeModals()
-          alert('✅ Utilisateur créé avec succès !')
+          await showSuccessAlert({
+            title: 'Utilisateur créé',
+            text: 'Le nouvel utilisateur a été créé avec succès.',
+          })
         } else {
           this.errorMessage = data.message
         }
@@ -433,7 +404,7 @@ export default {
       try {
         const token = localStorage.getItem('token')
 
-        const response = await fetch(`http://localhost:3000/api/users/${this.formData.id}`, {
+        const response = await fetch(apiUrl(`users/${this.formData.id}`), {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -447,7 +418,10 @@ export default {
         if (data.success) {
           await this.loadUsers()
           this.closeModals()
-          alert('✅ Utilisateur modifié avec succès !')
+          await showSuccessAlert({
+            title: 'Utilisateur modifié',
+            text: "Les informations de l'utilisateur ont été mises à jour.",
+          })
         } else {
           this.errorMessage = data.message
         }
@@ -460,18 +434,20 @@ export default {
     },
 
     async toggleUserStatus(user) {
-      if (
-        !confirm(
-          `Voulez-vous vraiment ${user.est_actif ? 'désactiver' : 'activer'} ${user.prenom} ${user.nom} ?`,
-        )
-      ) {
+      const confirmed = await confirmAction({
+        title: 'Confirmer le changement de statut',
+        text: `Voulez-vous vraiment ${user.est_actif ? 'désactiver' : 'activer'} ${user.prenom} ${user.nom} ?`,
+        confirmButtonText: 'Oui, continuer',
+      })
+
+      if (!confirmed) {
         return
       }
 
       try {
         const token = localStorage.getItem('token')
 
-        const response = await fetch(`http://localhost:3000/api/users/${user.id}/toggle-status`, {
+        const response = await fetch(apiUrl(`users/${user.id}/toggle-status`), {
           method: 'PATCH',
           headers: {
             Authorization: `Bearer ${token}`,
@@ -490,7 +466,10 @@ export default {
 
     confirmDelete(user) {
       if (user.id === 1) {
-        alert("❌ Impossible de supprimer l'administrateur principal !")
+        showErrorAlert({
+          title: 'Action impossible',
+          text: "Impossible de supprimer l'administrateur principal.",
+        })
         return
       }
       this.userToDelete = user
@@ -501,7 +480,7 @@ export default {
       try {
         const token = localStorage.getItem('token')
 
-        const response = await fetch(`http://localhost:3000/api/users/${this.userToDelete.id}`, {
+        const response = await fetch(apiUrl(`users/${this.userToDelete.id}`), {
           method: 'DELETE',
           headers: {
             Authorization: `Bearer ${token}`,
@@ -514,11 +493,17 @@ export default {
           await this.loadUsers()
           this.showDeleteModal = false
           this.userToDelete = null
-          alert('✅ Utilisateur supprimé avec succès')
+          await showSuccessAlert({
+            title: 'Utilisateur supprimé',
+            text: "L'utilisateur a été supprimé avec succès.",
+          })
         }
       } catch (error) {
         console.error('Erreur suppression:', error)
-        alert('❌ Erreur lors de la suppression')
+        await showErrorAlert({
+          title: 'Erreur de suppression',
+          text: "Une erreur est survenue lors de la suppression de l'utilisateur.",
+        })
       }
     },
 

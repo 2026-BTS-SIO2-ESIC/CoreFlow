@@ -20,25 +20,14 @@
 
           <div class="form-group">
             <label for="email">Adresse email</label>
-            <input
-              id="email"
-              v-model="email"
-              type="email"
-              placeholder="votre.email@coreflow.fr"
-              required
-            />
+            <input id="email" v-model="email" type="email" placeholder="votre.email@coreflow.fr" required />
           </div>
 
           <div class="form-group">
             <label for="password">Mot de passe</label>
             <div class="password-input-wrapper">
-              <input
-                id="password"
-                v-model="password"
-                :type="showPassword ? 'text' : 'password'"
-                placeholder="••••••••"
-                required
-              />
+              <input id="password" v-model="password" :type="showPassword ? 'text' : 'password'" placeholder="••••••••"
+                required />
               <button type="button" class="toggle-password" @click="showPassword = !showPassword">
                 {{ showPassword ? '🙈' : '👁️' }}
               </button>
@@ -93,6 +82,8 @@
 </template>
 
 <script>
+import { apiUrl } from '../config/api'
+
 export default {
   name: 'LoginView',
   data() {
@@ -110,7 +101,7 @@ export default {
       this.error = null
 
       try {
-        const response = await fetch('http://localhost:3000/api/auth/login', {
+        const response = await fetch(apiUrl('auth/login'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

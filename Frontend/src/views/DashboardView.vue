@@ -130,8 +130,7 @@
 
 <script>
 import DashboardSidebar from '../components/DashboardSidebar.vue'
-
-const API_URL = 'http://localhost:3000'
+import { apiUrl } from '../config/api'
 
 import axios from 'axios';
 import CreateEventModal from '@/components/CreateEventModal.vue';
@@ -185,7 +184,7 @@ export default {
     }
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/me`, {
+      const response = await fetch(apiUrl('auth/me'), {
         headers: { Authorization: `Bearer ${token}` },
       })
 
@@ -224,7 +223,7 @@ export default {
     },
     async fetchEvents() {
       try {
-        const response = await axios.get('http://localhost:3000/api/event/all');
+        const response = await axios.get(apiUrl('event/all'));
         const now = new Date();
         this.upcomingEvents = response.data.filter(e => new Date(e.startDate) >= now);
         this.pastEvents = response.data.filter(e => new Date(e.startDate) < now);
@@ -279,7 +278,7 @@ export default {
       this.modalLoading = true
 
       try {
-        const res = await fetch(`${API_URL}/api/users/password`, {
+        const res = await fetch(apiUrl('users/password'), {
           method: 'PUT',
           headers: {
             Authorization: `Bearer ${token}`,

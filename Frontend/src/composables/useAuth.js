@@ -3,7 +3,9 @@
  * Utilise GET /api/auth/me pour obtenir l'utilisateur vérifié côté serveur.
  */
 
-export const API_URL = 'http://localhost:3000/api'
+import { API_PREFIX } from '@/config/api'
+
+export const API_URL = API_PREFIX
 
 /**
  * Récupère l'utilisateur vérifié à partir du token (via API)

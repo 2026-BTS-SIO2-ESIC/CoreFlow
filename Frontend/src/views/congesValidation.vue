@@ -159,6 +159,7 @@
 <script>
 import DashboardSidebar from "../components/DashboardSidebar.vue"
 import { getMesConges, getStatsConges } from "../services/congesApi.js"
+import { apiUrl } from "../config/api"
 
 export default {
   components: {
@@ -238,7 +239,7 @@ export default {
       const token = localStorage.getItem('token')
 
       try {
-        const response = await fetch(`http://localhost:3000/api/conges/${id}/valider`, {
+        const response = await fetch(apiUrl(`conges/${id}/valider`), {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -263,7 +264,7 @@ export default {
       const token = localStorage.getItem('token')
 
       try {
-        const response = await fetch(`http://localhost:3000/api/conges/${id}/refuser`, {
+        const response = await fetch(apiUrl(`conges/${id}/refuser`), {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -343,7 +344,7 @@ export default {
       const token = localStorage.getItem('token')
 
       try {
-        const response = await fetch(`http://localhost:3000/api/conges/${id}/annuler-validation`, {
+        const response = await fetch(apiUrl(`conges/${id}/annuler-validation`), {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -365,7 +366,7 @@ export default {
       const token = localStorage.getItem('token')
 
       try {
-        const response = await fetch(`http://localhost:3000/api/conges/${id}/annuler-refus`, {
+        const response = await fetch(apiUrl(`conges/${id}/annuler-refus`), {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`

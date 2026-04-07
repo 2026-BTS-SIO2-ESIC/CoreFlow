@@ -12,23 +12,13 @@
         <div class="calendar-nav">
           <button type="button" aria-label="Mois précédent" @click="prevMonth">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M15 19l-7-7 7-7"
-              />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
             </svg>
           </button>
           <h2>{{ currentMonthName }} {{ currentYear }}</h2>
           <button type="button" aria-label="Mois suivant" @click="nextMonth">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M9 5l7 7-7 7"
-              />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
             </svg>
           </button>
         </div>
@@ -36,32 +26,21 @@
         <div class="calendar-weekdays">
           <span v-for="day in ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']" :key="day">{{
             day
-          }}</span>
+            }}</span>
         </div>
 
         <div class="calendar-grid">
-          <div
-            v-for="(cell, index) in calendarCells"
-            :key="index"
-            class="calendar-cell"
-            :class="{
-              'cell-empty': cell.isEmpty,
-              'cell-past': !cell.isEmpty && isPast(cell),
-              'cell-selected': !cell.isEmpty && isSelected(cell),
-              'cell-today': !cell.isEmpty && !isSelected(cell) && !isPast(cell) && isToday(cell),
-            }"
-            @click="onDayClick(cell)"
-          >
+          <div v-for="(cell, index) in calendarCells" :key="index" class="calendar-cell" :class="{
+            'cell-empty': cell.isEmpty,
+            'cell-past': !cell.isEmpty && isPast(cell),
+            'cell-selected': !cell.isEmpty && isSelected(cell),
+            'cell-today': !cell.isEmpty && !isSelected(cell) && !isPast(cell) && isToday(cell),
+          }" @click="onDayClick(cell)">
             <div class="cell-day">{{ cell.day }}</div>
             <div v-if="getEventsForDay(cell).length" class="cell-events">
-              <div
-                v-for="ev in getEventsForDay(cell)"
-                :key="ev.id"
-                class="cell-event"
+              <div v-for="ev in getEventsForDay(cell)" :key="ev.id" class="cell-event"
                 :class="ev.niveau === '2' ? 'cell-event-lvl2' : 'cell-event-lvl1'"
-                :title="`${ev.titre} - ${ev.type_evenement || ''}`"
-                @click.stop="onEventClick(ev.id)"
-              >
+                :title="`${ev.titre} - ${ev.type_evenement || ''}`" @click.stop="onEventClick(ev.id)">
                 {{ ev.titre }}
               </div>
             </div>
@@ -69,20 +48,10 @@
         </div>
       </div>
 
-      <CreateEventModal
-        :show="showCreateModal"
-        :initial-date="selectedDate"
-        :user="user"
-        @close="closeModal"
-        @submit="onEventCreated"
-      />
-      <DetailCardEvent
-        :show="showDetailModal"
-        :event-id="selectedEventId"
-        :user="user"
-        @close="closeDetailModal"
-        @updated="onEventUpdated"
-      />
+      <CreateEventModal :show="showCreateModal" :initial-date="selectedDate" :user="user" @close="closeModal"
+        @submit="onEventCreated" />
+      <DetailCardEvent :show="showDetailModal" :event-id="selectedEventId" :user="user" @close="closeDetailModal"
+        @updated="onEventUpdated" />
     </div>
   </div>
 </template>
@@ -92,6 +61,7 @@ import CreateEventModal from '../components/CreateEventModal.vue'
 import DetailCardEvent from '../components/DetailCardEvent.vue'
 import { fetchUserFromToken, hasRole, API_URL } from '../composables/useAuth'
 import DashboardSidebar from '../components/DashboardSidebar.vue'
+import { showWarningAlert } from '../utils/swal'
 
 export default {
   name: 'EventView',
@@ -136,8 +106,11 @@ export default {
     if (!verifiedUser) {
       localStorage.removeItem('token')
       localStorage.removeItem('user')
+      await showWarningAlert({
+        title: 'Session expirée',
+        text: 'Veuillez vous reconnecter.',
+      })
       this.$router.push('/login')
-      alert('Session expirée. Veuillez vous reconnecter.')
       return
     }
     this.user = verifiedUser
@@ -216,7 +189,10 @@ export default {
     },
     onDayClick(cell) {
       if (!hasRole(this.user, 'admin', 'manager')) {
-        alert("Vous n'avez pas les permissions pour créer un événement")
+        showWarningAlert({
+          title: 'Accès refusé',
+          text: "Vous n'avez pas les permissions pour créer un événement.",
+        })
         return
       }
       if (cell.isEmpty || !cell.date || this.isPast(cell)) return
@@ -284,6 +260,7 @@ export default {
   min-height: 100vh;
   background: #f1f5f9;
 }
+
 .event-main {
   margin-left: 15rem;
   min-height: 100vh;
@@ -291,6 +268,7 @@ export default {
   flex-direction: column;
   padding: 1.5rem;
 }
+
 .page-header {
   background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
   padding: 40px;
@@ -298,17 +276,20 @@ export default {
   border-top-right-radius: 12px;
   color: white;
 }
+
 .page-header h1 {
   font-family: 'Poppins', sans-serif;
   font-weight: 700;
   font-size: 32px;
   margin: 0 0 8px 0;
 }
+
 .page-header p {
   margin: 0;
   opacity: 0.95;
   font-size: 16px;
 }
+
 .calendar {
   flex: 1;
   display: flex;
@@ -321,12 +302,14 @@ export default {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   border: 1px solid #e2e8f0;
 }
+
 .calendar-nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 1.25rem;
 }
+
 .calendar-nav button {
   width: 2.5rem;
   height: 2.5rem;
@@ -343,21 +326,25 @@ export default {
     background 0.15s ease,
     border-color 0.15s ease;
 }
+
 .calendar-nav button:hover {
   background: #f8fafc;
   border-color: #cbd5e1;
   color: #1e293b;
 }
+
 .calendar-nav button svg {
   width: 1.25rem;
   height: 1.25rem;
 }
+
 .calendar-nav h2 {
   font-size: 1.25rem;
   font-weight: 600;
   margin: 0;
   color: #334155;
 }
+
 .calendar-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -370,12 +357,14 @@ export default {
   letter-spacing: 0.03em;
   margin-bottom: 0.5rem;
 }
+
 .calendar-grid {
   flex: 1;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 0.5rem;
 }
+
 .calendar-cell {
   min-height: 5rem;
   display: flex;
@@ -391,6 +380,7 @@ export default {
     background 0.15s ease,
     color 0.15s ease;
 }
+
 .cell-day {
   font-size: 0.9375rem;
   font-weight: 600;
@@ -398,6 +388,7 @@ export default {
   text-align: center;
   margin-bottom: 0.25rem;
 }
+
 .cell-events {
   flex: 1;
   display: flex;
@@ -406,6 +397,7 @@ export default {
   overflow-y: auto;
   min-height: 0;
 }
+
 .cell-event {
   font-size: 0.6875rem;
   font-weight: 500;
@@ -417,52 +409,65 @@ export default {
   text-overflow: ellipsis;
   cursor: pointer;
 }
+
 .cell-event-lvl1 {
   color: #1e40af;
   background: #bfdbfe;
 }
+
 .cell-event-lvl1:hover {
   background: #93c5fd;
 }
+
 .cell-event-lvl2 {
   color: #0f766e;
   background: #ccfbf1;
 }
+
 .cell-event-lvl2:hover {
   background: #99f6e4;
 }
+
 .calendar-cell:not(.cell-empty):hover {
   background: #f1f5f9;
 }
+
 .calendar-cell.cell-empty {
   cursor: default;
   opacity: 0.35;
   color: #94a3b8;
 }
+
 .calendar-cell.cell-selected {
   background: #14b8a6;
   color: #fff;
 }
+
 .calendar-cell.cell-selected .cell-event-lvl1,
 .calendar-cell.cell-selected .cell-event-lvl2 {
   background: rgba(255, 255, 255, 0.3);
   color: #fff;
 }
+
 .calendar-cell.cell-selected:hover {
   background: #0d9488;
 }
+
 .calendar-cell.cell-today {
   background: #ccfbf1;
   color: #0f766e;
 }
+
 .calendar-cell.cell-today:hover {
   background: #99f6e4;
 }
+
 .calendar-cell.cell-past {
   color: #94a3b8;
   cursor: not-allowed;
   opacity: 0.6;
 }
+
 .calendar-cell.cell-past:hover {
   background: transparent;
 }
