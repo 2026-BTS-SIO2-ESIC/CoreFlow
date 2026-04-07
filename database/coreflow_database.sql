@@ -234,10 +234,12 @@ CREATE TABLE `documents` (
   `taille`       INT          DEFAULT NULL,
   `description`  TEXT         DEFAULT NULL,
   `auteur_id`    INT          NOT NULL,
+  `derniere_consultation`    DATETIME         DEFAULT NULL,
   `cible_role`   VARCHAR(50)  DEFAULT 'tous',
   `service_id`   VARCHAR(100) DEFAULT NULL,
   `created_at`   TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
   `updated_at`   TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
   PRIMARY KEY (`id`),
   KEY `idx_auteur`     (`auteur_id`),
   KEY `idx_cible_role` (`cible_role`),
