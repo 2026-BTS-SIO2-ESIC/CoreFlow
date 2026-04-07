@@ -1,101 +1,120 @@
 <template>
-  <div class="sidebar">
-    <div class="logo">
-      <div class="logo-icon">C</div>
-      <div class="logo-text">CoreFlow</div>
-    </div>
-
-    <nav class="nav-menu">
-      <RouterLink to="/dashboard" class="nav-item">
-        <div class="nav-icon">
-          <svg viewBox="0 0 24 24">
-            <rect x="3" y="3" width="7" height="7"></rect>
-            <rect x="14" y="3" width="7" height="7"></rect>
-            <rect x="14" y="14" width="7" height="7"></rect>
-            <rect x="3" y="14" width="7" height="7"></rect>
-          </svg>
-        </div>
-        Tableau de bord
-      </RouterLink>
-
-      <ul>
-        <li>
-          <RouterLink to="/conges/demande" class="nav-item">
-            <div class="nav-icon">
-              <svg viewBox="0 0 24 24">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>
-            </div>
-            Demande Congés
-          </RouterLink>
-        </li>
-        <li v-if="canValidateConges">
-          <RouterLink to="/conges/validation" class="nav-item">
-            <div class="nav-icon">
-              <svg viewBox="0 0 24 24">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>
-            </div>
-            Validation Congés
-          </RouterLink>
-        </li>
-      </ul>
-
-      <RouterLink to="/evenements" class="nav-item">
-        <div class="nav-icon">
-          <svg viewBox="0 0 24 24">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-            <line x1="16" y1="2" x2="16" y2="6"></line>
-            <line x1="8" y1="2" x2="8" y2="6"></line>
-            <line x1="3" y1="10" x2="21" y2="10"></line>
-          </svg>
-        </div>
-        Événements
-      </RouterLink>
-
-      <RouterLink to="/documents/add" class="nav-item">
-        <div class="nav-icon">
-          <svg viewBox="0 0 24 24">
-            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-          </svg>
-        </div>
-        Documents
-      </RouterLink>
-
-      <RouterLink 
-        to="/tickets" class="nav-item">
-        <div class="nav-icon">
-          <svg viewBox="0 0 24 24">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-            <polyline points="14 2 14 8 20 8"></polyline>
-            <line x1="16" y1="13" x2="8" y2="13"></line>
-            <line x1="16" y1="17" x2="8" y2="17"></line>
-          </svg>
-        </div>
-        Tickets & Support
-      </RouterLink>
-
-      <RouterLink v-if="canManageUsers" to="/admin/users" class="nav-item">
-        <div class="nav-icon">
-          <svg viewBox="0 0 24 24">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-            <circle cx="12" cy="7" r="4"></circle>
-          </svg>
-        </div>
-        Gestion utilisateurs
-      </RouterLink>
-    </nav>
-
-    <div class="user-profile">
-      <div v-if="loading" class="user-loading">Chargement...</div>
-      <div v-else-if="user">
-        <div class="user-name">{{ user.nom }} {{ user.prenom }}</div>
-        <div class="user-role">{{ user.role }}</div>
+  <div class="sidebar-shell">
+    <div class="mobile-topbar">
+      <div class="logo mobile-logo">
+        <div class="logo-icon">C</div>
+        <div class="logo-text">CoreFlow</div>
       </div>
-      <button @click="$emit('logout')" class="btn-logout">Déconnexion</button>
+      <button type="button" class="hamburger-btn" @click="toggleMobileMenu" aria-label="Menu">
+        <svg viewBox="0 0 24 24">
+          <path d="M4 6h16"></path>
+          <path d="M4 12h16"></path>
+          <path d="M4 18h16"></path>
+        </svg>
+      </button>
     </div>
+
+    <div v-if="isMobile && isMobileMenuOpen" class="mobile-backdrop" @click="closeMobileMenu"></div>
+
+    <aside class="sidebar" :class="{ 'mobile-open': isMobile && isMobileMenuOpen }">
+      <div class="logo desktop-logo">
+        <div class="logo-icon">C</div>
+        <div class="logo-text">CoreFlow</div>
+      </div>
+
+      <nav class="nav-menu">
+        <RouterLink to="/dashboard" class="nav-item" @click="closeMobileMenu">
+          <div class="nav-icon">
+            <svg viewBox="0 0 24 24">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+          </div>
+          Tableau de bord
+        </RouterLink>
+
+        <ul>
+          <li>
+            <RouterLink to="/conges/demande" class="nav-item" @click="closeMobileMenu">
+              <div class="nav-icon">
+                <svg viewBox="0 0 24 24">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </div>
+              Demande Congés
+            </RouterLink>
+          </li>
+          <li v-if="canValidateConges">
+            <RouterLink to="/conges/validation" class="nav-item" @click="closeMobileMenu">
+              <div class="nav-icon">
+                <svg viewBox="0 0 24 24">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </div>
+              Validation Congés
+            </RouterLink>
+          </li>
+        </ul>
+
+        <RouterLink to="/event/create" class="nav-item" @click="closeMobileMenu">
+          <div class="nav-icon">
+            <svg viewBox="0 0 24 24">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+          </div>
+          Événements
+        </RouterLink>
+
+        <RouterLink to="/documents/list" class="nav-item" @click="closeMobileMenu">
+          <div class="nav-icon">
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"
+              ></path>
+            </svg>
+          </div>
+          Documents
+        </RouterLink>
+
+        <RouterLink to="/tickets" class="nav-item" @click="closeMobileMenu">
+          <div class="nav-icon">
+            <svg viewBox="0 0 24 24">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+          </div>
+          Tickets & Support
+        </RouterLink>
+
+        <RouterLink v-if="canManageUsers" to="/admin/users" class="nav-item" @click="closeMobileMenu">
+          <div class="nav-icon">
+            <svg viewBox="0 0 24 24">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          Gestion utilisateurs
+        </RouterLink>
+      </nav>
+
+      <div class="user-profile">
+        <div v-if="loading" class="user-loading">Chargement...</div>
+        <div v-else-if="user">
+          <div class="user-name">{{ user.nom }} {{ user.prenom }}</div>
+          <div class="user-role">{{ user.role }}</div>
+        </div>
+        <button @click="$emit('logout')" class="btn-logout">Déconnexion</button>
+      </div>
+    </aside>
   </div>
 </template>
 
@@ -106,27 +125,74 @@ export default {
   props: {
     user: {
       type: Object,
-      default: null
+      default: null,
     },
     loading: {
       type: Boolean,
-      default: false
+      default: false,
+    },
+  },
+  data() {
+    return {
+      isMobile: false,
+      isMobileMenuOpen: false,
     }
   },
   computed: {
     canManageUsers() {
-      const role = this.user?.role?.toLowerCase();
-      return role === 'admin' || role === 'manager';
+      const role = this.user?.role?.toLowerCase()
+      return role === 'admin' || role === 'manager'
     },
     canValidateConges() {
-      const role = this.user?.role?.toLowerCase();
-      return role === 'rh' || role === 'manager';
-    }
-  }
+      const role = this.user?.role?.toLowerCase()
+      return role === 'rh' || role === 'manager'
+    },
+  },
+  mounted() {
+    this.handleResize()
+    window.addEventListener('resize', this.handleResize)
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.handleResize)
+  },
+  watch: {
+    '$route.path'() {
+      this.closeMobileMenu()
+    },
+  },
+  methods: {
+    handleResize() {
+      this.isMobile = window.innerWidth <= 1024
+      if (!this.isMobile) {
+        this.isMobileMenuOpen = false
+      }
+    },
+    toggleMobileMenu() {
+      this.isMobileMenuOpen = !this.isMobileMenuOpen
+    },
+    closeMobileMenu() {
+      this.isMobileMenuOpen = false
+    },
+  },
 }
 </script>
 
 <style scoped>
+.sidebar-shell {
+  position: relative;
+}
+
+.mobile-topbar {
+  display: none;
+}
+
+.mobile-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 100;
+}
+
 .sidebar {
   width: 248px;
   height: 100vh;
@@ -137,7 +203,18 @@ export default {
   position: fixed;
   left: 0;
   top: 0;
+  z-index: 100;
   box-shadow: 2px 0 12px rgba(0, 0, 0, 0.04);
+}
+
+.desktop-logo {
+  display: flex;
+}
+
+.mobile-logo {
+  margin: 0;
+  padding: 0;
+  border-bottom: none;
 }
 
 .logo {
@@ -183,7 +260,9 @@ export default {
   padding: 10px 12px;
   color: #6b7280;
   text-decoration: none;
-  transition: background 0.18s ease, color 0.18s ease;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease;
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
@@ -266,12 +345,107 @@ svg {
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
 }
 
 .btn-logout:hover {
   background: #ef4444;
   color: white;
   border-color: #ef4444;
+}
+
+@media (max-width: 1024px) {
+  .mobile-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    background: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+    position: sticky;
+    top: 0;
+    z-index: 101;
+  }
+
+  .hamburger-btn {
+    width: 40px;
+    height: 40px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .hamburger-btn svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .desktop-logo {
+    display: none;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 280px;
+    max-width: 84vw;
+    height: 100vh;
+    border-right: 1px solid #f0f0f0;
+    border-bottom: none;
+    box-shadow: 8px 0 24px rgba(0, 0, 0, 0.12);
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    z-index: 102;
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .nav-menu {
+    padding: 12px 10px;
+    overflow-y: auto;
+  }
+
+  .nav-menu ul {
+    display: block;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .nav-item {
+    margin-bottom: 2px;
+    border: none;
+    border-left: 3px solid transparent;
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+
+  .router-link-active.nav-item,
+  .router-link-exact-active.nav-item {
+    border-left: 3px solid #14b8a6;
+  }
+
+  .user-profile {
+    align-items: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .logo-text {
+    font-size: 15px;
+  }
+
+  .user-profile {
+    padding: 12px;
+  }
 }
 </style>

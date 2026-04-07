@@ -180,7 +180,7 @@ export default {
       const token = localStorage.getItem('token')
 
       try {
-        const response = await fetch(`http://localhost:3000/api/conges/${id}/valider`, {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE}/api/conges/${id}/valider`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -202,7 +202,7 @@ export default {
       const token = localStorage.getItem('token')
 
       try {
-        const response = await fetch(`http://localhost:3000/api/conges/${id}/refuser`, {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE}/api/conges/${id}/refuser`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -610,6 +610,17 @@ export default {
 
 .approve:active {
   transform: translateY(0);
+}
+
+@media (max-width: 1024px) {
+  .page {
+    margin-left: 0;
+    padding: 20px 16px;
+  }
+
+  .stat {
+    padding-right: 28px;
+  }
 }
 
 /* Responsive Design */

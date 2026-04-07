@@ -76,16 +76,16 @@
                             </thead>
                             <tbody>
                                 <tr v-for="d in demandesEnAttente" :key="d.id">
-                                    <td>{{ formatDateTime(d.created_at) }}</td>
-                                    <td>{{ formatDate(d.date_debut) }}</td>
-                                    <td>{{ formatDate(d.date_fin) }}</td>
-                                    <td>{{ d.motif || '-' }}</td>
-                                    <td>
+                                    <td data-label="Date demande">{{ formatDateTime(d.created_at) }}</td>
+                                    <td data-label="Date début">{{ formatDate(d.date_debut) }}</td>
+                                    <td data-label="Date fin">{{ formatDate(d.date_fin) }}</td>
+                                    <td data-label="Motif">{{ d.motif || '-' }}</td>
+                                    <td data-label="Statut">
                                         <span :class="['badge', 'badge-en_attente']">
                                             En attente
                                         </span>
                                     </td>
-                                    <td>
+                                    <td data-label="Action">
                                         <button class="btn btn-small btn-danger" @click="annuler(d.id)">
                                             Annuler
                                         </button>
@@ -111,11 +111,11 @@
                             <tbody>
                                 <tr v-for="d in demandesTraitees" :key="d.id"
                                     :class="{ 'row-refused': d.statut === 'refuse', 'row-approved': d.statut === 'approuve' }">
-                                    <td>{{ formatDateTime(d.created_at) }}</td>
-                                    <td>{{ formatDate(d.date_debut) }}</td>
-                                    <td>{{ formatDate(d.date_fin) }}</td>
-                                    <td>{{ d.motif || '-' }}</td>
-                                    <td>
+                                    <td data-label="Date demande">{{ formatDateTime(d.created_at) }}</td>
+                                    <td data-label="Date début">{{ formatDate(d.date_debut) }}</td>
+                                    <td data-label="Date fin">{{ formatDate(d.date_fin) }}</td>
+                                    <td data-label="Motif">{{ d.motif || '-' }}</td>
+                                    <td data-label="Statut final">
                                         <span :class="['badge', `badge-${d.statut}`]">
                                             {{ formatStatut(d.statut) }}
                                         </span>
@@ -354,6 +354,7 @@ async function chargerSolde() {
 
 .table {
     width: 100%;
+    min-width: 680px;
     border-collapse: collapse;
     margin-top: 12px;
     background: white;
@@ -414,6 +415,7 @@ async function chargerSolde() {
     padding: 20px;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    overflow-x: auto;
 }
 
 .section-title {
@@ -454,7 +456,8 @@ async function chargerSolde() {
 .conges-container {
     margin-left: 272px;
     padding: 28px 24px;
-    max-width: 900px;
+    max-width: 1000px;
+    width: 100%;
 }
 
 h1 {
@@ -571,6 +574,11 @@ textarea {
 
 /* Responsive */
 @media (max-width: 768px) {
+    .conges-container {
+        margin-left: 0;
+        padding: 16px 12px;
+    }
+
     .form {
         grid-template-columns: 1fr;
     }
@@ -582,6 +590,63 @@ textarea {
 
     .btn {
         width: 100%;
+    }
+
+    .liste-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .section {
+        overflow: visible;
+        padding: 14px;
+    }
+
+    .table {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .table thead {
+        display: none;
+    }
+
+    .table,
+    .table tbody,
+    .table tr,
+    .table td {
+        display: block;
+        width: 100%;
+    }
+
+    .table tbody tr {
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        padding: 10px;
+        background: #fff;
+    }
+
+    .table td {
+        border: none;
+        border-bottom: 1px dashed #e5e7eb;
+        padding: 8px 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        text-align: right;
+    }
+
+    .table td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        color: #334155;
+        text-align: left;
+    }
+
+    .table td:last-child {
+        border-bottom: none;
     }
 }
 

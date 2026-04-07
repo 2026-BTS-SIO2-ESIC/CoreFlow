@@ -240,10 +240,10 @@ export default {
     }
 
     await this.fetchTickets()
-    // const API = 'http://localhost:3000/api/ticket/tickets' // on définit l'URL de l'API pour récupérer les tickets
-    // const API_It = 'http://localhost:3000/api/ticket/itTickets' // on définit l'URL de l'API pour récupérer les tickets
-    // const API_Rh = 'http://localhost:3000/api/ticket/rhTickets'
-    // let url = 'http://localhost:3000/api/tickets/my-tickets'
+    // const API = '${import.meta.env.VITE_API_BASE}/api/ticket/tickets' // on définit l'URL de l'API pour récupérer les tickets
+    // const API_It = '${import.meta.env.VITE_API_BASE}/api/ticket/itTickets' // on définit l'URL de l'API pour récupérer les tickets
+    // const API_Rh = '${import.meta.env.VITE_API_BASE}/api/ticket/rhTickets'
+    // let url = '${import.meta.env.VITE_API_BASE}/api/tickets/my-tickets'
     // if (role === 'it') {
     //   url = API_It
     // } else if (role === 'rh') {
@@ -260,7 +260,7 @@ export default {
 
     // try {
     //   const token = localStorage.getItem('token')
-    //   //'http://localhost:3000/api/tickets/my-tickets'
+    //   //'${import.meta.env.VITE_API_BASE}/api/tickets/my-tickets'
     //   const response = await fetch(url, {
     //     method: 'GET',
     //     headers: {
@@ -292,7 +292,7 @@ export default {
         // Afficher les tickets de l'utilisateur connecté
         try {
           const token = localStorage.getItem('token')
-          const response = await fetch('http://localhost:3000/api/ticket/my-tickets', {
+          const response = await fetch('${import.meta.env.VITE_API_BASE}/api/ticket/my-tickets', {
             method: 'GET',
             headers: {
               Authorization: `Bearer ${token}`,
@@ -309,10 +309,10 @@ export default {
           console.error('Erreur de chargement des tickets', err)
         }
       } else {
-        const API = 'http://localhost:3000/api/ticket/tickets' // tous les tickets (admin/manager)
-        const API_It = 'http://localhost:3000/api/ticket/itTickets' // tickets IT
-        const API_Rh = 'http://localhost:3000/api/ticket/rhTickets' // tickets RH
-        let url = 'http://localhost:3000/api/ticket/my-tickets'
+        const API = '${import.meta.env.VITE_API_BASE}/api/ticket/tickets' // tous les tickets (admin/manager)
+        const API_It = '${import.meta.env.VITE_API_BASE}/api/ticket/itTickets' // tickets IT
+        const API_Rh = '${import.meta.env.VITE_API_BASE}/api/ticket/rhTickets' // tickets RH
+        let url = '${import.meta.env.VITE_API_BASE}/api/ticket/my-tickets'
         if (role === 'it') {
           url = API_It
         } else if (role === 'rh') {
@@ -398,7 +398,7 @@ export default {
     async showDetails(id) {
       try {
         const token = localStorage.getItem('token')
-        const response = await fetch(`http://localhost:3000/api/ticket/${id}`, {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE}/api/ticket/${id}`, {
           method: 'GET',
           headers: {
             Authorization: `Bearer ${token}`,
@@ -420,7 +420,7 @@ export default {
       try {
         const token = localStorage.getItem('token')
         const userStr = JSON.parse(localStorage.getItem('user'))
-        const response = await fetch('http://localhost:3000/api/ticket', {
+        const response = await fetch('${import.meta.env.VITE_API_BASE}/api/ticket', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -583,6 +583,7 @@ export default {
 
 table {
   width: 100%;
+  min-width: 760px;
   border-collapse: collapse;
   text-align: left;
 }
@@ -904,6 +905,32 @@ tr {
     width: 100%;
     justify-content: center;
     flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding: 14px;
+  }
+
+  .filters {
+    overflow-x: auto;
+    gap: 12px;
+    padding-bottom: 8px;
+  }
+
+  .modal-content {
+    width: 94%;
+    padding: 18px;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
+
+  .btn-submit,
+  .btn-cancel {
+    width: 100%;
   }
 }
 </style>

@@ -88,20 +88,15 @@
         </div>
       </div>
     </div>
-    <<<<<<< HEAD
   </div>
 
-  ======= >>>>>>> feature/gestion-tickets-CT
 </template>
 
 <script>
 //on importe capacitor pour gérer les différences d'URL entre mobile et desktop
-import { Capacitor } from '@capacitor/core';
 
-const API_BASE = Capacitor.isNativePlatform() 
-  ? 'http:// 192.168.1.91:3000'  // Si on est sur l'émulateur Mobile
-  : 'http://localhost:3000'; // Si on est sur le navigateur Desktop
 
+const API_BASE = import.meta.env.VITE_API_BASE;
 export default {
   name: 'LoginView',
   data() {
@@ -119,7 +114,7 @@ export default {
       this.error = null
 
       try {
-        const response = await fetch(`${API_BASE}/api/auth/login`, {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE}/api/auth/login`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -443,6 +438,41 @@ input:focus {
   .login-left,
   .login-right {
     padding: 40px 30px;
+  }
+
+  .right-content h2 {
+    font-size: 28px;
+  }
+
+  h1 {
+    font-size: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-page {
+    padding: 10px;
+  }
+
+  .login-left {
+    padding: 26px 18px;
+  }
+
+  .login-right {
+    display: none;
+  }
+
+  .logo {
+    margin-bottom: 20px;
+  }
+
+  .logo-text {
+    font-size: 20px;
+  }
+
+  .dev-info {
+    font-size: 12px;
+    padding: 14px;
   }
 }
 </style>

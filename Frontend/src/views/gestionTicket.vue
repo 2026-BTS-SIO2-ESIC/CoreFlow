@@ -3,9 +3,9 @@ import { ref, onMounted } from "vue";
 
 
 const token = localStorage.getItem("token");
-const API = "http://localhost:3000/api/ticket/tickets"; // on définit l'URL de l'API pour récupérer les tickets
-const API_It = "http://localhost:3000/api/ticket/itTickets"; // on définit l'URL de l'API pour récupérer les tickets
-const API_Rh = "http://localhost:3000/api/ticket/rhTickets"; // on définit l'URL de l'API pour récupérer les tickets
+const API = "${import.meta.env.VITE_API_BASE}/api/ticket/tickets"; // on définit l'URL de l'API pour récupérer les tickets
+const API_It = "${import.meta.env.VITE_API_BASE}/api/ticket/itTickets"; // on définit l'URL de l'API pour récupérer les tickets
+const API_Rh = "${import.meta.env.VITE_API_BASE}/api/ticket/rhTickets"; // on définit l'URL de l'API pour récupérer les tickets
 
 const tickets = ref([]); // on crée une variable réactive pour stocker les tickets
 const loading = ref(true); // on crée une variable réactive pour indiquer si les données sont en cours de chargement
@@ -306,6 +306,8 @@ tbody tr td {
   display: flex;
   justify-content: space-between;
   margin-bottom: 40px;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .dashboard-header h1 {
@@ -335,5 +337,61 @@ svg {
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+@media (max-width: 1024px) {
+  .filters {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .stats-container {
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .stats {
+    width: calc(50% - 6px);
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-header h1 {
+    font-size: 24px;
+  }
+
+  .btn-create-ticket {
+    width: 100%;
+    font-size: 16px;
+    padding: 12px 10px;
+  }
+
+  thead,
+  tbody,
+  tr,
+  th,
+  td {
+    display: block;
+    width: 100%;
+  }
+
+  thead {
+    display: none;
+  }
+
+  tbody tr {
+    margin-bottom: 10px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  tbody tr td {
+    padding: 10px 12px;
+  }
+
+  .stats {
+    width: 100%;
+  }
 }
 </style>

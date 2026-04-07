@@ -8,6 +8,7 @@ import gestionTicket from '../views/gestionTicket.vue'
 import addDocumentView from '@/views/addDocumentView.vue'
 import listDocumentView from '@/views/listDocumentView.vue'
 import TicketsView from '../views/TicketsView.vue'
+import EventView from '../views/EventView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -29,7 +30,7 @@ const router = createRouter({
     {
       path: '/conges/validation',
       name: 'congesValidation',
-      component: CongesValidation
+      component: CongesValidation,
     },
     {
       path: '/conges/demande',
@@ -40,7 +41,11 @@ const router = createRouter({
       path: '/admin/users',
       name: 'admin-users',
       component: AdminUserView,
-      meta: { requiresRoles: ['admin', 'manager'] }
+    },
+    {
+      path: '/event/create',
+      name: 'event-create',
+      component: EventView,
     },
     // {
     //   path: '/gestionTicket',
@@ -60,44 +65,44 @@ const router = createRouter({
     {
       path: '/documents/list',
       name: 'list-document',
-      component: listDocumentView
-    }
+      component: listDocumentView,
+    },
   ],
 })
 
 router.beforeEach((to, from, next) => {
-  const requiredRoles = to.meta?.requiresRoles;
+  const requiredRoles = to.meta?.requiresRoles
 
   if (!requiredRoles) {
-    next();
-    return;
+    next()
+    return
   }
 
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('token')
   if (!token) {
-    next('/login');
-    return;
+    next('/login')
+    return
   }
 
-  const userStr = localStorage.getItem('user');
+  const userStr = localStorage.getItem('user')
   if (!userStr) {
-    next('/dashboard');
-    return;
+    next('/dashboard')
+    return
   }
 
   try {
-    const user = JSON.parse(userStr);
-    const role = user?.role?.toLowerCase();
+    const user = JSON.parse(userStr)
+    const role = user?.role?.toLowerCase()
 
     if (requiredRoles.includes(role)) {
-      next();
-      return;
+      next()
+      return
     }
   } catch (error) {
     // Données utilisateur invalides dans le stockage local.
   }
 
-  next('/dashboard');
-});
+  next('/dashboard')
+})
 
 export default router
