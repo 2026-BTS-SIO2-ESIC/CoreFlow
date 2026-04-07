@@ -1,6 +1,6 @@
 ## Documentation des routes `event`
 
-Ce document décrit les routes de l'API `event` et donne des exemples d'utilisation avec **Postman**.
+Ce document décrit les routes de l'API `event`, tous les champs possibles des body et donne des exemples d'utilisation avec **Postman**.
 
 ---
 
@@ -16,29 +16,100 @@ Sans token valide, vous obtiendrez `401 Token d'authentification manquant` ou `4
 
 ---
 
+## Résumé des routes
+
+| # | Méthode | Route | Description |
+|---|---------|-------|-------------|
+| 1 | GET | `/event/list/participation/:user_id/:userRole` | Liste des événements par participation et rôle |
+| 2 | GET | `/event/list/:id` | Récupérer un événement par ID |
+| 3 | POST | `/event/create/:userRole` | Créer un événement |
+| 4 | PUT | `/event/update` | Mettre à jour un événement |
+| 5 | POST | `/event/user_list_by_email` | Recherche utilisateurs par email |
+
+**Rôles requis** : Les routes `create` et `update` exigent le rôle `admin` ou `manager`.
+
+---
+
 ## 1. Liste des événements (par participation et rôle)
 
 - **Méthode** : `GET`
 - **URL** : `http://localhost:3000/event/list/participation/:user_id/:userRole`
 - **Headers** : `Authorization: Bearer <token>`
+- **Body** : aucun
 
-**Paramètres URL** : `user_id` (ID de l'utilisateur), `userRole` (`admin`, `manager`, etc.)
+**Paramètres URL** :
+- `user_id` (integer, obligatoire) : ID de l'utilisateur
+- `userRole` (string, obligatoire) : `admin`, `manager`, `employe`, `rh`, etc.
 
-**Comment utiliser** : Remplacez `:user_id` et `:userRole` par les valeurs. Ex. `GET http://localhost:3000/event/list/participation/5/admin`
+**Exemple** : `GET http://localhost:3000/event/list/participation/5/admin`
 
-**Réponse** : Si admin → `{ message, eventAdmin }`. Sinon → `{ message, eventLevelOne, eventLevelTwo }`
+**Réponse** :
+- Si admin : `{ message, eventAdmin }` — tableau de tous les événements
+- Sinon : `{ message, eventLevelOne, eventLevelTwo }` — événements niveau 1 (entreprise) et niveau 2 (participations)
 
 ---
 
-## 2. Création d'un événement
+## 2. Récupérer un événement par ID
+
+- **Méthode** : `GET`
+- **URL** : `http://localhost:3000/event/list/:id`
+- **Headers** : `Authorization: Bearer <token>`
+- **Body** : aucun
+
+**Paramètres URL** :
+- `id` (integer, obligatoire) : ID de l'événement
+
+**Exemple** : `GET http://localhost:3000/event/list/42`
+
+**Réponse** : `200 OK` + `{ message, event }`
+
+---
+
+## 3. Création d'un événement
 
 - **Méthode** : `POST`
 - **URL** : `http://localhost:3000/event/create/:userRole`
 - **Headers** : `Content-Type: application/json`, `Authorization: Bearer <token>`
 
-**Comment utiliser** : Le paramètre `userRole` doit être `manager`. Corps JSON avec les champs de l'événement.
+**Paramètres URL** :
+- `userRole` (string, obligatoire) : `manager` ou `admin` — utilisateur connecté doit avoir ce rôle
 
-**Body (exemple)** :
+**Body : tous les champs possibles**
+
+| Champ (JSON) | Type | Obligatoire | Description |
+|--------------|------|-------------|-------------|
+| `titre` | string | ✓ | Titre de l'événement |
+| `description` | string | | Description |
+| `type_evenement` | string | ✓ | Type (ex. meeting, formation, etc.) |
+| `date_debut` | string | ✓ | Date/heure début (format `YYYY-MM-DD HH:mm:ss`). Ne peut pas être avant aujourd'hui |
+| `date_fin` | string | ✓ | Date/heure fin (format `YYYY-MM-DD HH:mm:ss`). Doit être >= date_debut |
+| `lieu` | string | | Lieu de l'événement |
+| `organisateur_id` | integer | ✓ | ID de l'organisateur (doit être manager ou admin) |
+| `niveau` | string | ✓ | `"1"` = entreprise (visible par tous) ou `"2"` = service (visible selon participations) |
+| `inviter` | string | | Emails des invités, séparés par des virgules (ex. `"email1@x.com,email2@y.com"`). Vérifiés en base |
+| `departement` | string | | Nom du département pour les participations automatiques (niveau 2) |
+| `est_obligatoire` | integer | | `0` ou `1` |
+| `nb_places_max` | integer | | Nombre max de places (entier >= 0) |
+| `statut` | string | | `planifie`, `en_cours`, `termine` ou `annule` |
+| `created_at` | string | | Auto-généré si absent (format `YYYY-MM-DD HH:mm:ss`) |
+| `updated_at` | string | | Auto-généré si absent |
+| `commentaire` | string | | Commentaire initial des participations |
+
+**Body (exemple minimal)** :
+
+```json
+{
+  "titre": "Un meeting",
+  "description": "Description",
+  "type_evenement": "meeting",
+  "date_debut": "2026-06-21 12:00:00",
+  "date_fin": "2026-06-21 14:00:00",
+  "organisateur_id": 1,
+  "niveau": "1"
+}
+```
+
+**Body (exemple complet)** :
 
 ```json
 {
@@ -49,49 +120,47 @@ Sans token valide, vous obtiendrez `401 Token d'authentification manquant` ou `4
   "date_fin": "2026-06-21 14:00:00",
   "lieu": "Salle A",
   "organisateur_id": 1,
-  "niveau": "1",
+  "niveau": "2",
   "inviter": "email1@x.com,email2@y.com",
-  "department": "IT"
+  "departement": "IT",
+  "est_obligatoire": 1,
+  "nb_places_max": 20,
+  "statut": "planifie",
+  "commentaire": "Veuillez confirmer"
 }
 ```
 
-**Champs obligatoires** : `titre`, `organisateur_id`, `date_debut`, `date_fin`, `type_evenement`, `niveau`. **Réponse** : `201` + `{ message, id, participationIds }`
+**Réponse** : `201` + `{ message, id, participationIds }`
 
 ---
 
-## 3. Récupérer un événement par ID
-
-- **Méthode** : `GET`
-- **URL** : `http://localhost:3000/event/list/:id`
-- **Headers** : `Authorization: Bearer <token>`
-
-**Comment utiliser** : Remplacez `:id` par l'ID de l'événement. Ex. `GET http://localhost:3000/event/list/42`
-
-**Réponse** : `200 OK` + `{ message, event }`
-
----
-
-## 4. Recherche d'utilisateurs par email (autocomplétion inviter)
-
-- **Méthode** : `POST`
-- **URL** : `http://localhost:3000/event/user_list_by_email`
-- **Headers** : `Content-Type: application/json`, `Authorization: Bearer <token>`
-
-**Comment utiliser** : Pour l'autocomplétion du champ inviter. Envoie une chaîne partielle d'email, la requête SQL utilise `LIKE %valeur%`.
-
-**Body** : `{ "email": "admin" }`
-
-**Réponse** : `200 OK` + `{ message, usersInfos }` (tableau de `{ id, email }`)
-
----
-
-## 5. Mise à jour d'un événement
+## 4. Mise à jour d'un événement
 
 - **Méthode** : `PUT`
 - **URL** : `http://localhost:3000/event/update`
 - **Headers** : `Content-Type: application/json`, `Authorization: Bearer <token>`
 
-**Comment utiliser** : Envoyez `id` et `organisateur_id` obligatoirement, plus les champs à modifier.
+**Body : tous les champs possibles**
+
+| Champ (JSON) | Type | Obligatoire | Description |
+|--------------|------|-------------|-------------|
+| `id` | integer | ✓ | ID de l'événement à modifier |
+| `organisateur_id` | integer | ✓ | ID de l'organisateur (doit correspondre au propriétaire) |
+| `titre` | string | | Titre |
+| `description` | string | | Description |
+| `type_evenement` | string | | Type d'événement |
+| `date_debut` | string | | Date/heure début |
+| `date_fin` | string | | Date/heure fin |
+| `lieu` | string | | Lieu |
+| `est_obligatoire` | integer | | `0` ou `1` |
+| `nb_places_max` | integer | | Nombre max de places |
+| `statut` | string | | `planifie`, `en_cours`, `termine`, `annule` |
+| `niveau` | string | | `"1"` ou `"2"` |
+| `inviter` | string | | Emails invités (vérifiés en base si fournis) |
+| `statut_participation` | string | | Met à jour le statut des participations de l'événement |
+| `commentaire` | string | | Met à jour le commentaire des participations |
+
+Au moins un champ modifiable (en plus de `id` et `organisateur_id`) doit être envoyé.
 
 **Body (exemple)** :
 
@@ -101,13 +170,37 @@ Sans token valide, vous obtiendrez `401 Token d'authentification manquant` ou `4
   "organisateur_id": 1,
   "titre": "Nouveau titre",
   "description": "Nouvelle description",
+  "statut": "en_cours",
   "niveau": "2"
 }
 ```
 
-**Règles** : Seul le propriétaire (`organisateur_id`) peut modifier. Sinon `403 PERMISSION_ERROR`. Si l'événement n'existe pas : `404 NOT_FOUND`.
+**Erreurs** :
+- `400` : champs invalides ou manquants
+- `403` : vous ne possédez pas les droits sur cet événement (`PERMISSION_ERROR`)
+- `404` : événement inexistant (`NOT_FOUND`)
 
 **Réponse** : `201` + `{ message, id }`
+
+---
+
+## 5. Recherche d'utilisateurs par email
+
+- **Méthode** : `POST`
+- **URL** : `http://localhost:3000/event/user_list_by_email`
+- **Headers** : `Content-Type: application/json`, `Authorization: Bearer <token>`
+
+**Body : champs possibles**
+
+| Champ (JSON) | Type | Obligatoire | Description |
+|--------------|------|-------------|-------------|
+| `email` | string | ✓ | Chaîne partielle d'email (requête SQL `LIKE %valeur%`) |
+
+**Body (exemple)** : `{ "email": "admin" }`
+
+**Réponse** : `200 OK` + `{ message, usersInfos }` — tableau de `{ id, email }`
+
+**Erreurs** : `404` si aucun utilisateur trouvé
 
 ---
 

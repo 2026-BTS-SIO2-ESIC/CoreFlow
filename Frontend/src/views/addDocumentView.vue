@@ -1,25 +1,26 @@
 <template>
-  <main class="min-h-screen bg-[#F0FDFA] flex justify-center p-12">
+  <main class="min-h-screen bg-[#F0FDFA] flex justify-center p-4 sm:p-6 lg:p-10 lg:pl-14 lg:ml-[248px]">
       <DashboardSidebar
         :user="user"
         :loading="false"
         @logout="logout"
       />
+      
     <div class="w-full max-w-2xl">
       
-      <div class="mb-10">
+      <div class="mb-6 sm:mb-8 lg:mb-10">
         <h1 class="text-gray-900" style="font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 32px;">
           Publier un nouveau document
         </h1>
       </div>
 
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-10">
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-8 lg:p-10">
         
         <form @submit.prevent="envoyerDocument">
           
           <div 
             @click="declencherInputFichier" 
-            class="border-2 border-dashed border-[#0D9488]/40 rounded-xl p-10 mb-8 text-center cursor-pointer transition-colors bg-[#F0FDFA]/50 hover:bg-[#F0FDFA]"
+            class="border-2 border-dashed border-[#0D9488]/40 rounded-xl p-6 sm:p-8 lg:p-10 mb-8 text-center cursor-pointer transition-colors bg-[#F0FDFA]/50 hover:bg-[#F0FDFA]"
           >
             <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-gray-50">
               <svg class="w-6 h-6 text-[#0D9488]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -100,7 +101,7 @@
             {{ message }}
           </div>
 
-          <div class="flex items-center gap-4 mt-10 pt-8 border-t border-gray-50">
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 mt-10 pt-8 border-t border-gray-50">
             <button type="button" @click="reinitialiser" class="flex-1 px-6 py-3.5 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors" style="font-family: 'Mulish', sans-serif; font-weight: 600; font-size: 15px;">
               Annuler
             </button>
@@ -118,7 +119,12 @@
 
 <script setup>
 import DashboardSidebar from '@/components/DashboardSidebar.vue';
-import { ref } from 'vue';
+
+import { onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+const user = ref(null);
 
 // Variables
 const titre = ref('');
@@ -131,6 +137,25 @@ const inputFichier = ref(null);
 const message = ref('');
 const isSuccess = ref(false);
 const isLoading = ref(false);
+
+onMounted(() => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    router.push('/login');
+    return;
+  }
+
+  const userStr = localStorage.getItem('user');
+  if (userStr) {
+    user.value = JSON.parse(userStr);
+  }
+});
+
+const logout = () => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  router.push('/login');
+};
 
 // Fonctions d'interaction fichier
 const declencherInputFichier = () => inputFichier.value.click();
@@ -172,7 +197,7 @@ const envoyerDocument = async () => {
   formData.append('fichier', fichierSelectionne.value); 
 
   try {
-    const response = await fetch('http://localhost:3000/api/documents', {
+    const response = await fetch('${import.meta.env.VITE_API_BASE}/api/documents', {
       method: 'POST',
       body: formData
     });

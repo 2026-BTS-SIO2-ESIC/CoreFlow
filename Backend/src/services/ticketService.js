@@ -1,22 +1,38 @@
-const userRepository = require('../Repository/ticketRepository');
+const TicketRepository = require("../repository/ticketRepository");
 
-async function listTickets() {
-    const tickets = await userRepository.getAllTickets(); 
-    return tickets;
-}
+const TicketService = {
+    // --- Listing all tickets ---
+    getAllTickets: async () => {
+        return await TicketRepository.getAllTickets();
+    },
 
-async function listItTickets() {
-    const tickets = await userRepository.getItTickets(); 
-    return tickets;
-}
-async function listRhTickets() {
-    const tickets = await userRepository.getRhTickets(); 
-    return tickets;
-}
+    // --- Listing IT tickets ---
+    getItTickets: async () => {
+        return await TicketRepository.getItTickets();
+    },
 
+    // --- Listing RH tickets ---
+    getRhTickets: async () => {
+        return await TicketRepository.getRhTickets();
+    },
 
-module.exports = {
-	listTickets,
-	listItTickets,
-	listRhTickets,
+    // --- User-specific tickets ---
+    getMyTickets: async (userId) => {
+        return await TicketRepository.getByUserId(userId);
+    },
+
+    // --- Ticket operations ---
+    createNewTicket: async (formData, userData) => {
+        const ticketData = {
+            ...formData,
+            demandeur_id: userData.id,
+        };
+        return await TicketRepository.create(ticketData);
+    },
+
+    getTicketById: async (ticketId) => {
+        return await TicketRepository.getById(ticketId);
+    },
 };
+
+module.exports = TicketService;

@@ -76,3 +76,19 @@ exports.authorize = (...roles) => {
     next();
   };
 };
+
+// Middleware combiné pour authentification + autorisation
+exports.authMiddleware = (...roles) => {
+  return [exports.authenticate, exports.authorize(...roles)];
+};
+
+// Middleware pour vérifier que l'utilisateur est un RH
+exports.checkRH = (req, res, next) => {
+  if (req.user.role !== 'RH') {
+    return res.status(403).json({
+      success: false,
+      message: 'Accès réservé aux RH'
+    });
+  }
+  next();
+};
