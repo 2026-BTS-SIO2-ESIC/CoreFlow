@@ -23,7 +23,22 @@ const TicketRepository = {
     // 2. Liste de TOUS les tickets (Admin)
     getAllTickets: async () => {
         const [rows] = await pool.query(
-            "SELECT id, titre, description, categorie, statut, demandeur_id, assigne_a_id, updated_at FROM tickets ORDER by id ASC"
+            `SELECT
+                t.id,
+                t.titre,
+                t.description,
+                t.categorie,
+                t.statut,
+                t.demandeur_id,
+                t.assigne_a_id,
+                t.created_at,
+                t.updated_at,
+                u.nom,
+                u.prenom,
+                u.departement
+            FROM tickets t
+            JOIN utilisateurs u ON t.demandeur_id = u.id
+            ORDER BY t.id ASC`
         );
         return rows;
     },
@@ -31,7 +46,21 @@ const TicketRepository = {
     // 3. Liste des tickets IT
     getItTickets: async () => {
         const [rows] = await pool.query(
-            "SELECT id, titre, description, statut, demandeur_id, updated_at FROM tickets WHERE categorie = 'it' ORDER by id ASC"
+            `SELECT
+                t.id,
+                t.titre,
+                t.description,
+                t.statut,
+                t.demandeur_id,
+                t.created_at,
+                t.updated_at,
+                u.nom,
+                u.prenom,
+                u.departement
+            FROM tickets t
+            JOIN utilisateurs u ON t.demandeur_id = u.id
+            WHERE t.categorie = 'it'
+            ORDER BY t.id ASC`
         );
         return rows;
     },
@@ -39,7 +68,21 @@ const TicketRepository = {
     // 4. Liste des tickets RH
     getRhTickets: async () => {
         const [rows] = await pool.query(
-            "SELECT id, titre, description, statut, demandeur_id, updated_at FROM tickets WHERE categorie = 'rh' ORDER by id ASC"
+            `SELECT
+                t.id,
+                t.titre,
+                t.description,
+                t.statut,
+                t.demandeur_id,
+                t.created_at,
+                t.updated_at,
+                u.nom,
+                u.prenom,
+                u.departement
+            FROM tickets t
+            JOIN utilisateurs u ON t.demandeur_id = u.id
+            WHERE t.categorie = 'rh'
+            ORDER BY t.id ASC`
         );
         return rows;
     },

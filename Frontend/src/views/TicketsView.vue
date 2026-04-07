@@ -45,16 +45,16 @@
           </thead>
           <tbody>
             <tr v-for="ticket in filteredTickets" :key="ticket.id">
-              <td class="id-cell">#{{ ticket.id }}</td>
-              <td>{{ ticket.titre }}</td>
-              <td>{{ ticket.prenom }} {{ ticket.nom }}</td>
-              <td>
+              <td class="id-cell ticket-id" data-label="N°">#{{ ticket.id }}</td>
+              <td class="ticket-title" data-label="Titre">{{ ticket.titre }}</td>
+              <td class="ticket-requester" data-label="Demandeur">{{ ticket.prenom }} {{ ticket.nom }}</td>
+              <td class="ticket-status" data-label="Statut">
                 <span :class="['status-badge', getStatusClass(ticket.statut)]">
-                  {{ ticket.statut || 'En attente' }}
+                  {{ formatStatus(ticket.statut) }}
                 </span>
               </td>
-              <td>{{ formatDate(ticket.created_at) }}</td>
-              <td class="actions">
+              <td class="ticket-updated" data-label="Dernière mise à jour">{{ formatDate(ticket.created_at) }}</td>
+              <td class="actions" data-label="Action">
                 <button @click="showDetails(ticket.id)" class="icon-btn">👁️</button>
               </td>
             </tr>
@@ -62,18 +62,20 @@
         </table>
       </div>
 
+      <!-- Statistiques ========================================================== -->
+
       <div class="stats-grid">
         <div class="stat-card">
           <span class="stat-label">Tickets traité</span>
-          <span class="stat-value highlight">12</span>
+          <span class="stat-value highlight">{{ ticketStats.traites }}</span>
         </div>
         <div class="stat-card">
           <span class="stat-label">Tickets en attente</span>
-          <span class="stat-value highlight">1</span>
+          <span class="stat-value highlight">{{ ticketStats.enAttente }}</span>
         </div>
         <div class="stat-card">
           <span class="stat-label">Note</span>
-          <span class="stat-value highlight">3.2</span>
+          <span class="stat-value highlight">{{ ticketStats.note }}</span>
         </div>
       </div>
     </main>
@@ -218,6 +220,22 @@ export default {
       if (this.currentFilter === 'Tout') return this.tickets
       return this.tickets.filter((t) => t.statut === this.currentFilter)
     },
+    ticketStats() {
+      const tickets = Array.isArray(this.tickets) ? this.tickets : []
+
+      const statuses = tickets.map((ticket) => this.normalizeStatus(ticket?.statut))
+      const traites = statuses.filter((status) => ['resolu', 'ferme'].includes(status)).length
+      const enAttente = statuses.filter((status) => ['ouvert', 'en_cours'].includes(status)).length
+      const total = statuses.length
+
+      const note = total > 0 ? ((traites / total) * 5).toFixed(1) : '0.0'
+
+      return {
+        traites,
+        enAttente,
+        note,
+      }
+    },
   },
 
   watch: {
@@ -292,7 +310,7 @@ export default {
         // Afficher les tickets de l'utilisateur connecté
         try {
           const token = localStorage.getItem('token')
-          const response = await fetch('${import.meta.env.VITE_API_BASE}/api/ticket/my-tickets', {
+          const response = await fetch(`${import.meta.env.VITE_API_BASE}/api/ticket/my-tickets`, {
             method: 'GET',
             headers: {
               Authorization: `Bearer ${token}`,
@@ -309,10 +327,10 @@ export default {
           console.error('Erreur de chargement des tickets', err)
         }
       } else {
-        const API = '${import.meta.env.VITE_API_BASE}/api/ticket/tickets' // tous les tickets (admin/manager)
-        const API_It = '${import.meta.env.VITE_API_BASE}/api/ticket/itTickets' // tickets IT
-        const API_Rh = '${import.meta.env.VITE_API_BASE}/api/ticket/rhTickets' // tickets RH
-        let url = '${import.meta.env.VITE_API_BASE}/api/ticket/my-tickets'
+        const API = `${import.meta.env.VITE_API_BASE}/api/ticket/tickets` // tous les tickets (admin/manager)
+        const API_It = `${import.meta.env.VITE_API_BASE}/api/ticket/itTickets` // tickets IT
+        const API_Rh = `${import.meta.env.VITE_API_BASE}/api/ticket/rhTickets` // tickets RH
+        let url = `${import.meta.env.VITE_API_BASE}/api/ticket/my-tickets` // par défaut, on affiche les tickets de l'utilisateur connecté (pour les rôles autres que admin/manager)
         if (role === 'it') {
           url = API_It
         } else if (role === 'rh') {
@@ -354,6 +372,8 @@ export default {
         status = status.statut || status.value || ''
       }
 
+      const normalized = this.normalizeStatus(status)
+
       const map = {
         ouvert: 'En attente',
         en_cours: 'En cours',
@@ -361,15 +381,19 @@ export default {
         ferme: 'Fermé',
       }
 
-      return map[status] || status
+      return map[normalized] || status
     },
 
-    getStatusClass(status) {
-      const normalized = String(status || 'ouvert')
+    normalizeStatus(status) {
+      return String(status || 'ouvert')
         .toLowerCase()
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
         .replace(/\s+/g, '_')
+    },
+
+    getStatusClass(status) {
+      const normalized = this.normalizeStatus(status)
 
       const classMap = {
         ouvert: 'status-open',
@@ -420,7 +444,7 @@ export default {
       try {
         const token = localStorage.getItem('token')
         const userStr = JSON.parse(localStorage.getItem('user'))
-        const response = await fetch('${import.meta.env.VITE_API_BASE}/api/ticket', {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE}/api/ticket`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -464,10 +488,30 @@ export default {
 </script>
 
 <style scoped>
+html, body {
+  height: auto;        /* Permet au document de s'étirer */
+  min-height: 100%;
+  overflow-x: hidden;  /* Évite le scroll horizontal parasite */
+}
 .container {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+@media (max-width: 1024px) {
+  /* ... tes styles existants ... */
+
+  .modal-content {
+    padding: 20px;      /* Réduire le padding interne pour gagner de la place */
+    margin-top: 20px;   /* Evite que la modale colle au haut de l'écran */
+    margin-bottom: 20px;
+  }
+
+  .description-box {
+    font-size: 13px;    /* Un peu plus petit pour le confort */
+    padding: 15px;
+  }
 }
 
 /* Corps de la page ============================================ */
@@ -583,7 +627,6 @@ export default {
 
 table {
   width: 100%;
-  min-width: 760px;
   border-collapse: collapse;
   text-align: left;
 }
@@ -634,16 +677,29 @@ tr {
 
 /* Actions */
 .icon-btn {
-  background: none;
-  border: none;
+  background: #ecfeff;
+  border: 1px solid #99f6e4;
+  color: #0f766e;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  font-size: 16px;
-  margin-right: 10px;
-  opacity: 0.6;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 10px;
+  margin-right: 6px;
+  opacity: 1;
+  min-width: 54px;
 }
 
 .icon-btn:hover {
-  opacity: 1;
+  background: #ccfbf1;
+  border-color: #5eead4;
+}
+
+.actions {
+  white-space: nowrap;
 }
 
 /* Stats Cards */
@@ -676,28 +732,40 @@ tr {
 /* Formulaire ========================================================= */
 
 /* Fond de la modale (couvre tout l'écran) */
+/* Fond de la modale */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5); /* Fond semi-transparent */
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
-  align-items: center;
-  z-index: 2000; /* Doit être supérieur à la sidebar */
+  align-items: flex-start; /* Changé de 'center' à 'flex-start' pour permettre le scroll naturel */
+  padding: 20px;           /* Espace de sécurité pour ne pas coller aux bords */
+  overflow-y: auto;        /* Active le scroll sur l'overlay si le contenu dépasse */
+  z-index: 2000;
 }
 
-/* Boîte blanche du formulaire */
+/* Boîte de la modale */
 .modal-content {
   background: white;
   padding: 30px;
   border-radius: 12px;
   width: 500px;
-  max-width: 90%;
+  max-width: 100%;
+  margin: auto;            /* Centre la modale si elle est plus petite que l'écran */
+  position: relative;
 }
 
+/* Spécifique aux détails */
+.details-modal {
+  width: 700px !important;
+  max-width: 100%;
+  /* Supprime le max-height et l'overflow-y ici, 
+     on laisse l'overlay gérer le scroll global c'est plus fluide sur mobile */
+}
 .modal-header {
   display: flex;
   justify-content: space-between;
@@ -786,12 +854,6 @@ tr {
 /* Détails du ticket */
 
 /* On rend la modale de détails plus large que celle du formulaire */
-.details-modal {
-  width: 700px !important;
-  max-width: 95%;
-  max-height: 90vh;
-  overflow-y: auto;
-}
 
 .details-body {
   display: flex;
@@ -884,7 +946,7 @@ tr {
   .main-content {
     width: 100%;
     margin-left: 0;
-    padding: 20px;
+    padding: 78px 20px 20px;
   }
 
   .content-header {
@@ -910,27 +972,257 @@ tr {
 
 @media (max-width: 768px) {
   .main-content {
-    padding: 14px;
+    padding: 80px 12px 16px;
+  }
+
+  .content-header {
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .content-header h1 {
+    font-size: 22px;
+  }
+
+  .btn-add-ticket {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 14px;
+    text-align: center;
   }
 
   .filters {
+    gap: 10px;
     overflow-x: auto;
-    gap: 12px;
+    padding-bottom: 10px;
+    margin-bottom: 14px;
+    scrollbar-width: thin;
+  }
+
+  .filter-btn {
+    white-space: nowrap;
+    border: 1px solid #d1fae5;
+    border-radius: 999px;
+    padding: 8px 12px;
+    background: #f8fffe;
+  }
+
+  .filter-btn.active {
+    background: #0f766e;
+    color: #fff;
+  }
+
+  .filter-btn.active::after {
+    display: none;
+  }
+
+  .roleFilter {
+    width: 100%;
+    border-radius: 12px;
+    justify-content: stretch;
+    padding: 4px;
+    margin-bottom: 14px;
+  }
+
+  .role-filter-btn {
+    flex: 1;
+    text-align: center;
+    padding: 10px 8px;
+  }
+
+  .table-container {
+    background: transparent;
+    box-shadow: none;
+    overflow: visible;
+    margin-bottom: 24px;
+  }
+
+  table,
+  tbody,
+  tr,
+  td {
+    display: block;
+    width: 100%;
+  }
+
+  thead {
+    display: none;
+  }
+
+  tbody {
+    display: grid;
+    gap: 14px;
+  }
+
+  tr {
+    border: 1px solid #d9f5f2;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbfc 100%);
+    padding: 0;
+    overflow: hidden;
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.1);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      'id status'
+      'title title'
+      'requester requester'
+      'updated action';
+  }
+
+  td {
+    border-bottom: 1px dashed #e5e7eb;
+    padding: 10px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: #1f2937;
+  }
+
+  td:last-child {
+    border-bottom: none;
+    padding-bottom: 4px;
+  }
+
+  td::before {
+    content: attr(data-label);
+    font-size: 11px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 700;
+    min-width: 118px;
+  }
+
+  .ticket-id {
+    grid-area: id;
+    font-weight: 700;
+    color: #0f766e;
+    background: linear-gradient(180deg, #f0fdfa 0%, #ecfeff 100%);
+    border-bottom: none;
     padding-bottom: 8px;
   }
 
+  .ticket-title {
+    grid-area: title;
+    font-weight: 600;
+    font-size: 14px;
+    color: #0f172a;
+    border-top: 1px dashed #dbeafe;
+  }
+
+  .ticket-requester {
+    grid-area: requester;
+  }
+
+  .ticket-status {
+    grid-area: status;
+    border-bottom: none;
+    justify-content: flex-end;
+    padding-bottom: 8px;
+    background: linear-gradient(180deg, #f0fdfa 0%, #ecfeff 100%);
+  }
+
+  .ticket-status .status-badge {
+    margin-left: 0;
+  }
+
+  .ticket-updated {
+    grid-area: updated;
+    color: #334155;
+    border-bottom: none;
+  }
+
+  .ticket-id::before,
+  .ticket-status::before,
+  .ticket-title::before,
+  .actions::before {
+    display: none;
+  }
+
+  .actions {
+    grid-area: action;
+    justify-content: flex-end;
+    border-bottom: none;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  .icon-btn {
+    margin-right: 0;
+    min-width: 44px;
+    border-radius: 10px;
+  }
+
+  .status-badge {
+    white-space: nowrap;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .stat-card {
+    border: 1px solid #dbeafe;
+    box-shadow: 0 8px 14px rgba(15, 23, 42, 0.08);
+    padding: 14px;
+  }
+
+  .stat-label {
+    font-size: 12px;
+  }
+
+  .stat-value {
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 76px 8px 12px;
+  }
+
+  .content-header h1 {
+    font-size: 20px;
+  }
+
+  td::before {
+    min-width: 92px;
+    font-size: 10px;
+  }
+
+  td {
+    padding: 9px 10px;
+    font-size: 12px;
+  }
+
+  .ticket-title {
+    font-size: 13px;
+  }
+
+  .icon-btn {
+    min-width: 44px;
+    padding: 6px 8px;
+  }
+
+  tr {
+    border-radius: 14px;
+    box-shadow: 0 8px 16px rgba(15, 23, 42, 0.09);
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-overlay {
+    padding: 10px;
+  }
+
   .modal-content {
-    width: 94%;
-    padding: 18px;
-  }
-
-  .modal-actions {
-    flex-direction: column;
-  }
-
-  .btn-submit,
-  .btn-cancel {
-    width: 100%;
+    padding: 16px;
   }
 }
 </style>

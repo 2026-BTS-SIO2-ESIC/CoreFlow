@@ -301,13 +301,8 @@ tbody tr td {
   display: flex;
   justify-content: space-between;
   margin-bottom: 40px;
-<<<<<<< HEAD
-  margin-left: 300px;
-  margin-right: 80px;
-=======
   flex-wrap: wrap;
   gap: 12px;
->>>>>>> 23434bb79fb647ecbbdf32f4f5b5d9e4611b15a5
 }
 
 .dashboard-header h1 {
@@ -340,9 +335,6 @@ tbody tr td {
   color: white;
   cursor: pointer;
 }
-<<<<<<< HEAD
-</style>
-=======
 
 .btn-logout:hover {
   background: #c82333;
@@ -414,4 +406,3 @@ svg {
   }
 }
 </style>
->>>>>>> 23434bb79fb647ecbbdf32f4f5b5d9e4611b15a5
