@@ -34,8 +34,19 @@ class DocumentService {
             day: '2-digit',
             month: 'short',
             year: 'numeric'
-        })
+        }),
+        // Gestion de l'affichage de la dernière consultation
+        derniere_consultation_affichage: doc.derniere_consultation 
+                ? 'Consulté le ' + new Date(doc.derniere_consultation).toLocaleDateString('fr-FR', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric'
+                })
+                : 'Jamais consulté'
         }));
+    }
+    async registerConsultation(id) {
+    return await documentRepository.updateLastConsultation(id);
     }
     async deleteDocument(id) {
         // Récupère le document pour obtenir le chemin du fichier

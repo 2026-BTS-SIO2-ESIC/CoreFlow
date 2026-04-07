@@ -39,6 +39,15 @@ class DocumentController {
         res.status(500).json({ message: 'Erreur interne du serveur' });
         }
     }
+    async consulterDocument(req, res) {
+        try {
+            await documentService.registerConsultation(req.params.id);
+            res.status(200).json({ message: 'Consultation enregistrée avec succès' });
+        } catch (error) {
+            console.error('Erreur lors de la consultation :', error);
+            res.status(500).json({ message: 'Erreur interne du serveur' });
+        }
+    }
 }
 
 module.exports = new DocumentController();

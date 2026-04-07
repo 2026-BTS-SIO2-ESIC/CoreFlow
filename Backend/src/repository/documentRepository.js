@@ -26,6 +26,7 @@ class DocumentRepository {
             d.taille,
             d.cible_role,
             d.created_at,
+            d.derniere_consultation,
             u.nom AS auteur_nom,
             u.prenom AS auteur_prenom,
             u.departement AS service_nom
@@ -45,7 +46,11 @@ class DocumentRepository {
         const [result] = await db.query(query, [id]); 
         return result.affectedRows; // Renvoie 1 si supprimé, 0 si non trouvé 
     }
-        
+    async updateLastConsultation(id) {
+    const sql = 'UPDATE documents SET derniere_consultation = NOW() WHERE id = ?';
+    const [result] = await db.query(sql, [id]);
+    return result.affectedRows > 0;
+    }  
 }
 
 module.exports = new DocumentRepository();

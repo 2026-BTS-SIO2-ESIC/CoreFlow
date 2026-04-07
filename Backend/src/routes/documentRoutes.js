@@ -16,5 +16,6 @@ router.post('/', upload.single('fichier'), (req, res) => documentController.crea
 router.get('/', documentController.getDocuments);
 // Route pour supprimer un document par ID
 router.delete('/:id', (req, res) => documentController.deleteDocument(req, res));
-
+// Route pour enregistrer une consultation (lorsqu'un document est téléchargé ou vu
+router.patch('/:id/consulter', (req, res) => documentController.consulterDocument(req, res));
 module.exports = router;

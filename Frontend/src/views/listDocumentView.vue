@@ -47,7 +47,8 @@
         </div>
 
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100" style="padding: 40px;">
-          <div class="overflow-x-auto">
+          <!--
+          <div class="desktop-view">
             <table class="w-full min-w-[760px]">
               <thead>
                 <tr class="border-b border-gray-200 text-left">
@@ -85,8 +86,93 @@
                 </tr>
               </tbody>
             </table>
+          </div> 
+            -->
+          <div class="desktop-view">
+            <table class="w-full min-w-[760px]">
+              <thead>
+                <tr class="border-b border-gray-200 text-left">
+                  <th class="w-[30%] text-gray-600 font-semibold font-['Mulish'] text-[14px]" style="padding-bottom: 24px;">Nom du fichier</th>
+                  <th class="w-[20%] text-gray-600 font-semibold font-['Mulish'] text-[14px]" style="padding-bottom: 24px;">Service</th>
+                  <th class="w-[10%] text-gray-600 font-semibold font-['Mulish'] text-[14px]" style="padding-bottom: 24px;">Taille</th>
+                  <th class="w-[15%] text-gray-600 font-semibold font-['Mulish'] text-[14px]" style="padding-bottom: 24px;">Date d'ajout</th>
+                  <th class="w-[15%] text-gray-600 font-semibold font-['Mulish'] text-[14px]" style="padding-bottom: 24px;">Actions</th>
+                  <th class="w-[20%] text-gray-600 font-semibold font-['Mulish'] text-[14px]" style="padding-bottom: 24px;">Dernière consultation</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="doc in processedDocuments" :key="'desktop-'+doc.id" class="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
+                  <td class="text-gray-900 font-medium font-['Mulish'] text-[14px]" style="padding-top: 24px; padding-bottom: 24px;">{{ doc.titre }}</td>
+                  <td style="padding-top: 24px; padding-bottom: 24px;">
+                    <span class="service-badge">
+                      {{ doc.service_nom || 'Général' }}
+                    </span>
+                  </td>
+                  <td class="text-gray-600 font-['Mulish'] text-[14px]" style="padding-top: 24px; padding-bottom: 24px;">{{ doc.taille_ko }} Ko</td>
+                  <td class="text-gray-600 font-['Mulish'] text-[14px]" style="padding-top: 24px; padding-bottom: 24px;">{{ doc.date_affichage }}</td>
+                  
+                  <td style="padding-top: 24px; padding-bottom: 24px;">
+                    <div class="desktop-actions">
+                      <button @click="telecharger(doc)" class="action-btn" title="Télécharger">
+                        <Download :size="18" class="text-gray-600" />
+                      </button>
+                      
+                      <button @click="voir(doc)" class="action-btn" title="Voir">
+                        <Eye :size="18" class="text-gray-600" />
+                      </button>
+                      
+                      <button @click="confirmerSuppression(doc.id)" class="action-btn action-btn-danger" title="Supprimer">
+                        <Trash2 :size="18" class="text-red-500" />
+                      </button>
+                    </div>
+                  </td>
+                  <td class="text-gray-600 font-['Mulish'] text-[14px]" style="padding-top: 24px; padding-bottom: 24px;">{{ doc.derniere_consultation_affichage }}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
 
+          <div class="mobile-view">
+            <div 
+              v-for="doc in processedDocuments" 
+              :key="'mobile-'+doc.id" 
+              class="mobile-swipe-container"
+            >
+              <div class="mobile-swipe-actions">
+                <button @click="confirmerSuppression(doc.id)" class="swipe-delete-btn">
+                  <Trash2 :size="20" />
+                  <span>Supprimer</span>
+                </button>
+              </div>
+
+              <div 
+                class="mobile-card swipeable-content"
+                :class="{ 'is-swiped': swipedDocId === doc.id }"
+                @touchstart="touchStartX = $event.touches[0].clientX"
+                @touchend="handleSwipe(doc.id, $event.changedTouches[0].clientX)"
+              >
+                <div class="mobile-card-header">
+                  <h3 class="mobile-card-title">{{ doc.titre }}</h3>
+                  <div class="mobile-card-actions">
+                    <button @click="voir(doc)" class="action-btn">
+                      <Eye :size="18" class="text-gray-600" />
+                    </button>
+                    <button @click="telecharger(doc)" class="action-btn">
+                      <Download :size="18" class="text-gray-600" />
+                    </button>
+                  </div>
+                </div>
+
+                <div class="mobile-card-meta">
+                  <span class="service-badge mobile-badge">{{ doc.service_nom || 'Général' }}</span>
+                  <span class="meta-item">• {{ doc.taille_ko }} Ko</span>
+                  <span class="meta-item" style="width: 100%;">• Ajout : {{ doc.date_affichage }}</span>
+                  <span class="meta-item" style="width: 100%;">• Consulté : {{ doc.derniere_consultation_affichage }}</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
           <div v-if="documents.length === 0" class="text-center text-gray-400 italic" style="padding-top: 64px; padding-bottom: 64px;">
             Aucun document trouvé.
           </div>
@@ -101,6 +187,9 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { Plus, Filter, Download, Eye, Trash2 } from 'lucide-vue-next';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Browser } from '@capacitor/browser';
 import DashboardSidebar from '@/components/DashboardSidebar.vue';
 
 const apiBase = import.meta.env.VITE_API_BASE;
@@ -113,6 +202,21 @@ const sortOrder = ref('desc');
 const selectedService = ref(''); // Variable pour stocker le choix du menu
 const selectedFormat = ref(''); // Stocke le choix du format
 
+// Stocke l'ID du document qu'on est en train de glisser
+const swipedDocId = ref(null);
+// Stocke la position du doigt quand il touche l'écran
+let touchStartX = 0;
+
+const handleSwipe = (id, touchEndX) => {
+  const distance = touchStartX - touchEndX;
+  if (distance > 50) {
+    // Si on a glissé le doigt de plus de 50px vers la gauche : on ouvre
+    swipedDocId.value = id;
+  } else if (distance < -50) {
+    // Si on a glissé vers la droite : on referme
+    swipedDocId.value = null;
+  }
+};
 // La liste de tes services
 const availableServices = ['Informatique', 'Commercial', 'Ressources Humaines', 'IT', 'Général'];
 
@@ -187,23 +291,96 @@ const fetchDocuments = async () => {
   }
 };
 
-const telecharger = async (doc) => {
+// --- NOUVELLE FONCTION : Enregistrer la consultation ---
+const enregistrerConsultation = async (id) => {
   try {
-    const response = await fetch(`${apiBase}/uploads/${doc.fichier_path}`);
-    const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', doc.titre);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    
-    fetchDocuments();
+    const token = localStorage.getItem('token');
+    await fetch(`${apiBase}/api/documents/${id}/consulter`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
   } catch (e) {
-    console.error("Erreur téléchargement", e);
+    console.error("Erreur lors de l'enregistrement de la consultation", e);
   }
 };
+
+// Fonction utilitaire pour convertir un Blob (Web) en Base64 (Mobile)
+const blobToBase64 = (blob) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = () => {
+      resolve(reader.result);
+    };
+    reader.readAsDataURL(blob);
+  });
+};
+// --- FONCTION MODIFIÉE : Télécharger ---
+// --- FONCTION MODIFIÉE : Télécharger (Hybride) ---
+const telecharger = async (doc) => {
+  try {
+    await enregistrerConsultation(doc.id);
+
+    // On récupère le fichier depuis le backend
+    const response = await fetch(`${apiBase}/uploads/${doc.fichier_path}`);
+    const blob = await response.blob();
+
+    if (Capacitor.isNativePlatform()) {
+      // 📱 VERSION MOBILE (Android/iOS)
+      const base64Data = await blobToBase64(blob);
+      
+      // On retire l'en-tête "data:application/pdf;base64," pour ne garder que le code brut
+      const base64String = base64Data.split(',')[1];
+
+      // On écrit le fichier dans le dossier "Documents" du téléphone
+      await Filesystem.writeFile({
+        path: doc.titre, // Nom du fichier
+        data: base64String,
+        directory: Directory.Documents 
+      });
+      
+      alert(`Le document "${doc.titre}" a été enregistré dans le dossier Documents de l'appareil.`);
+    } else {
+      // 💻 VERSION WEB (Navigateur classique)
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', doc.titre);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url); // On nettoie la mémoire
+    }
+    
+    fetchDocuments(); 
+  } catch (e) {
+    console.error("Erreur téléchargement", e);
+    alert("Une erreur est survenue lors du téléchargement.");
+  }
+};
+
+// --- FONCTION MODIFIÉE : Voir (Hybride) ---
+const voir = async (doc) => {
+  try {
+    await enregistrerConsultation(doc.id); 
+    const fileUrl = `${apiBase}/uploads/${doc.fichier_path}`;
+
+    if (Capacitor.isNativePlatform()) {
+      // 📱 VERSION MOBILE : Ouvre un vrai navigateur superposé (sans casser l'app)
+      await Browser.open({ url: fileUrl });
+    } else {
+      // 💻 VERSION WEB : Nouvel onglet classique
+      window.open(fileUrl, '_blank');   
+    }
+    
+    fetchDocuments(); 
+  } catch (e) {
+    console.error("Erreur lors de la visualisation", e);
+  }
+};
+
 
 const confirmerSuppression = (id) => {
   if (confirm("Êtes-vous sûr de vouloir supprimer ce document ?")) {
@@ -291,5 +468,171 @@ onMounted(() => {
   font-family: 'Mulish', sans-serif;
   font-size: 13px;
   font-weight: 500;
+}
+/* =========================================================
+   GESTION DU RESPONSIVE (MEDIA QUERIES)
+   ========================================================= */
+
+/* Par défaut (écrans de téléphones) : On cache le bureau, on montre le mobile */
+.desktop-view {
+  display: none;
+}
+.mobile-view {
+  display: flex;
+  flex-direction: column;
+  gap: 16px; /* Espacement entre les cartes */
+}
+
+/* Sur les écrans moyens et grands (tablettes, ordinateurs) : On inverse ! */
+@media (min-width: 768px) {
+  .desktop-view {
+    display: block;
+    overflow-x: auto;
+  }
+  .mobile-view {
+    display: none;
+  }
+}
+
+/* =========================================================
+   STYLE DES CARTES MOBILES
+   ========================================================= */
+
+.mobile-card {
+  background-color: #ffffff;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mobile-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.mobile-card-title {
+  color: #111827;
+  font-weight: 700;
+  font-family: 'Mulish', sans-serif;
+  font-size: 15px;
+  line-height: 1.2;
+  word-break: break-word;
+  margin: 0;
+}
+
+.mobile-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.mobile-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 8px;
+  color: #6B7280;
+  font-family: 'Mulish', sans-serif;
+  font-size: 13px;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Ajustement de ton badge pour qu'il soit un peu plus fin sur mobile */
+.mobile-badge {
+  font-size: 12px !important;
+  padding: 4px 12px !important;
+}
+
+/* =========================================================
+   STYLE DES BOUTONS COMMUNS (Bureau et Mobile)
+   ========================================================= */
+
+.desktop-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.action-btn {
+  padding: 8px;
+  background-color: #F9FAFB;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+}
+
+.action-btn:hover {
+  background-color: #F3F4F6;
+}
+
+.action-btn-danger:hover {
+  background-color: #FEF2F2;
+}
+/* =========================================================
+   STYLE DU SWIPE TO DELETE (Mobile)
+   ========================================================= */
+
+/* La boîte principale qui cache ce qui dépasse (overflow: hidden) */
+.mobile-swipe-container {
+  position: relative;
+  overflow: hidden; 
+  border-radius: 12px;
+  background-color: #EF4444; /* Le fond rouge */
+}
+
+/* Le bouton Supprimer collé à droite, caché SOUS la carte */
+.mobile-swipe-actions {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 100px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.swipe-delete-btn {
+  background: none;
+  border: none;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100px;
+  gap: 4px;
+  font-family: 'Mulish', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* La carte blanche qui va glisser */
+.swipeable-content {
+  position: relative;
+  z-index: 10;
+  background-color: #ffffff; /* Doit être blanc pour cacher le rouge */
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Animation fluide */
+}
+
+/* La classe CSS qui est ajoutée par le Javascript quand on glisse ! */
+.swipeable-content.is-swiped {
+  transform: translateX(-100px); /* Décale la carte de 100px vers la gauche */
 }
 </style>
