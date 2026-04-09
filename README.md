@@ -17,7 +17,67 @@ CoreFlow permet de :
 ## 👥 Équipe
 Projet réalisé dans le cadre du BTS SIO 2ème année - Épreuve E5
 
-## 📦 Installation
+## � Arborescence du projet
+```
+CoreFlow/
+├── Backend/
+│   ├── docs/
+│   │   └── evenement.md
+│   ├── src/
+│   │   ├── config/
+│   │   │   └── database.js
+│   │   ├── controllers/
+│   │   │   ├── authController.js
+│   │   │   ├── event_Controller.js
+│   │   │   └── userController.js
+│   │   ├── middlewares/
+│   │   │   ├── authMiddleware.js
+│   │   │   ├── errorMiddleware.js
+│   │   │   └── validationMiddleware.js
+│   │   ├── models/
+│   │   │   ├── event.js
+│   │   │   └── User.js
+│   │   ├── routes/
+│   │   │   ├── authRoutes.js
+│   │   │   ├── eventRoutes.js
+│   │   │   └── userRoutes.js
+│   │   └── server.js
+│   ├── middleware.md
+│   ├── package.json
+│   └── README.md
+├── database/
+│   ├── coreflow_database.sql
+│   ├── hash-password.js
+│   ├── package.json
+│   └── README.md
+├── Docs/
+│   ├── GIT_GUIDE.md
+│   └── GUIDE_D'INSTALLATION.md
+├── Frontend/
+│   ├── public/
+│   ├── src/
+│   │   ├── assets/
+│   │   ├── components/
+│   │   ├── router/
+│   │   │   └── index.js
+│   │   ├── stores/
+│   │   │   └── counter.js
+│   │   ├── views/
+│   │   │   ├── AdminUserView.vue
+│   │   │   ├── DashboardView.vue
+│   │   │   └── LoginView.vue
+│   │   ├── App.vue
+│   │   └── main.js
+│   ├── eslint.config.js
+│   ├── index.html
+│   ├── jsconfig.json
+│   ├── package.json
+│   ├── README.md
+│   └── vite.config.js
+└── README.md
+```
+
+## �📦 Installation
 Instructions à venir...
 
 ## 🌿 Branches
