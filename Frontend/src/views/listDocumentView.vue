@@ -47,47 +47,6 @@
         </div>
 
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100" style="padding: 40px;">
-          <!--
-          <div class="desktop-view">
-            <table class="w-full min-w-[760px]">
-              <thead>
-                <tr class="border-b border-gray-200 text-left">
-                  <th class="w-[40%] text-gray-600 font-semibold font-['Mulish'] text-[14px]" style="padding-bottom: 24px;">Nom du fichier</th>
-                  <th class="w-[20%] text-gray-600 font-semibold font-['Mulish'] text-[14px]" style="padding-bottom: 24px;">Service</th>
-                  <th class="w-[10%] text-gray-600 font-semibold font-['Mulish'] text-[14px]" style="padding-bottom: 24px;">Taille</th>
-                  <th class="w-[15%] text-gray-600 font-semibold font-['Mulish'] text-[14px]" style="padding-bottom: 24px;">Date d'ajout</th>
-                  <th class="w-[15%] text-gray-600 font-semibold font-['Mulish'] text-[14px]" style="padding-bottom: 24px;">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="doc in processedDocuments" :key="doc.id" class="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
-                  <td class="text-gray-900 font-medium font-['Mulish'] text-[14px]" style="padding-top: 24px; padding-bottom: 24px;">{{ doc.titre }}</td>
-                  <td style="padding-top: 24px; padding-bottom: 24px;">
-                    <span class="service-badge">
-                      {{ doc.service_nom || 'Général' }}
-                    </span>
-                  </td>
-                  <td class="text-gray-600 font-['Mulish'] text-[14px]" style="padding-top: 24px; padding-bottom: 24px;">{{ doc.taille_ko }} Ko</td>
-                  <td class="text-gray-600 font-['Mulish'] text-[14px]" style="padding-top: 24px; padding-bottom: 24px;">{{ doc.date_affichage }}</td>
-                  
-                  <td style="padding-top: 24px; padding-bottom: 24px;">
-                    <div class="flex items-center gap-2">
-                      <button @click="telecharger(doc)" class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Télécharger">
-                        <Download :size="18" class="text-gray-600" />
-                      </button>
-                      <a :href="`${apiBase}/uploads/${doc.fichier_path}`" target="_blank" class="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Voir">
-                        <Eye :size="18" class="text-gray-600" />
-                      </a>
-                      <button @click="confirmerSuppression(doc.id)" class="p-2 hover:bg-red-50 rounded-lg transition-colors" title="Supprimer">
-                        <Trash2 :size="18" class="text-red-500" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div> 
-            -->
           <div class="desktop-view">
             <table class="w-full min-w-[760px]">
               <thead>
@@ -166,8 +125,8 @@
                 <div class="mobile-card-meta">
                   <span class="service-badge mobile-badge">{{ doc.service_nom || 'Général' }}</span>
                   <span class="meta-item">• {{ doc.taille_ko }} Ko</span>
-                  <span class="meta-item" style="width: 100%;">• Ajout : {{ doc.date_affichage }}</span>
-                  <span class="meta-item" style="width: 100%;">• Consulté : {{ doc.derniere_consultation_affichage }}</span>
+                  <span class="meta-item" style="width: 100%;">• Ajouté le {{ doc.date_affichage }}</span>
+                  <span class="meta-item" style="width: 100%;">•{{ doc.derniere_consultation_affichage }}</span>
                 </div>
               </div>
 
@@ -190,6 +149,7 @@ import { Plus, Filter, Download, Eye, Trash2 } from 'lucide-vue-next';
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Browser } from '@capacitor/browser';
+import { Share } from '@capacitor/share';
 import DashboardSidebar from '@/components/DashboardSidebar.vue';
 
 const apiBase = import.meta.env.VITE_API_BASE;
@@ -197,7 +157,7 @@ const router = useRouter();
 const user = ref(null);
 const documents = ref([]);
 
-// 1. On définit la valeur par défaut sur 'desc' (Plus récent d'abord)
+// On définit la valeur par défaut sur 'desc' (Plus récent d'abord)
 const sortOrder = ref('desc');
 const selectedService = ref(''); // Variable pour stocker le choix du menu
 const selectedFormat = ref(''); // Stocke le choix du format
@@ -217,13 +177,13 @@ const handleSwipe = (id, touchEndX) => {
     swipedDocId.value = null;
   }
 };
-// La liste de tes services
+// La liste des services
 const availableServices = ['Informatique', 'Commercial', 'Ressources Humaines', 'IT', 'Général'];
 
 // La liste des formats pour le menu
 const availableFormats = ['PDF', 'Word', 'Excel', 'PowerPoint', 'Image', 'Texte', 'Autre'];
 
-// Le traducteur (caché en arrière-plan)
+// Le traducteur 
 const getFormatName = (mimeType) => {
   if (!mimeType) return 'Autre';
   
@@ -242,17 +202,17 @@ const getFormatName = (mimeType) => {
 const processedDocuments = computed(() => {
   let result = [...documents.value];
 
-  // 1. Filtre par Service
+  // Filtre par Service
   if (selectedService.value !== '') {
     result = result.filter(doc => (doc.service_nom || 'Général') === selectedService.value);
   }
 
-  // 2. Filtre par Format (Il utilise le traducteur pour vérifier !)
+  // Filtre par Format 
   if (selectedFormat.value !== '') {
     result = result.filter(doc => getFormatName(doc.type_fichier) === selectedFormat.value);
   }
 
-  // 3. Tri Chronologique
+  // Tri Chronologique
   return result.sort((a, b) => {
     let dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
     let dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
@@ -291,7 +251,7 @@ const fetchDocuments = async () => {
   }
 };
 
-// --- NOUVELLE FONCTION : Enregistrer la consultation ---
+//  Enregistrer la consultation
 const enregistrerConsultation = async (id) => {
   try {
     const token = localStorage.getItem('token');
@@ -317,33 +277,52 @@ const blobToBase64 = (blob) => {
     reader.readAsDataURL(blob);
   });
 };
-// --- FONCTION MODIFIÉE : Télécharger ---
-// --- FONCTION MODIFIÉE : Télécharger (Hybride) ---
+
+// --- FONCTION Télécharger (Hybride) ---
 const telecharger = async (doc) => {
   try {
     await enregistrerConsultation(doc.id);
 
-    // On récupère le fichier depuis le backend
+    // Récupération du fichier depuis ton serveur
     const response = await fetch(`${apiBase}/uploads/${doc.fichier_path}`);
     const blob = await response.blob();
 
     if (Capacitor.isNativePlatform()) {
-      // 📱 VERSION MOBILE (Android/iOS)
-      const base64Data = await blobToBase64(blob);
+      // VERSION MOBILE (Android/iOS)
       
-      // On retire l'en-tête "data:application/pdf;base64," pour ne garder que le code brut
-      const base64String = base64Data.split(',')[1];
+      // VÉRIFIER ET DEMANDER LES PERMISSIONS
+      let permissions = await Filesystem.checkPermissions();
+      
+      if (permissions.publicStorage !== 'granted') {
+        // La popup native "Autoriser l'application à accéder aux photos/fichiers ?" va s'ouvrir
+        permissions = await Filesystem.requestPermissions();
+      }
 
-      // On écrit le fichier dans le dossier "Documents" du téléphone
+      // Si l'utilisateur refuse la permission, on arrête tout proprement
+      if (permissions.publicStorage !== 'granted') {
+        alert("Permission refusée. Nous ne pouvons pas sauvegarder le document.");
+        return; 
+      }
+
+      // PRÉPARER LE FICHIER (Conversion + Nom propre)
+      const base64Data = await blobToBase64(blob);
+      const base64String = base64Data.split(',')[1];
+      
+      const extension = doc.fichier_path.split('.').pop();
+      const titrePropre = doc.titre.replace(/[^a-zA-Z0-9]/g, '_');
+      const nomFichierFinal = `${titrePropre}.${extension}`;
+
+      // ENREGISTRER DANS LE VRAI DOSSIER PUBLIC "DOCUMENTS"
       await Filesystem.writeFile({
-        path: doc.titre, // Nom du fichier
+        path: nomFichierFinal,
         data: base64String,
         directory: Directory.Documents 
       });
       
-      alert(`Le document "${doc.titre}" a été enregistré dans le dossier Documents de l'appareil.`);
+      alert(`Succès ! Le fichier ${nomFichierFinal} est dans vos Documents.`);
+
     } else {
-      // 💻 VERSION WEB (Navigateur classique)
+      // VERSION WEB (Navigateur classique)
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -361,17 +340,17 @@ const telecharger = async (doc) => {
   }
 };
 
-// --- FONCTION MODIFIÉE : Voir (Hybride) ---
+// --- FONCTION Voir (Hybride) ---
 const voir = async (doc) => {
   try {
     await enregistrerConsultation(doc.id); 
     const fileUrl = `${apiBase}/uploads/${doc.fichier_path}`;
 
     if (Capacitor.isNativePlatform()) {
-      // 📱 VERSION MOBILE : Ouvre un vrai navigateur superposé (sans casser l'app)
+      // VERSION MOBILE : Ouvre un vrai navigateur superposé (sans casser l'app)
       await Browser.open({ url: fileUrl });
     } else {
-      // 💻 VERSION WEB : Nouvel onglet classique
+      // VERSION WEB : Nouvel onglet classique
       window.open(fileUrl, '_blank');   
     }
     
@@ -425,7 +404,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Conserve ton layout pour centrer et gérer la sidebar ! */
+/* Conserve le layout pour centrer et gérer la sidebar  */
 .page-layout {
   min-height: 100vh;
   background-color: #F0FDFA;
@@ -448,9 +427,9 @@ onMounted(() => {
   width: 100%;
 }
 
-/* --- 1. L'espace dans les rectangles des filtres --- */
+/* L'espace dans les rectangles des filtres*/
 .filter-select {
-  padding: 10px 20px; /* C'est ici qu'on donne un bel espace intérieur */
+  padding: 10px 20px; 
   border: 1px solid #E5E7EB;
   border-radius: 8px;
   background-color: #FFFFFF;
@@ -459,19 +438,19 @@ onMounted(() => {
   font-size: 14px;
   outline: none;
 }
-/* --- 3. Les bulles des services --- */
+/*  Les bulles des services */
 .service-badge {
   padding: 6px 16px; /* Plus d'espace à l'intérieur */
-  border-radius: 9999px; /* Arrondi total en forme de pilule */
+  border-radius: 9999px; /* Arrondi */
   background-color: #F3F4F6;
   color: #4B5563;
   font-family: 'Mulish', sans-serif;
   font-size: 13px;
   font-weight: 500;
 }
-/* =========================================================
-   GESTION DU RESPONSIVE (MEDIA QUERIES)
-   ========================================================= */
+/* 
+   GESTION DU RESPONSIVE 
+*/
 
 /* Par défaut (écrans de téléphones) : On cache le bureau, on montre le mobile */
 .desktop-view {
@@ -483,7 +462,7 @@ onMounted(() => {
   gap: 16px; /* Espacement entre les cartes */
 }
 
-/* Sur les écrans moyens et grands (tablettes, ordinateurs) : On inverse ! */
+/* Sur les écrans moyens et grands (tablettes, ordinateurs) : On inverse */
 @media (min-width: 768px) {
   .desktop-view {
     display: block;
@@ -494,9 +473,9 @@ onMounted(() => {
   }
 }
 
-/* =========================================================
+/* 
    STYLE DES CARTES MOBILES
-   ========================================================= */
+*/
 
 .mobile-card {
   background-color: #ffffff;
@@ -550,15 +529,15 @@ onMounted(() => {
   gap: 4px;
 }
 
-/* Ajustement de ton badge pour qu'il soit un peu plus fin sur mobile */
+/* Ajustement du badge pour qu'il soit un peu plus fin sur mobile */
 .mobile-badge {
   font-size: 12px !important;
   padding: 4px 12px !important;
 }
 
-/* =========================================================
+/* 
    STYLE DES BOUTONS COMMUNS (Bureau et Mobile)
-   ========================================================= */
+*/
 
 .desktop-actions {
   display: flex;
@@ -585,9 +564,6 @@ onMounted(() => {
 .action-btn-danger:hover {
   background-color: #FEF2F2;
 }
-/* =========================================================
-   STYLE DU SWIPE TO DELETE (Mobile)
-   ========================================================= */
 
 /* La boîte principale qui cache ce qui dépasse (overflow: hidden) */
 .mobile-swipe-container {
