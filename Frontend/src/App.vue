@@ -15,3 +15,7 @@ body {
   font-family: Avenir, Helvetica, Arial, sans-serif;
 }
 </style>
+
+<style>
+/* On peut laisser le style vide pour l'instant, Tailwind s'occupe de tout */
+</style>

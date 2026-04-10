@@ -1,5 +1,11 @@
 // Déclare le modèle event pour accéder aux fonctions dans le modèle
-var Event = require("../models/event");
+var Event = require("../repository/eventRepository");
+const {
+  validateEvent,
+  validateUpdateEvent,
+  validateDeleteEvent,
+  validateEventList,
+} = require("../services/eventService");
 
 const logSuccess = (code, msg) => {
   console.log(
@@ -24,27 +30,37 @@ const logError = (code, errorCode, msg) => {
     msg,
   );
 };
-// Mapping des champs (nouvelle structure table evenements)
+// DB: type_evenement ENUM('reunion','formation','afterwork','seminaire','autre')
+const TYPE_EVENT_MAP = {
+  meeting: "reunion",
+  conference: "seminaire",
+  atelier: "formation",
+};
+
+// Mapping des champs (structure table evenements)
 const mapEventBody = (body) => {
+  const rawType = body.type_evenement;
+  const eventType =
+    rawType && TYPE_EVENT_MAP[rawType] ? TYPE_EVENT_MAP[rawType] : rawType;
   return {
     id: body.id,
     title: body.titre,
     description: body.description,
-    eventType: body.type_evenement,
+    eventType,
     startDate: body.date_debut,
     endDate: body.date_fin,
     location: body.lieu,
     organizerId: body.organisateur_id,
     isRequired: body.est_obligatoire,
     maxPlaces: body.nb_places_max,
-    status: body.statut,
+    status: body.statut ?? "planifie",
     level: body.niveau,
     createdAt: body.created_at,
     updatedAt: body.updated_at,
 
     statusParticipation: body.statut_participation,
     invited: body.inviter,
-    department: body.departement,
+    department: body.departement ?? body.department,
     comment: body.commentaire,
   };
 };
@@ -55,10 +71,12 @@ exports.event_list = async function (req, res) {
   // Ainsi déclare err pour afficher les erreurs rencontrées dans la DB
   const userId = req.params.user_id;
   const userRole = req.params.userRole;
+  const typeFilter = req.query.type;
 
   Event.listAll(
     userId,
     userRole,
+    typeFilter,
     (err, resultsAdmin, resultsLvlOne, resultsLvlTwo) => {
       // Vérifie si le header est bien Content-Type: application/json
       // Renvoie une erreur en cas d'une mauvaise requête vers la DB
@@ -78,9 +96,6 @@ exports.event_list = async function (req, res) {
           },
         });
       }
-      console.log("result admin", resultsAdmin);
-      console.log("result lvl two", resultsLvlTwo);
-      console.log("result lvl one", resultsLvlOne);
       if (resultsAdmin != null) {
         logSuccess(
           200,
@@ -243,7 +258,7 @@ exports.event_create = async (req, res) => {
   }
 
   // Appelle la fonction create du modèle Event, prend event comme paramètre
-  Event.create(event, event.department, (err, results) => {
+  Event.create(event, event.department || null, (err, results) => {
     if (err) {
       logError(
         500,
@@ -348,168 +363,138 @@ exports.event_update = async (req, res) => {
   });
 };
 
-// Validation des champs (create)
-const validateEvent = async (event) => {
-  const err = [];
 
-  // Vérification organisateur_id (obligatoire)
-  if (
-    event.organizerId === undefined ||
-    !Number.isInteger(Number(event.organizerId))
-  ) {
-    err.push("Champ organisateur_id est invalide ou requis");
-  }
+// Fonction qui permet de supprimer un événement, prend l'id de l'événement à supprimer depuis les paramètres de l'URL
+exports.event_delete = async (req, res) => {
+    // 1. Récupération de l'ID depuis l'URL (ex: /delete/9)
+    const eventId = req.params.id;
+    const userId = req.user.id; // Récupéré via le Middleware Auth (Token JWT)
+    const userRole = req.user.role;
+    console.log(`[REQUEST] Suppression de l'événement ID: ${eventId} par l'utilisateur ${userId} (Role: ${userRole})`);
 
-  // Vérification inviter (requis si niveau=2)
-  if (
-    event.invited !== undefined &&
-    event.invited !== null &&
-    event.invited !== ""
-  ) {
-    const { userExist, mail } = await Event.checkIfUserExist(event.invited);
-    if (!userExist) {
-      err.push("L'utilisateur " + mail + " n'existe pas");
+    // 2. Validation via ton Service (on passe un nombre pour éviter l'erreur "ID invalide")
+    const { isValid, errors } = validateDeleteEvent(Number(eventId));
+    
+    console.log("Validation du champ ID:", { eventId, isValid, errors });
+    if (!isValid) {
+        console.error("[VALIDATION_ERROR]", errors);
+        return res.status(400).json({ error: "ID invalide", details: errors });
     }
-  }
+     console.log("ID validé, vérification de l'existence de l'événement et des droits de l'utilisateur...");
+    // 3. Appel au Repository pour vérifier l'existence et obtenir le créateur
+    // On adapte le premier appel pour récupérer les données de l'événement
+    Event.delete(eventId, (err, eventInfo) => {
+      console.log("Résultat de la vérification de l'événement:", { err, eventInfo });
+        if (err) {
+            if (err.code === "EVENT_NOT_FOUND") {
+                console.error(`[NOT_FOUND] Événement ${eventId} inexistant.`);
+                return res.status(404).json({ error: "Événement introuvable" });
+            }
+            console.log("error",err)
+            return res.status(500).json({ error: "Erreur lors de la suppression", err });
+        }
+        console.log("action faite pass to confirm organizateur")
+        // --- PROTECTION DE PROPRIÉTÉ ---
+        // Seul le créateur (organisateur_id) ou un Admin peut supprimer
+        if (eventInfo.organisateur_id !== userId && userRole !== "admin") {
+            console.warn(`[FORBIDDEN] L'utilisateur ${userId} a tenté de supprimer l'événement de ${eventInfo.organisateur_id}`);
+            return res.status(403).json({ 
+                error: "Droit refusé : Vous ne pouvez supprimer que vos propres événements." 
+            });
+        }
 
-  // Vérification date_debut
-  if (!event.startDate || isNaN(Date.parse(event.startDate))) {
-    err.push(
-      "Champ date_debut est invalide, doit être une date valide (YYYY-MM-DD)",
-    );
-  } else if (!timeVerify(Date.parse(event.startDate))) {
-    err.push("La date de début ne peut pas être avant aujourd'hui");
-  }
+        // 4. Si la vérification passe, on procède à la suppression réelle
+        console.log("action faite pass to confirm dellete")
+        console.log("SUCESS")
+        console.log(`[SUCCESS] Événement ${eventId} supprimé par son créateur (${userId})`);
+        return res.status(200).json({ 
+            message: "Événement supprimé avec succès", 
+            id: eventId 
+        });
+        // Event.confirmDelete(eventId, (deleteErr) => {
+        //     if (deleteErr) {
+        //         return res.status(500).json({ error: "Erreur lors de la suppression finale" });
+        //     }
 
-  // Vérification date_fin
-  if (!event.endDate || isNaN(Date.parse(event.endDate))) {
-    err.push(
-      "Champ date_fin est invalide, doit être une date valide (YYYY-MM-DD)",
-    );
-  } else if (event.startDate && event.endDate < event.startDate) {
-    err.push("La date de fin ne peut pas être avant la date de début");
-  }
-
-  // Vérification description
-  if (
-    event.description !== undefined &&
-    typeof event.description !== "string"
-  ) {
-    err.push("Champ description doit être une chaîne de caractères");
-  }
-
-  // Vérification titre (obligatoire)
-  if (!event.title || typeof event.title !== "string") {
-    err.push("Champ titre est invalide ou requis");
-  }
-
-  // Vérification type_evenement (obligatoire)
-  if (!event.eventType || typeof event.eventType !== "string") {
-    err.push("Champ type_evenement est invalide ou requis");
-  }
-
-  // Vérification niveau (1 ou 2)
-  if (event.level !== "1" && event.level !== "2") {
-    err.push("Champ niveau est invalide, doit être 1 ou 2");
-  }
-
-  // Vérification nb_places_max si fourni
-  if (event.maxPlaces !== undefined && event.maxPlaces !== null) {
-    if (
-      !Number.isInteger(Number(event.maxPlaces)) ||
-      Number(event.maxPlaces) < 0
-    ) {
-      err.push("Champ nb_places_max doit être un entier positif");
-    }
-  }
-
-  //available status 'planifie','en_cours','termine','annule'
-  if (event.status !== undefined && event.status !== null) {
-    if (
-      event.status !== "planifie" &&
-      event.status !== "en_cours" &&
-      event.status !== "termine" &&
-      event.status !== "annule"
-    ) {
-      err.push(
-        "Champ statut est invalide, doit être planifie, en_cours, termine ou annule",
-      );
-    }
-  }
-
-  // Vérification est_obligatoire si fourni (booléen 0/1)
-  if (event.isRequired !== undefined && event.isRequired !== null) {
-    const v = Number(event.isRequired);
-    if (v !== 0 && v !== 1) {
-      err.push("Champ est_obligatoire doit être 0 ou 1");
-    }
-  }
-
-  return {
-    isValid: err.length === 0,
-    err,
-  };
+        //     // 5. Succès
+        // });
+    });
 };
 
-// Valide les champs nécessaires pour modifier l'événement
-const validateUpdateEvent = async (event) => {
-  const err = [];
-  let codeError = 400;
 
-  // Vérification id (obligatoire pour update)
-  if (event.id === undefined || !Number.isInteger(Number(event.id))) {
-    err.push("Champ id est invalide ou requis pour la mise à jour");
-  }
+// methode Get pour afficher les evenements passés, prend l'id de l'utilisateur depuis les paramètres de l'URL
+exports.past_events = async (req, res) => {
+  const userId = req.params.user_id || req.user.id;
 
-  // Vérification organisateur_id (obligatoire pour vérifier la propriété)
-  if (
-    event.organizerId === undefined ||
-    !Number.isInteger(Number(event.organizerId))
-  ) {
-    err.push(
-      "Champ organisateur_id est invalide ou requis pour la mise à jour",
-    );
-  }
+  const { isValid, err } = await validateEventList(userId);
+  if (!isValid) return res.status(400).json({ error: err });
 
-  // Vérification inviter si fourni
-  if (
-    event.invited !== undefined &&
-    event.invited !== null &&
-    event.invited !== ""
-  ) {
-    const { userExist, mail } = await Event.checkIfUserExist(event.invited);
-    if (!userExist) {
-      err.push("L'utilisateur " + mail + " n'existe pas");
-      codeError = 404;
+  Event.listPast(userId, (err, results) => {
+    if (err) {
+      console.error("[DB_ERROR]", err.message);
+      return res.status(500).json({ error: "Erreur lors de la récupération des archives" });
     }
-  }
-
-  if (event.status !== undefined && event.status !== null) {
-    if (
-      event.status !== "planifie" &&
-      event.status !== "en_cours" &&
-      event.status !== "termine" &&
-      event.status !== "annule"
-    ) {
-      err.push(
-        "Champ statut est invalide, doit être planifie, en_cours, termine ou annule",
-      );
-    }
-  }
-
-  // Vérification niveau si fourni
-  if (event.level !== undefined && event.level !== "1" && event.level !== "2") {
-    err.push("Champ niveau est invalide, doit être 1 ou 2");
-  }
-
-  return {
-    isValid: err.length === 0,
-    err,
-    codeError,
-  };
+    res.status(200).json({ success: true, count: results.length, data: results });
+  });
 };
 
-const timeVerify = (time) => {
-  const today = Date.now();
-  return time <= today;
+// methode Get pour afficher les evenements à venir, prend l'id de l'utilisateur depuis les paramètres de l'URL
+
+exports.future_events = async (req, res) => {
+  const userId = req.params.user_id || req.user.id;
+
+  const { isValid, err } = await validateEventList(userId);
+  if (!isValid) return res.status(400).json({ error: err });
+
+  Event.listFuture(userId, (err, results) => {
+    if (err) {
+      console.error("[DB_ERROR]", err.message);
+      return res.status(500).json({ error: "Erreur lors de la récupération des événements à venir" });
+    }
+    res.status(200).json({ success: true, count: results.length, data: results });
+  });
 };
+
+
+exports.event_respond = async (req, res) => {
+  const { eventId, userId, status } = req.body;
+  
+  Event.updateParticipation(eventId, userId, status, (err, results) => {
+    if (err) {
+      logError(500, "DB_ERROR", "Erreur participation: " + err.message);
+      return res.status(500).json({ error: "Erreur lors de la réponse" });
+    }
+    logSuccess(200, `Utilisateur ${userId} a répondu ${status} à l'event ${eventId}`);
+    res.status(200).json({ message: "Réponse enregistrée" });
+  });
+};
+
+// Nouvelle fonction pour récupérer les statuts de participation
+exports.get_participation_status = async (req, res) => {
+  const userId = req.params.user_id;
+  
+  Event.getParticipationStatus(userId, (err, results) => {
+    if (err) {
+      logError(500, "DB_ERROR", "Erreur lors de la récupération des statuts: " + err.message);
+      return res.status(500).json({ error: "Erreur lors de la récupération" });
+    }
+    logSuccess(200, `Statuts de participation récupérés pour l'utilisateur ${userId}`);
+    res.status(200).json({ participationStatus: results });
+  });
+};
+
+// Nouvelle fonction pour le check-in à l'événement
+exports.check_in_event = async (req, res) => {
+  const { eventId, userId } = req.body;
+  
+  Event.checkIn(eventId, userId, (err, results) => {
+    if (err) {
+      logError(500, "DB_ERROR", "Erreur lors du check-in: " + err.message);
+      return res.status(500).json({ error: "Erreur lors du check-in" });
+    }
+    logSuccess(200, `Utilisateur ${userId} a fait le check-in à l'événement ${eventId}`);
+    res.status(200).json({ message: "Check-in enregistré avec succès" });
+  });
+};
+
+// La logique de validation métier est déportée dans services/eventService.js

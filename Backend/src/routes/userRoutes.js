@@ -7,6 +7,9 @@ const { validateUserCreation, validateUserUpdate } = require('../middlewares/val
 // Toutes les routes nécessitent une authentification
 router.use(authenticate);
 
+// PUT /api/users/password - Modifier son propre mot de passe (utilisateur connecte)
+router.put('/password', userController.updatePassword);
+
 // GET /api/users - Liste tous les utilisateurs (admin, rh, manager)
 router.get('/', authorize('admin', 'rh', 'manager'), userController.getAllUsers);
 

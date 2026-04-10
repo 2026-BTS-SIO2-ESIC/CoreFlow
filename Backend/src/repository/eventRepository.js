@@ -2,14 +2,14 @@ const { db } = require("../config/database");
 
 const Event = {
   // fonction listAll qui permet de recuperer tous les evenements de la base de donnees
-  listAll: (userId, userRole, callback) => {
+  listAll: (userId, userRole, typeFilter, callback) => {
     // requette sql pour recuperer tous les evenements
     const adminsql = "SELECT * FROM evenements;"; // pour admin
 
     const sql = "SELECT * FROM evenements WHERE niveau=1";
     const eventIdsSql =
       "SELECT evenement_id FROM participations WHERE user_id=?";
-    const secondSql = "SELECT * FROM evenements WHERE niveau=2 AND id=?";
+    const secondSql = "SELECT * FROM evenements WHERE niveau=2 AND id IN (?)";
 
     if (userRole === "admin") {
       db.query(adminsql, (err, resultsAdmin) => {
@@ -31,19 +31,19 @@ const Event = {
             return callback(err, null, null, null);
           }
 
-          db.query(
-            secondSql,
-            [resultsEventIds[0].evenement_id],
-            (err, resultsLvlTwo) => {
-              if (err) {
-                console.error("DB ERROR :", err);
-                return callback(err, null, null, null);
-              }
-              console.log("resultsLvlTwo", resultsLvlTwo);
-              console.log("resultsLvlOne", resultsLvlOne);
-              return callback(null, null, resultsLvlOne, resultsLvlTwo);
-            },
-          );
+          const eventIds = (resultsEventIds || []).map((r) => r.evenement_id);
+
+          if (eventIds.length === 0) {
+            return callback(null, null, resultsLvlOne, []);
+          }
+
+          db.query(secondSql, [eventIds], (err, resultsLvlTwo) => {
+            if (err) {
+              console.error("DB ERROR :", err);
+              return callback(err, null, null, null);
+            }
+            return callback(null, null, resultsLvlOne, resultsLvlTwo || []);
+          });
         });
       });
     }
@@ -58,9 +58,9 @@ const Event = {
       // en cas d'erreur renvoi l'erreur
       if (err) {
         console.error("DB ERROR :", err);
-        return callback(err, null);
+        return callback(err, null, null, null);
       }
-      return callback(null, results);
+      return callback(null, results || []);
     });
   },
 
@@ -117,7 +117,37 @@ const Event = {
       return callback(err, null);
     }
 
-    // execute la query en lui donnant la requette (sql) et les valeurs de l'evenement comme parametre
+    // 1. Validations AVANT l'INSERT (pour ne pas insérer si erreur)
+    let idsForParticipations = [];
+    if (event.invited && String(event.invited).trim()) {
+      const { userExist, userIdsList } = await Event.checkIfUserExist(
+        event.invited,
+      );
+      if (userExist === false) {
+        const err = new Error("USER_NOT_FOUND");
+        err.code = "USER_NOT_FOUND";
+        return callback(err, null);
+      }
+      idsForParticipations = [...(userIdsList || [])];
+    }
+
+    if (department) {
+      const [deptResults] = await db
+        .promise()
+        .query(getUserIdsFromDepartment, [department]);
+      if (deptResults.length === 0) {
+        const err = new Error("USER_NOT_FOUND_FOR_DEPARTMENT");
+        err.code = "USER_NOT_FOUND_FOR_DEPARTMENT";
+        return callback(err, null);
+      }
+      idsForParticipations.push(...deptResults.map((user) => user.id));
+    }
+    // Dédupliquer : un user peut être à la fois invité ET dans le département
+    idsForParticipations = [...new Set(idsForParticipations)];
+
+    // 2. INSERT evenement (seulement si toutes les validations passent)
+    const statutValue = event.status ?? "planifie";
+
     db.query(
       sql,
       [
@@ -130,70 +160,48 @@ const Event = {
         event.organizerId,
         event.isRequired ?? null,
         event.maxPlaces ?? null,
-        event.status ?? null,
+        statutValue,
         event.createdAt,
         event.updatedAt,
         event.level,
       ],
-      async (err, results) => {
+      (err, results) => {
         if (err) {
           console.error("DB ERROR :", err);
           return callback(err, null);
         }
-        const eventId = results.insertId; // insertId est le dernier id inserer dans la table evenement
+        const eventId = results.insertId;
 
-        // recupere la liste des userIds des invites et verifie si les emails existent dans la DB
-        const { userExist, userIdsList } = await Event.checkIfUserExist(
-          event.invited,
-        );
-        // requette sql pour recuperer les ids des utilisateurs du meme departement
-        db.query(getUserIdsFromDepartment, [department], (err, results) => {
-          if (err) {
-            console.error("DB ERROR :", err);
-            return callback(err, null);
-          }
-          if (results.length === 0) {
-            const err = new Error("USER_NOT_FOUND_FOR_DEPARTMENT");
-            err.code = "USER_NOT_FOUND_FOR_DEPARTMENT";
-            return callback(err, null);
-          }
-          // si des utilisateurs existent dans ce departement, extrait leurs ids avec map et les ajoute a userIdsList
-          userIdsList.push(...results.map((user) => user.id));
+        if (idsForParticipations.length === 0) {
+          return callback(null, { eventId, participationIds: [] });
+        }
 
-          if (userExist === false) {
-            const err = new Error("USER_NOT_FOUND");
-            return callback(err, null);
-          }
-          if (userIdsList.length === 0) {
-            return callback(null, { eventId, participationIds: [] });
-          }
-          const participationIds = [];
-          let completed = 0;
-          for (const userId of userIdsList) {
-            db.query(
-              sqlParticipation,
-              [
-                eventId,
-                userId,
-                event.comment ?? null,
-                "en_attente",
-                event.createdAt,
-                event.updatedAt ?? null,
-              ],
-              (err, resultsParticipations) => {
-                if (err) {
-                  console.error("DB ERROR :", err);
-                  return callback(err, null);
-                }
-                participationIds.push(resultsParticipations.insertId);
-                completed++;
-                if (completed === userIdsList.length) {
-                  return callback(null, { eventId, participationIds });
-                }
-              },
-            );
-          }
-        });
+        const participationIds = [];
+        let completed = 0;
+        for (const userId of idsForParticipations) {
+          db.query(
+            sqlParticipation,
+            [
+              eventId,
+              userId,
+              event.comment ?? null,
+              "en_attente",
+              event.createdAt,
+              event.updatedAt ?? null,
+            ],
+            (err, resultsParticipations) => {
+              if (err) {
+                console.error("DB ERROR :", err);
+                return callback(err, null);
+              }
+              participationIds.push(resultsParticipations.insertId);
+              completed++;
+              if (completed === idsForParticipations.length) {
+                return callback(null, { eventId, participationIds });
+              }
+            },
+          );
+        }
       },
     );
   },
@@ -326,6 +334,142 @@ const Event = {
       }
     });
   },
+
+  // fonction delete qui supprime un evenement de la table evenements a partir de son id
+  delete: (eventId, callback) => {
+  db.promise()
+    .query("SELECT id, organisateur_id FROM evenements WHERE id = ?", [eventId])
+    .then(([rows]) => {
+      if (rows.length === 0) {
+        const err = new Error("EVENT_NOT_FOUND");
+        err.code = "EVENT_NOT_FOUND";
+        throw err; // ⚠️ important
+      }
+
+      return db.promise().query(
+        "DELETE FROM evenements WHERE id = ?",
+        [eventId]
+      );
+    })
+    .then(([results]) => {
+      return callback(null, {id: eventId});
+    })
+    .catch((err) => {
+      console.error("DB ERROR :", err);
+      return callback(err, null);
+    });
+  },
+
+
+  // ... tes autres fonctions ...
+
+  // Récupérer les événements passés (date_fin < maintenant)
+// Récupérer les événements passés
+listPast: (userId, callback) => {
+  const sql = `
+    SELECT DISTINCT e.* FROM evenements e 
+    LEFT JOIN participations p ON e.id = p.evenement_id 
+    WHERE (p.user_id = ? OR e.organisateur_id = ?) 
+    AND e.date_fin < NOW()
+    ORDER BY e.date_fin DESC
+  `;
+  db.query(sql, [userId, userId], callback);
+},
+
+// Récupérer les événements à venir
+listFuture: (userId, callback) => {
+  const sql = `
+    SELECT DISTINCT e.* FROM evenements e 
+    LEFT JOIN participations p ON e.id = p.evenement_id 
+    WHERE (p.user_id = ? OR e.organisateur_id = ?) 
+    AND e.date_debut > NOW()
+    ORDER BY e.date_debut ASC
+  `;
+  db.query(sql, [userId, userId], callback);
+},
+
+  updateParticipation: (eventId, userId, status, callback) => {
+  const sql = "UPDATE participations SET statut = ?, updated_at = NOW() WHERE evenement_id = ? AND user_id = ?";
+  db.query(sql, [status, eventId, userId], (err, res) => {
+    if (err) return callback(err, null);
+    if (res.affectedRows === 0) return callback({ code: "PARTICIPATION_NOT_FOUND" }, null);
+    callback(null, res);
+  });
+},
+
+getParticipationStatus: (userId, callback) => {
+  const sql = `
+    SELECT 
+      e.id as evenement_id,
+      e.titre,
+      e.date_debut,
+      e.date_fin,
+      p.statut as participation_statut
+    FROM evenements e
+    LEFT JOIN participations p ON e.id = p.evenement_id
+    WHERE p.user_id = ? OR e.organisateur_id = ?
+    ORDER BY e.date_debut DESC
+  `;
+  db.query(sql, [userId, userId], (err, results) => {
+    if (err) return callback(err, null);
+    callback(null, results || []);
+  });
+},
+
+checkIn: (eventId, userId, callback) => {
+  const sql = `
+    UPDATE participations 
+    SET statut = 'confirme', updated_at = NOW() 
+    WHERE evenement_id = ? AND user_id = ?
+  `;
+  db.query(sql, [eventId, userId], (err, res) => {
+    if (err) return callback(err, null);
+    if (res.affectedRows === 0) return callback({ code: "PARTICIPATION_NOT_FOUND" }, null);
+    callback(null, res);
+  });
+},
+
+updateStatus: (eventId, newStatus, callback) => {
+  const sql = "UPDATE evenements SET statut = ?, updated_at = NOW() WHERE id = ?";
+  db.query(sql, [newStatus, eventId], (err, res) => {
+    if (err) return callback(err, null);
+    callback(null, res);
+  });
+},
+
+checkRoomConflict: async (location, startDate, endDate, eventId = null) => {
+    try { // <--- IL MANQUAIT CELUI-LÀ
+      let sql = `
+        SELECT id FROM evenements 
+        WHERE lieu = ? 
+        AND (
+          (date_debut < ? AND date_fin > ?)
+        )
+      `;
+      const params = [location, endDate, startDate];
+      
+      // Si c'est un update, on exclut l'événement actuel
+      if (eventId) {
+        sql += " AND id != ?";
+        params.push(eventId);
+      }
+
+      const [rows] = await db.promise().query(sql, params);
+      return rows.length > 0;
+    } catch (error) { // <--- MAINTENANT LE CATCH EST VALIDE
+      console.error("Erreur SQL dans checkRoomConflict:", error);
+      throw error;
+    }
+    db.query(sql, params, (err, results) => {
+      if (err) {
+        console.error("DB ERROR :", err);
+        return callback(err, null);
+      }
+      callback(null, results.length > 0);
+    });
+
+  }, // <--- UNE SEULE ACCOLADE ICI (pour fermer la fonction)
+
 
   // fonction qui lance  une requette pour verfier si utilisateurs dans champ inviter existe deans la DB
   checkIfUserExist: async (userMail) => {
