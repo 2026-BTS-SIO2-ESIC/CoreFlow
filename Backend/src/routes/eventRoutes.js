@@ -40,6 +40,12 @@ router.get("/future/:user_id/:userRole", event_controller.future_events);
 // Point 1 : Réponse employé
 router.post("/participation/respond/:user_id", event_controller.event_respond);
 
+// Nouvelle route : Récupérer les statuts de participation
+router.get("/participation/status/:user_id", event_controller.get_participation_status);
+
+// Nouvelle route : Check-in à l'événement
+router.post("/participation/check-in", event_controller.check_in_event);
+
 // Point 2 : Changement de statut (Manager/Admin)
 router.patch("/status", authorize("admin", "manager"), (req, res) => {
   const { id, status } = req.body;

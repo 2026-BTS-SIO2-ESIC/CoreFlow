@@ -2,7 +2,7 @@
   <div class="event-section">
     <h3>{{ title }}</h3>
     <div v-if="events.length > 0" class="event-grid">
-      <DetailCardEvent 
+      <EventCard 
         v-for="event in events" 
         :key="event.id" 
         :event="event" 
@@ -13,7 +13,7 @@
 </template>
 
 <script setup>
-import DetailCardEvent from './DetailCardEvent.vue';
+import EventCard from './EventCard.vue';
 
 const props = defineProps({
   title: String,

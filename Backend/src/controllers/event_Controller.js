@@ -469,5 +469,32 @@ exports.event_respond = async (req, res) => {
   });
 };
 
+// Nouvelle fonction pour récupérer les statuts de participation
+exports.get_participation_status = async (req, res) => {
+  const userId = req.params.user_id;
+  
+  Event.getParticipationStatus(userId, (err, results) => {
+    if (err) {
+      logError(500, "DB_ERROR", "Erreur lors de la récupération des statuts: " + err.message);
+      return res.status(500).json({ error: "Erreur lors de la récupération" });
+    }
+    logSuccess(200, `Statuts de participation récupérés pour l'utilisateur ${userId}`);
+    res.status(200).json({ participationStatus: results });
+  });
+};
+
+// Nouvelle fonction pour le check-in à l'événement
+exports.check_in_event = async (req, res) => {
+  const { eventId, userId } = req.body;
+  
+  Event.checkIn(eventId, userId, (err, results) => {
+    if (err) {
+      logError(500, "DB_ERROR", "Erreur lors du check-in: " + err.message);
+      return res.status(500).json({ error: "Erreur lors du check-in" });
+    }
+    logSuccess(200, `Utilisateur ${userId} a fait le check-in à l'événement ${eventId}`);
+    res.status(200).json({ message: "Check-in enregistré avec succès" });
+  });
+};
 
 // La logique de validation métier est déportée dans services/eventService.js

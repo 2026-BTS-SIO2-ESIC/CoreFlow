@@ -397,6 +397,37 @@ listFuture: (userId, callback) => {
   });
 },
 
+getParticipationStatus: (userId, callback) => {
+  const sql = `
+    SELECT 
+      e.id as evenement_id,
+      e.titre,
+      e.date_debut,
+      e.date_fin,
+      p.statut as participation_statut
+    FROM evenements e
+    LEFT JOIN participations p ON e.id = p.evenement_id
+    WHERE p.user_id = ? OR e.organisateur_id = ?
+    ORDER BY e.date_debut DESC
+  `;
+  db.query(sql, [userId, userId], (err, results) => {
+    if (err) return callback(err, null);
+    callback(null, results || []);
+  });
+},
+
+checkIn: (eventId, userId, callback) => {
+  const sql = `
+    UPDATE participations 
+    SET statut = 'confirme', updated_at = NOW() 
+    WHERE evenement_id = ? AND user_id = ?
+  `;
+  db.query(sql, [eventId, userId], (err, res) => {
+    if (err) return callback(err, null);
+    if (res.affectedRows === 0) return callback({ code: "PARTICIPATION_NOT_FOUND" }, null);
+    callback(null, res);
+  });
+},
 
 updateStatus: (eventId, newStatus, callback) => {
   const sql = "UPDATE evenements SET statut = ?, updated_at = NOW() WHERE id = ?";

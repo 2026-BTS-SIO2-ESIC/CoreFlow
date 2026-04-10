@@ -41,21 +41,54 @@
             <p>{{ user?.departement || 'Non défini' }}</p>
           </div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card events-card">
           <span class="icon">🗓️</span>
           <div class="events-dashboard-section">
-          <CreateEventModal v-if="user && (user.role === 'admin' || user.role === 'manager')" />
-          
-            <div class="events-container">
-              <EventList title="🚀 Événements à venir" :events="upcomingEvents" />
-              <div class="spacer-v"></div>
-              <EventList title="📜 Historique" :events="pastEvents" class="past-events-style" />
+            <div class="event-header">
+              <h3>Événements</h3>
+              <button 
+                v-if="user && (user.role === 'admin' || user.role === 'manager')"
+                @click="showCreateEventModal = true"
+                class="btn-create-event"
+              >
+                ➕ Créer un événement
+              </button>
             </div>
-        </div>
-          <!-- <div class="stat-info">
-            <label>Prochain Événement</label>
-            <p>Aucun événement planifié</p>
-          </div> -->
+            
+            <CreateEventModal 
+              v-if="user && (user.role === 'admin' || user.role === 'manager')"
+              :show="showCreateEventModal"
+              :user="user"
+              @close="showCreateEventModal = false"
+              @submit="onEventCreated"
+            />
+            
+            <!-- Onglets d'événements -->
+            <div class="events-tabs">
+              <button 
+                v-for="tab in ['upcoming', 'late', 'finished']" 
+                :key="tab"
+                class="tab-button"
+                :class="{ active: activeEventTab === tab }"
+                @click="activeEventTab = tab"
+              >
+                {{ tabLabels[tab] }}
+              </button>
+            </div>
+
+            <!-- Contenu des onglets -->
+            <div class="events-container">
+              <div v-if="activeEventTab === 'upcoming'" class="tab-content">
+                <EventList title="À venir" :events="upcomingEvents" />
+              </div>
+              <div v-if="activeEventTab === 'late'" class="tab-content">
+                <EventList title="Passés" :events="lateEvents" />
+              </div>
+              <div v-if="activeEventTab === 'finished'" class="tab-content">
+                <EventList title="Terminés" :events="finishedEvents" />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -133,7 +166,6 @@ import DashboardSidebar from '../components/DashboardSidebar.vue'
 
 const API_URL = 'http://localhost:3000'
 
-import axios from 'axios';
 import CreateEventModal from '@/components/CreateEventModal.vue';
 import EventList from '@/components/EventList.vue';
 
@@ -151,7 +183,16 @@ export default {
       error: null,
 
       upcomingEvents: [],
-      pastEvents: [],
+      lateEvents: [],
+      finishedEvents: [],
+      activeEventTab: 'upcoming',
+      showCreateEventModal: false,
+
+      tabLabels: {
+        upcoming: 'À venir',
+        late: 'Passés',
+        finished: 'Terminés'
+      },
 
       // Modal mot de passe
       showPasswordModal: false,
@@ -159,6 +200,9 @@ export default {
       modalError: null,
       modalSuccess: null,
       passwordForm: { oldPass: '', newPass: '', confirmPass: '' },
+      
+      // Auto-refresh
+      refreshInterval: null,
     }
   },
 
@@ -197,6 +241,14 @@ export default {
       const data = await response.json()
       this.user = data.data
       localStorage.setItem('user', JSON.stringify(data.data))
+      
+      // Charger les événements après avoir récupéré l'utilisateur
+      await this.fetchEvents()
+      
+      // Actualiser les événements toutes les 30 secondes
+      this.refreshInterval = setInterval(() => {
+        this.fetchEvents()
+      }, 30000)
     } catch (err) {
       this.error = 'Impossible de contacter le serveur.'
       const userStr = localStorage.getItem('user')
@@ -206,16 +258,113 @@ export default {
     }
   },
 
+  // ── Nettoyage avant destruction ──────────────────────
+  beforeUnmount() {
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval)
+    }
+  },
+
   // ── Actions ──────────────────────────────────────────
   methods: {
     async fetchEvents() {
+      if (!this.user) return;
+
       try {
-        const response = await axios.get('http://localhost:3000/api/event/all');
+        const token = localStorage.getItem('token');
+        
+        // Récupérer les événements
+        const response = await fetch(
+          `${API_URL}/api/event/list/participation/${this.user.id}/${this.user.role}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        if (!response.ok) {
+          console.error('Erreur lors de la récupération des événements');
+          return;
+        }
+
+        const data = await response.json();
+        
+        // Récupérer tous les événements (admin, niveau 1 et niveau 2)
+        let allEvents = [
+          ...(data.eventAdmin || []),
+          ...(data.eventLevelOne || []),
+          ...(data.eventLevelTwo || []),
+        ];
+
+        // Récupérer les statuts de participation
+        const participationResponse = await fetch(
+          `${API_URL}/api/event/participation/status/${this.user.id}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        let participationMap = {};
+        if (participationResponse.ok) {
+          const participationData = await participationResponse.json();
+          if (participationData.participationStatus) {
+            participationData.participationStatus.forEach(p => {
+              participationMap[p.evenement_id] = p.participation_statut;
+            });
+          }
+        }
+
+        // Ajouter le statut de participation aux événements
+        allEvents = allEvents.map(event => ({
+          ...event,
+          statut_participation: participationMap[event.id] || null
+        }));
+
+        // Obtenir la date actuelle et l'heure actuelle
         const now = new Date();
-        this.upcomingEvents = response.data.filter(e => new Date(e.startDate) >= now);
-        this.pastEvents = response.data.filter(e => new Date(e.startDate) < now);
+
+        // Catégoriser les événements
+        this.upcomingEvents = [];
+        this.lateEvents = [];
+        this.finishedEvents = [];
+
+        allEvents.forEach((event) => {
+          const startDate = new Date(event.date_debut);
+          const endDate = new Date(event.date_fin);
+          
+          // Vérifier si l'utilisateur a confirmé sa présence
+          const userConfirmedPresence = event.statut_participation === 'confirme';
+          
+          // Vérifier le statut et les dates + participation
+          if (endDate < now || event.statut === 'termine' || event.statut === 'annule') {
+            // Si l'événement est terminé/passé
+            if (userConfirmedPresence) {
+              // Utilisateur a confirmé sa présence → Terminés
+              this.finishedEvents.push(event);
+            } else {
+              // Utilisateur absent ou n'a pas confirmé → Passés
+              this.lateEvents.push(event);
+            }
+          } else if (startDate < now || (event.statut === 'en_cours')) {
+            // Événement en cours mais pas encore fini
+            this.lateEvents.push(event);
+          } else {
+            // À venir
+            this.upcomingEvents.push(event);
+          }
+        });
+
+        // Trier chaque catégorie du plus ancien au plus récent
+        this.upcomingEvents.sort((a, b) => 
+          new Date(a.date_debut) - new Date(b.date_debut)
+        );
+        this.lateEvents.sort((a, b) => 
+          new Date(a.date_debut) - new Date(b.date_debut)
+        );
+        this.finishedEvents.sort((a, b) => 
+          new Date(a.date_debut) - new Date(b.date_debut)
+        );
       } catch (error) {
-        console.error("Erreur API:", error);
+        console.error('Erreur API:', error);
       }
     },
     logout() {
@@ -231,6 +380,10 @@ export default {
       } catch (err) {
         console.error('Error navigating to event panel:', err)
       }
+    },
+    onEventCreated() {
+      // Rafraîchir les événements après création
+      this.fetchEvents()
     },
     openPasswordModal() {
       this.modalError = null
@@ -635,5 +788,90 @@ export default {
 .btn-save:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+
+/* ── Onglets événements ────────────────────────────── */
+.events-card {
+  grid-column: 1 / -1;
+}
+
+.event-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.event-header h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.btn-create-event {
+  padding: 6px 14px;
+  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn-create-event:hover {
+  opacity: 0.88;
+}
+
+.events-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  margin-top: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 12px;
+}
+
+.tab-button {
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.tab-button:hover {
+  color: #111827;
+}
+
+.tab-button.active {
+  color: #14b8a6;
+  border-bottom-color: #14b8a6;
+}
+
+.tab-content {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.events-container {
+  margin-top: 12px;
 }
 </style>
