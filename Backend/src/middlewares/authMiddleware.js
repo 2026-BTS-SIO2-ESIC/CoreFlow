@@ -42,7 +42,10 @@ exports.authenticate = async (req, res, next) => {
     }
 
     // Attacher l'utilisateur à la requête pour les routes suivantes
-    req.user = user;
+    req.user = {
+      ...user,
+      userId: user.id
+    };
 
     // Passer au middleware/controller suivant
     next();

@@ -54,7 +54,7 @@ INSERT INTO `utilisateurs` (`id`, `email`, `password`, `nom`, `prenom`, `role`, 
 (1, 'admin@coreflow.fr',   '$2b$10$QJd3Cz3FnyoHsArcDyBLY.L0XATHRJMIrwNXGVAwznO3tf3fa5XSK', 'Admin',  'CoreFlow', 'admin',   'Informatique',       'Administrateur Système', '01 23 45 67 89', '2024-01-01', 1),
 (2, 'rh@coreflow.fr',      '$2b$10$RCMVhX6SDQwErhXJ/BcqJ.Qx/XKl5hbYJ1ngIkaPL4hnVIHOhixqG', 'Martin', 'Marie',    'rh',      'Ressources Humaines', 'Responsable RH',         '01 23 45 67 90', '2024-02-01', 1),
 (3, 'manager@coreflow.fr', '$2b$10$BMQGxHBEiVSVJJ3riMQy2.Iu8eo/zIZud1q8/C9u6LtYXxPokOvMO', 'Dubois', 'Pierre',   'manager', 'IT',                  'Manager IT',             '01 23 45 67 91', '2024-03-01', 1),
-(4, 'employe@coreflow.fr', '$2b$10$9ko/UeodRICYNalR9XEJou9E1dO2vNYb9iwkZ0Wk7codBjYCCsGQem', 'Durand', 'Sophie',   'employe', 'Commercial',          'Commerciale',            '01 23 45 67 92', '2024-04-01', 1);
+(4, 'employe@coreflow.fr', '$2b$10$9ko/UeodRICYNalR9XEJou9E1dO2vNYb9iwkZ0Wk7codBjYCCsGQem', 'Jean', 'Tranzit',   'employe', 'Commercial',          'Commerciale',            '01 23 45 67 92', '2024-04-01', 1)
 
 -- ------------------------------------------------------------
 -- Table : tickets

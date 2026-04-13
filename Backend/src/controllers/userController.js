@@ -215,8 +215,15 @@ exports.getInactiveUsers = async (req, res) => {
 
 // PUT /api/users/password - Modifier son propre mot de passe
 exports.updatePassword = async (req, res) => {
-  const userId = req.user.userId;
+  const userId = req.user?.id;
   const { oldPass, newPass } = req.body;
+
+  if (!userId) {
+    return res.status(401).json({
+      success: false,
+      message: 'Authentification requise.'
+    });
+  }
 
   if (!oldPass || !newPass) {
     return res.status(400).json({

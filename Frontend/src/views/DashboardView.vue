@@ -104,17 +104,44 @@
 
         <div class="form-group">
           <label>Mot de passe actuel</label>
-          <input type="password" v-model="passwordForm.oldPass" placeholder="••••••••" />
+          <div class="password-input-wrapper">
+            <input
+              :type="showPassword ? 'text' : 'password'"
+              v-model="passwordForm.oldPass"
+              placeholder="••••••••"
+            />
+            <button type="button" class="toggle-password" @click="showPassword = !showPassword">
+              {{ showPassword ? '🙈' : '👁️' }}
+            </button>
+          </div>
         </div>
 
         <div class="form-group">
           <label>Nouveau mot de passe</label>
-          <input type="password" v-model="passwordForm.newPass" placeholder="••••••••" />
+          <div class="password-input-wrapper">
+            <input
+              :type="showPassword ? 'text' : 'password'"
+              v-model="passwordForm.newPass"
+              placeholder="••••••••"
+            />
+            <button type="button" class="toggle-password" @click="showPassword = !showPassword">
+              {{ showPassword ? '🙈' : '👁️' }}
+            </button>
+          </div>
         </div>
 
         <div class="form-group">
           <label>Confirmer le nouveau mot de passe</label>
-          <input type="password" v-model="passwordForm.confirmPass" placeholder="••••••••" />
+          <div class="password-input-wrapper">
+            <input
+              :type="showPassword ? 'text' : 'password'"
+              v-model="passwordForm.confirmPass"
+              placeholder="••••••••"
+            />
+            <button type="button" class="toggle-password" @click="showPassword = !showPassword">
+              {{ showPassword ? '🙈' : '👁️' }}
+            </button>
+          </div>
         </div>
 
         <div class="modal-actions">
@@ -155,6 +182,7 @@ export default {
 
       // Modal mot de passe
       showPasswordModal: false,
+      showPassword: false,
       modalLoading: false,
       modalError: null,
       modalSuccess: null,
@@ -235,12 +263,14 @@ export default {
     openPasswordModal() {
       this.modalError = null
       this.modalSuccess = null
+      this.showPassword = false
       this.passwordForm = { oldPass: '', newPass: '', confirmPass: '' }
       this.showPasswordModal = true
     },
 
     closePasswordModal() {
       if (this.modalLoading) return
+      this.showPassword = false
       this.showPasswordModal = false
     },
 
@@ -580,9 +610,13 @@ export default {
   color: #374151;
   margin-bottom: 6px;
 }
+.password-input-wrapper {
+  position: relative;
+}
 .form-group input {
   width: 100%;
   padding: 10px 12px;
+  padding-right: 42px;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   font-size: 14px;
@@ -635,6 +669,25 @@ export default {
 .btn-save:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggle-password:hover {
+  opacity: 0.7;
 }
 
 @media (max-width: 1024px) {
