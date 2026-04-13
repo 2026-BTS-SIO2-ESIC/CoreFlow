@@ -232,6 +232,8 @@
 
 <script>
 import DashboardSidebar from '../components/DashboardSidebar.vue';
+import CreateEventModal from '@/components/CreateEventModal.vue';
+import EventList from '@/components/EventList.vue';
 import QRCode from 'qrcode';
 
 const API_URL = import.meta.env.VITE_API_BASE || 'http://localhost:3000';
@@ -239,7 +241,9 @@ const API_URL = import.meta.env.VITE_API_BASE || 'http://localhost:3000';
 export default {
   name: 'DashboardView',
   components: {
-    DashboardSidebar,CreateEventModal, EventList
+    DashboardSidebar,
+    CreateEventModal,
+    EventList,
   },
 
   // ── Données réactives ────────────────────────────────

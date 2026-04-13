@@ -79,7 +79,7 @@
 </template>
 
 <script setup>
-const apiBase = import.meta.env.VITE_API_BASE;
+const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:3000';
 
 const router = useRouter();
 const user = ref(null);

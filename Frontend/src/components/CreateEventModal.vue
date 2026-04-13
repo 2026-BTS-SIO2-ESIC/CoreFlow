@@ -450,7 +450,7 @@ export default {
       this.userSearchLoading = true
       this.userSearchResults = []
       try {
-        const res = await fetch('${import.meta.env.VITE_API_BASE}/api/event/user_list_by_email', {
+        const res = await fetch(`${import.meta.env.VITE_API_BASE}/api/event/user_list_by_email`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

@@ -188,6 +188,7 @@ const envoyerDocument = async () => {
 
   isLoading.value = true;
   message.value = '';
+  const token = localStorage.getItem('token');
 
   const formData = new FormData();
   formData.append('titre', titre.value);
@@ -197,8 +198,9 @@ const envoyerDocument = async () => {
   formData.append('fichier', fichierSelectionne.value); 
 
   try {
-    const response = await fetch('${import.meta.env.VITE_API_BASE}/api/documents', {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE}/api/documents`, {
       method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
       body: formData
     });
 
