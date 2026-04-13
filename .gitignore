@@ -2,12 +2,17 @@
 # Dependencies
 node_modules/
 frontend/node_modules/
+Frontend/node_modules/
 Backend/node_modules/
 
 # Environment variables
 .env
 .env.local
 .env.*.local
+Frontend/.env
+Frontend/.env.*
+Backend/.env
+Backend/.env.*
 
 # IDE
 .vscode/
@@ -25,6 +30,16 @@ logs/
 dist/
 build/
 .cache/
+Frontend/dist/
+Frontend/android/.gradle/
+Frontend/android/build/
+Frontend/android/app/build/
+Frontend/android/local.properties
+Frontend/android/capacitor-cordova-android-plugins/build/
+
+# Runtime uploads
+Backend/uploads/*
+!Backend/uploads/.gitkeep
 
 # Temporary
 *.tmp
