@@ -3,7 +3,8 @@
  * Utilise GET /api/auth/me pour obtenir l'utilisateur vérifié côté serveur.
  */
 
-export const API_URL = `${import.meta.env.VITE_API_BASE}/api`
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3000'
+export const API_URL = `${API_BASE}/api`
 
 /**
  * Récupère l'utilisateur vérifié à partir du token (via API)

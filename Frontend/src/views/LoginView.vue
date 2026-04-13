@@ -105,6 +105,8 @@
 </template>
 
 <script>
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3000'
+
 export default {
   name: 'LoginView',
   data() {
@@ -122,7 +124,7 @@ export default {
       this.error = null
 
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_BASE}/api/auth/login`, {
+        const response = await fetch(`${API_BASE}/api/auth/login`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -133,10 +135,24 @@ export default {
           }),
         })
 
-        const data = await response.json()
+        const rawBody = await response.text()
+        let data = null
+        if (rawBody) {
+          try {
+            data = JSON.parse(rawBody)
+          } catch {
+            this.error = 'Réponse serveur invalide. Vérifiez l\'URL API et le backend.'
+            return
+          }
+        }
 
-        if (!data.success) {
-          this.error = data.message
+        if (!response.ok) {
+          this.error = data?.message || `Erreur ${response.status} lors de la connexion.`
+          return
+        }
+
+        if (!data?.success || !data?.data?.token || !data?.data?.user) {
+          this.error = data?.message || 'Réponse de connexion incomplète.'
           return
         }
 
