@@ -75,9 +75,11 @@
               <p><strong>Mail :</strong> {{ user?.email || '—' }}</p>
               <p><strong>Service :</strong> {{ user?.departement || '—' }}</p>
               <p><strong>Rôle :</strong> {{ user?.role || '—' }}</p>
+              <p><strong>A2F :</strong> {{ user?.twofa_enabled ? 'Activée' : 'Désactivée' }}</p>
             </div>
-            <button @click="openPasswordModal" class="btn-password">
-              Modifier mon mot de passe
+            <button @click="openPasswordModal" class="btn-password">Modifier mon mot de passe</button>
+            <button @click="openTwofaModal" class="btn-password btn-twofa">
+              {{ user?.twofa_enabled ? 'Gérer mon A2F TOTP' : 'Activer mon A2F TOTP' }}
             </button>
           </div>
 
@@ -152,17 +154,87 @@
         </div>
       </div>
     </div>
+
+    <!-- MODAL A2F TOTP -->
+    <div v-if="showTwofaModal" class="modal-overlay" @click.self="closeTwofaModal">
+      <div class="modal-card twofa-modal-card">
+        <div class="modal-header">
+          <h3>🔐 A2F TOTP</h3>
+          <button class="modal-close" @click="closeTwofaModal">✕</button>
+        </div>
+
+        <div v-if="twofaError" class="modal-error">{{ twofaError }}</div>
+        <div v-if="twofaSuccess" class="modal-success">{{ twofaSuccess }}</div>
+
+        <template v-if="twofaModalMode === 'setup'">
+          <p class="twofa-help">
+            Scannez le QR code avec Google Authenticator, Authy ou Microsoft Authenticator, puis
+            saisissez le code à 6 chiffres pour activer l'A2F.
+          </p>
+
+          <div v-if="twofaLoading && !twofaSecret" class="twofa-loading">Génération de la clé…</div>
+
+          <div v-else>
+            <div v-if="twofaQrDataUrl" class="twofa-qr-box">
+              <img :src="twofaQrDataUrl" alt="QR code A2F" class="twofa-qr" />
+            </div>
+
+            <div class="twofa-secret-box">
+              <span class="twofa-secret-label">Clé secrète</span>
+              <code class="twofa-secret">{{ twofaSecret }}</code>
+            </div>
+
+            <div class="form-group">
+              <label>Code TOTP</label>
+              <input
+                v-model="twofaCode"
+                type="text"
+                inputmode="numeric"
+                autocomplete="one-time-code"
+                maxlength="6"
+                placeholder="123456"
+              />
+            </div>
+          </div>
+        </template>
+
+        <template v-else>
+          <p class="twofa-help">
+            Votre A2F est active. Si vous la désactivez, vous pourrez vous reconnecter sans code
+            TOTP jusqu'à une nouvelle activation.
+          </p>
+        </template>
+
+        <div class="modal-actions">
+          <button @click="closeTwofaModal" class="btn-cancel">Annuler</button>
+          <button
+            v-if="twofaModalMode === 'setup'"
+            @click="confirmTwofaSetup"
+            class="btn-save"
+            :disabled="twofaLoading"
+          >
+            {{ twofaLoading ? 'Activation...' : 'Activer' }}
+          </button>
+          <button
+            v-else
+            @click="disableTwofa"
+            class="btn-save"
+            :disabled="twofaLoading"
+          >
+            {{ twofaLoading ? 'Désactivation...' : 'Désactiver' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
 <script>
-import DashboardSidebar from '../components/DashboardSidebar.vue'
+import DashboardSidebar from '../components/DashboardSidebar.vue';
+import QRCode from 'qrcode';
 
-const API_URL = `${import.meta.env.VITE_API_BASE}`
-
-import axios from 'axios';
-import CreateEventModal from '@/components/CreateEventModal.vue';
-import EventList from '@/components/EventList.vue';
+const API_URL = import.meta.env.VITE_API_BASE || 'http://localhost:3000';
 
 export default {
   name: 'DashboardView',
@@ -187,6 +259,16 @@ export default {
       modalError: null,
       modalSuccess: null,
       passwordForm: { oldPass: '', newPass: '', confirmPass: '' },
+
+      // Modal A2F
+      showTwofaModal: false,
+      twofaModalMode: 'setup',
+      twofaLoading: false,
+      twofaError: null,
+      twofaSuccess: null,
+      twofaSecret: '',
+      twofaQrDataUrl: '',
+      twofaCode: '',
     }
   },
 
@@ -320,7 +402,140 @@ export default {
         this.modalLoading = false
       }
     },
-  },
+
+    async openTwofaModal() {
+      this.twofaError = null;
+      this.twofaSuccess = null;
+      this.twofaCode = '';
+      this.twofaSecret = '';
+      this.twofaQrDataUrl = '';
+      this.twofaModalMode = this.user?.twofa_enabled ? 'disable' : 'setup';
+      this.showTwofaModal = true;
+
+      if (this.twofaModalMode === 'setup') {
+        await this.prepareTwofaSetup();
+      }
+    },
+
+    closeTwofaModal() {
+      if (this.twofaLoading) {
+        return;
+      }
+
+      this.showTwofaModal = false;
+      this.twofaError = null;
+      this.twofaSuccess = null;
+      this.twofaCode = '';
+      this.twofaSecret = '';
+      this.twofaQrDataUrl = '';
+    },
+
+    async prepareTwofaSetup() {
+      const token = localStorage.getItem('token');
+      this.twofaLoading = true;
+
+      try {
+        const response = await fetch(`${API_URL}/api/auth/2fa/setup`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          this.twofaError = data.message || "Impossible de préparer l'A2F.";
+          return;
+        }
+
+        this.twofaSecret = data.data.secret;
+        this.twofaQrDataUrl = await QRCode.toDataURL(data.data.otpauthUrl, {
+          width: 220,
+          margin: 1,
+        });
+      } catch (error) {
+        console.error('Erreur préparation A2F:', error);
+        this.twofaError = 'Impossible de générer la configuration A2F.';
+      } finally {
+        this.twofaLoading = false;
+      }
+    },
+
+    async confirmTwofaSetup() {
+      if (!this.twofaCode) {
+        this.twofaError = 'Veuillez saisir le code TOTP.';
+        return;
+      }
+
+      const token = localStorage.getItem('token');
+      this.twofaLoading = true;
+      this.twofaError = null;
+
+      try {
+        const response = await fetch(`${API_URL}/api/auth/2fa/confirm`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            code: this.twofaCode,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          this.twofaError = data.message || 'Code TOTP invalide.';
+          return;
+        }
+
+        this.user = data.data.user;
+        localStorage.setItem('user', JSON.stringify(data.data.user));
+        this.twofaSuccess = 'A2F activée avec succès.';
+        this.showTwofaModal = false;
+      } catch (error) {
+        console.error('Erreur confirmation A2F:', error);
+        this.twofaError = 'Impossible de valider le code TOTP.';
+      } finally {
+        this.twofaLoading = false;
+      }
+    },
+
+    async disableTwofa() {
+      const token = localStorage.getItem('token');
+      this.twofaLoading = true;
+      this.twofaError = null;
+
+      try {
+        const response = await fetch(`${API_URL}/api/auth/2fa/disable`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          this.twofaError = data.message || "Impossible de désactiver l'A2F.";
+          return;
+        }
+
+        this.user = data.data.user;
+        localStorage.setItem('user', JSON.stringify(data.data.user));
+        this.twofaSuccess = 'A2F désactivée.';
+        this.showTwofaModal = false;
+      } catch (error) {
+        console.error('Erreur désactivation A2F:', error);
+        this.twofaError = "Impossible de désactiver l'A2F.";
+      } finally {
+        this.twofaLoading = false;
+      }
+    }
+  }
 }
 </script>
 
@@ -531,10 +746,11 @@ export default {
     opacity 0.2s ease,
     transform 0.15s ease;
 }
-.btn-password:hover {
-  opacity: 0.88;
-  transform: translateY(-1px);
-}
+.btn-password:hover { opacity: 0.88; transform: translateY(-1px); }
+
+.btn-twofa { margin-top: 10px; }
+
+.btn-twofa { margin-top: 10px; }
 
 /* ── Modal ──────────────────────────────────────────── */
 .modal-overlay {
@@ -630,110 +846,19 @@ export default {
   box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.12);
 }
 
-.modal-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 24px;
-}
-.btn-cancel {
-  flex: 1;
-  padding: 10px;
-  background: #f9fafb;
-  color: #6b7280;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: 0.2s;
-}
-.btn-cancel:hover {
-  background: #f3f4f6;
-}
-.btn-save {
-  flex: 1;
-  padding: 10px;
-  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-  transition: opacity 0.2s;
-}
-.btn-save:hover:not(:disabled) {
-  opacity: 0.88;
-}
-.btn-save:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
+.modal-actions { display: flex; gap: 10px; margin-top: 24px; }
+.btn-cancel { flex: 1; padding: 10px; background: #f9fafb; color: #6b7280; border: 1px solid #e5e7eb; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; }
+.btn-cancel:hover { background: #f3f4f6; }
+.btn-save { flex: 1; padding: 10px; background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; transition: opacity 0.2s; }
+.btn-save:hover:not(:disabled) { opacity: 0.88; }
+.btn-save:disabled { opacity: 0.55; cursor: not-allowed; }
 
-.toggle-password {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 18px;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.toggle-password:hover {
-  opacity: 0.7;
-}
-
-@media (max-width: 1024px) {
-  .main-content {
-    margin-left: 0;
-    padding: 20px;
-  }
-
-  .header-content {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .dashboard-core {
-    grid-template-columns: 1fr;
-  }
-
-  .modal-card {
-    width: min(520px, 94vw);
-    padding: 22px;
-  }
-}
-
-@media (max-width: 640px) {
-  .main-content {
-    padding: 14px;
-  }
-
-  .dashboard-header,
-  .actions-panel,
-  .profile-security-card,
-  .company-life {
-    padding: 16px;
-  }
-
-  .header-left h1 {
-    font-size: 20px;
-  }
-
-  .modal-actions {
-    flex-direction: column;
-  }
-}
+.twofa-modal-card { width: 520px; }
+.twofa-help { margin: 0 0 16px; color: #4b5563; font-size: 14px; line-height: 1.5; }
+.twofa-loading { padding: 24px 0; text-align: center; color: #6b7280; }
+.twofa-qr-box { display: flex; justify-content: center; margin: 10px 0 18px; }
+.twofa-qr { width: 220px; height: 220px; border-radius: 16px; background: #fff; padding: 10px; border: 1px solid #e5e7eb; }
+.twofa-secret-box { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
+.twofa-secret-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.6px; color: #6b7280; font-weight: 700; }
+.twofa-secret { display: block; padding: 12px 14px; border-radius: 10px; background: #f8fafc; border: 1px solid #e5e7eb; color: #111827; word-break: break-all; }
 </style>

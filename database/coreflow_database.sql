@@ -38,6 +38,8 @@ CREATE TABLE `utilisateurs` (
   `telephone`    VARCHAR(20)    DEFAULT NULL,
   `date_embauche` DATE          DEFAULT NULL,
   `est_actif`    TINYINT(1)     DEFAULT '1',
+  `twofa_enabled` TINYINT(1)    DEFAULT '0',
+  `totp_secret`   VARCHAR(255)  DEFAULT NULL,
   `created_at`   TIMESTAMP      DEFAULT CURRENT_TIMESTAMP,
   `updated_at`   TIMESTAMP      DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),

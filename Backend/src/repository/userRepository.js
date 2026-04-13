@@ -1,7 +1,7 @@
 const { pool } = require('../config/database');
 const bcrypt = require('bcrypt');
 
-const USER_SELECT_FIELDS = 'id, email, nom, prenom, role, departement, poste, telephone, date_embauche, est_actif, created_at, updated_at';
+const USER_SELECT_FIELDS = 'id, email, nom, prenom, role, departement, poste, telephone, date_embauche, est_actif, twofa_enabled, created_at, updated_at';
 
 async function getAllUsers(filters = {}) {
 	const { role, departement, search, actif } = filters;
@@ -63,6 +63,27 @@ async function findPasswordById(id) {
 async function updatePasswordById(id, newPassword) {
 	const hashedPassword = await bcrypt.hash(newPassword, 10);
 	await pool.query('UPDATE utilisateurs SET password = ? WHERE id = ?', [hashedPassword, id]);
+}
+
+async function updateTwoFactorSecret(id, secret) {
+	await pool.query(
+		'UPDATE utilisateurs SET totp_secret = ?, twofa_enabled = 0 WHERE id = ?',
+		[secret, id]
+	);
+}
+
+async function enableTwoFactor(id) {
+	await pool.query(
+		'UPDATE utilisateurs SET twofa_enabled = 1 WHERE id = ?',
+		[id]
+	);
+}
+
+async function disableTwoFactor(id) {
+	await pool.query(
+		'UPDATE utilisateurs SET totp_secret = NULL, twofa_enabled = 0 WHERE id = ?',
+		[id]
+	);
 }
 
 async function createUser(userData) {
@@ -196,6 +217,9 @@ module.exports = {
 	findByEmailExcludingId,
 	findPasswordById,
 	updatePasswordById,
+	updateTwoFactorSecret,
+	enableTwoFactor,
+	disableTwoFactor,
 	createUser,
 	updateUser,
 	toggleUserStatus,

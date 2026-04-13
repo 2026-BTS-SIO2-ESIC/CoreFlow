@@ -18,6 +18,10 @@
             {{ error }}
           </div>
 
+          <div v-if="requiresTwofa" class="twofa-notice">
+            Code d'authentification requis pour finaliser la connexion.
+          </div>
+
           <div class="form-group">
             <label for="email">Adresse email</label>
             <input
@@ -45,20 +49,32 @@
             </div>
           </div>
 
-          <!-- //Code de double authentification seuelemnt pour les rôles sensible (2FA) - optionnel pour l'instant -->
-          <div class="doubleAuth">
-            <label for="doubleAuth">Code de double authentification</label>
+          <div v-if="requiresTwofa" class="form-group">
+            <label for="twofaCode">Code TOTP</label>
             <input
-              id="doubleAuth"
-              v-model="doubleAuth"
+              id="twofaCode"
+              v-model="twofaCode"
               type="text"
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              maxlength="6"
               placeholder="123456"
               required
             />
           </div>
 
           <button type="submit" class="btn-login" :disabled="loading">
-            {{ loading ? 'Connexion...' : 'Se connecter' }}
+            {{ loading ? 'Connexion...' : requiresTwofa ? 'Vérifier le code' : 'Se connecter' }}
+          </button>
+
+          <button
+            v-if="requiresTwofa"
+            type="button"
+            class="btn-login btn-secondary"
+            :disabled="loading"
+            @click="cancelTwoFactor"
+          >
+            Retour
           </button>
         </form>
         <div class="dev-info">
@@ -105,12 +121,17 @@
 </template>
 
 <script>
+const API_URL = import.meta.env.VITE_API_BASE || 'http://localhost:3000'
+
 export default {
   name: 'LoginView',
   data() {
     return {
       email: '',
       password: '',
+      twofaCode: '',
+      requiresTwofa: false,
+      pendingToken: '',
       showPassword: false,
       loading: false,
       error: null,
@@ -118,11 +139,16 @@ export default {
   },
   methods: {
     async handleLogin() {
+      if (this.requiresTwofa) {
+        await this.handleTwoFactorValidation()
+        return
+      }
+
       this.loading = true
       this.error = null
 
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_BASE}/api/auth/login`, {
+        const response = await fetch(`${API_URL}/api/auth/login`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -140,6 +166,14 @@ export default {
           return
         }
 
+        if (data.data.requiresTwofa) {
+          this.requiresTwofa = true
+          this.pendingToken = data.data.token
+          this.twofaCode = ''
+          this.error = null
+          return
+        }
+
         // Stocker le token et les infos utilisateur
         localStorage.setItem('token', data.data.token)
         localStorage.setItem('user', JSON.stringify(data.data.user))
@@ -152,6 +186,54 @@ export default {
       } finally {
         this.loading = false
       }
+    },
+    async handleTwoFactorValidation() {
+      if (!this.twofaCode) {
+        this.error = 'Veuillez saisir le code TOTP.'
+        return
+      }
+
+      this.loading = true
+      this.error = null
+
+      try {
+        const response = await fetch(`${API_URL}/api/auth/2fa/verify`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${this.pendingToken}`,
+          },
+          body: JSON.stringify({
+            code: this.twofaCode,
+          }),
+        })
+
+        const data = await response.json()
+
+        if (!response.ok || !data.success) {
+          this.error = data.message || 'Code TOTP invalide.'
+          return
+        }
+
+        localStorage.setItem('token', data.data.token)
+        localStorage.setItem('user', JSON.stringify(data.data.user))
+        this.pendingToken = ''
+        this.requiresTwofa = false
+        this.twofaCode = ''
+
+        this.$router.push('/dashboard')
+      } catch (error) {
+        console.error('Erreur 2FA:', error)
+        this.error = 'Erreur de validation du code TOTP'
+      } finally {
+        this.loading = false
+      }
+    },
+    cancelTwoFactor() {
+      this.requiresTwofa = false
+      this.pendingToken = ''
+      this.twofaCode = ''
+      this.error = null
     },
   },
 }
@@ -387,6 +469,17 @@ input:focus {
   opacity: 0.7;
 }
 
+.twofa-notice {
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #ecfeff;
+  color: #0f766e;
+  border: 1px solid #99f6e4;
+  font-size: 13px;
+  font-weight: 600;
+}
+
 .error-message {
   background: #fee;
   color: #c33;
@@ -419,6 +512,20 @@ input:focus {
 .btn-login:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.btn-secondary {
+  margin-top: 10px;
+  background: #f8fafc;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  box-shadow: none;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+  background: #eef2f7;
 }
 
 .dev-info {
