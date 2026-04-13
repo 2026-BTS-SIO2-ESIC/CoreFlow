@@ -47,6 +47,11 @@ CREATE TABLE `utilisateurs` (
   KEY `idx_est_actif`(`est_actif`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+ALTER TABLE `utilisateurs`
+  ADD COLUMN `totp_secret`      VARCHAR(255) DEFAULT NULL,
+  ADD COLUMN `totp_enabled`     BOOLEAN      NOT NULL DEFAULT FALSE,
+  ADD COLUMN `totp_backup_codes` TEXT        DEFAULT NULL; 
+
 -- Données de test standardisées
 -- Mots de passe : Admin -> @dmiN1234 | RH -> Rh_1234 | Manager -> Manager_1234 | Employé -> Employe_1234
 -- Les hash bcrypt sont déjà intégrés, plus besoin de lancer hash-passwords.js
