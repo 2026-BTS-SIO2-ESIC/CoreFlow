@@ -31,8 +31,11 @@ coverage
 # Environment files
 .env.development
 .env.production
+.env.android
 .env
 .env.*
+!.env.example
+!.env.android
 
 # Cypress
 /cypress/videos/

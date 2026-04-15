@@ -45,18 +45,6 @@
             </div>
           </div>
 
-          <!-- //Code de double authentification seuelemnt pour les rôles sensible (2FA) - optionnel pour l'instant -->
-          <div class="doubleAuth">
-            <label for="doubleAuth">Code de double authentification</label>
-            <input
-              id="doubleAuth"
-              v-model="doubleAuth"
-              type="text"
-              placeholder="123456"
-              required
-            />
-          </div>
-
           <button type="submit" class="btn-login" :disabled="loading">
             {{ loading ? 'Connexion...' : 'Se connecter' }}
           </button>

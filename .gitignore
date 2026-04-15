@@ -13,6 +13,8 @@ Frontend/.env
 Frontend/.env.*
 Backend/.env
 Backend/.env.*
+!Frontend/.env.example
+!Backend/.env.example
 
 # IDE
 .vscode/
