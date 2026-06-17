@@ -93,9 +93,7 @@
 </template>
 
 <script>
-//on importe capacitor pour gérer les différences d'URL entre mobile et desktop
-
-
+// On peut aussi utiliser import.meta.env.VITE_API_BASE directement dans le code, mais je préfère le stocker dans une variable pour plus de clarté
 const API_BASE = import.meta.env.VITE_API_BASE;
 export default {
   name: 'LoginView',

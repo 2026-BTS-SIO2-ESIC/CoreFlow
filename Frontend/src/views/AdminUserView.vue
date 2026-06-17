@@ -1,6 +1,7 @@
 <template>
   <div class="admin-container">
     <DashboardSidebar :user="user" :loading="false" @logout="logout" />
+    
 
     <!-- Header avec logo -->
     <div class="header">

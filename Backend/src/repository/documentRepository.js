@@ -2,7 +2,7 @@ const db = require('../config/db');
 
 class DocumentRepository {
     async createDocument(document) {
-        const sql = 'INSERT INTO documents (titre, description, fichier_path, type_fichier,taille,cible_role,auteur_id,service_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+        const sql = 'INSERT INTO documents (titre, description, fichier_path, type_fichier, taille, cible_role, auteur_id, service_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
         const values = [
             document.titre,
             document.description,
@@ -14,7 +14,7 @@ class DocumentRepository {
             document.service_id
         ];
         const [result] = await db.query(sql, values);
-        return result.insertId;// Retourne l'ID du document créé
+        return result.insertId; // Retourne l'ID du document créé
     }
     
     async findAllDocuments() {
@@ -61,6 +61,31 @@ class DocumentRepository {
         const [result] = await db.query(query, [titre, description, cible_role, id]);
         // Si affectedRows est > 0, ça veut dire que le document existait et a été modifié
         return result.affectedRows > 0;
+    }
+
+    async getAllDocumentsWithAuthor(userRole) {
+        // On sélectionne nos colonnes habituelles
+        let query = `
+            SELECT d.id, d.titre, d.description, d.fichier_path, d.type_fichier, 
+                   d.taille, d.cible_role, d.service_id, d.created_at,
+                   u.nom AS auteur_nom, u.prenom AS auteur_prenom
+            FROM documents d
+            LEFT JOIN utilisateurs u ON d.auteur_id = u.id
+        `;
+
+        // On conserve tes filtres de sécurité par rôle si nécessaire
+        if (userRole !== 'admin') {
+            if (userRole === 'rh') {
+                query += ` WHERE d.cible_role IN ('Tous', 'RH')`;
+            } else {
+                query += ` WHERE d.cible_role = 'Tous'`;
+            }
+        }
+
+        query += ` ORDER BY d.created_at DESC`;
+        
+        const [rows] = await db.query(query);
+        return rows;
     }
 }
 

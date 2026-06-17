@@ -3,7 +3,9 @@ const documentService = require('../services/documentService');
 class DocumentController {
     async createDocument(req, res) {
         try {
+            // ✅ Version propre : une seule déclaration "const result"
             const result = await documentService.addDocument(req.body, req.file);
+            
             res.status(201).json({ 
                 message: 'Document créé avec succès !',
                 data: result
@@ -16,7 +18,11 @@ class DocumentController {
 
     async getDocuments(req, res) {
         try {
-            const documents = await documentService.getAllDocuments();
+            // SÉCURITÉ : On récupère le rôle de l'utilisateur connecté
+            const userRole = req.user ? req.user.role : 'employe'; 
+            
+            // On passe le rôle au service pour filtrer la requête SQL
+            const documents = await documentService.getAllDocuments(userRole);
             res.status(200).json(documents);
         } catch (error) {
             console.error('Erreur lors de la récupération des documents :', error);
@@ -38,7 +44,6 @@ class DocumentController {
         }
     }
 
-    // La vraie fonction update du contrôleur
     async updateDocument(req, res) {
         try {
             const documentId = req.params.id;
@@ -56,7 +61,6 @@ class DocumentController {
                 return res.status(400).json({ message: "Le titre et la cible sont obligatoires." });
             }
 
-            // ICI on appelle le service proprement
             const isUpdated = await documentService.updateDocument(documentId, titre, description, cible_role);
             
             if (!isUpdated) {
