@@ -329,6 +329,9 @@ const Event = {
                 return callback(null, results);
               },
             );
+            
+          } else {
+            return callback(null, results);
           }
         });
       }
