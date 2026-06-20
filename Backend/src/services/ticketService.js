@@ -33,6 +33,16 @@ const TicketService = {
     getTicketById: async (ticketId) => {
         return await TicketRepository.getById(ticketId);
     },
+
+    // --- Take charge of a ticket ---
+    takeChargeTicket: async (ticketId, userId) => {
+        return await TicketRepository.takeCharge(ticketId, userId);
+    },
+
+    // --- Mark ticket as resolved ---
+    resolveTicket: async (ticketId, userId) => {
+        return await TicketRepository.isResolved(ticketId, userId);
+    },
 };
 
 module.exports = TicketService;
