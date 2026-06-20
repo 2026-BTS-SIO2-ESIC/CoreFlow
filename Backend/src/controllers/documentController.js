@@ -18,7 +18,7 @@ class DocumentController {
     }
     async getDocuments(req,res) {
         try {
-            const documents = await documentService.getAllDocuments();
+            const documents = await documentService.getAllDocuments(req.user.role, req.user.id);
             res.status(200).json(documents);
         } catch (error) {
             console.error('Erreur lors de la récupération des documents :', error);

@@ -1,3 +1,4 @@
+
 const documentRepository = require('../repository/documentRepository');
 const fs = require('fs'); // Pour gérer les fichiers (ex: suppression)
 const path = require('path'); // Pour gérer les chemins de fichiers
@@ -23,8 +24,8 @@ class DocumentService {
         const documentId = await documentRepository.createDocument(newDocument);
         return { id: documentId, filename: fichierData.filename }; // Retourne l'ID du document créé et le nom du fichier
     }
-    async getAllDocuments() {
-        const documents = await documentRepository.findAllDocuments();
+    async getAllDocuments(userRole, userId) {
+        const documents = await documentRepository.findAllDocuments(userRole, userId);
         return documents.map(doc => ({
             ...doc,
             auteur_complet: `${doc.auteur_prenom} ${doc.auteur_nom}`,

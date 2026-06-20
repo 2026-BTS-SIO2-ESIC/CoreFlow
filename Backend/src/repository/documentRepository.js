@@ -16,7 +16,7 @@ class DocumentRepository {
         const [result] = await db.query(sql, values);
         return result.insertId;// Retourne l'ID du document créé
     }
-    async findAllDocuments() {
+    async findAllDocuments(userRole, userId) {
         const sql = `SELECT
             d.id,
             d.titre,
@@ -31,8 +31,12 @@ class DocumentRepository {
             u.prenom AS auteur_prenom,
             u.departement AS service_nom
         FROM documents d
-        INNER JOIN utilisateurs u ON d.auteur_id = u.id`;
-        const [rows] = await db.query(sql);
+        INNER JOIN utilisateurs u ON d.auteur_id = u.id
+        WHERE d.cible_role = 'Tous' 
+           OR d.cible_role = ? 
+           OR d.auteur_id = ?
+           OR ? = 'admin'`;
+        const [rows] = await db.query(sql, [userRole, userId, userRole]);
     return rows;
     }
     async getDocumentById(id) {         
