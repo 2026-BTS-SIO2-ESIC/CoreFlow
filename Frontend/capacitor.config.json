@@ -2,7 +2,17 @@
   "appId": "fr.esic.coreflow",
   "appName": "coreflow",
   "webDir": "dist",
+<<<<<<< HEAD
   "android": {
     "allowMixedContent": true
 }
 }
+=======
+  "server": {
+    "cleartext": true
+  },
+  "android": {
+    "allowMixedContent": true
+}
+}
+>>>>>>> 067806a91735225bdac4d077d1e9d8f83234b31a

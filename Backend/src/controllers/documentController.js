@@ -3,10 +3,9 @@ const documentService = require('../services/documentService');
 class DocumentController {
     async createDocument(req, res) {
         try {
-            //req.body contient les données textuelles et req.file contient le texte, req.file contient le fichier (grâce à Multer)
+            // ✅ Version propre : une seule déclaration "const result"
             const result = await documentService.addDocument(req.body, req.file);
-
-            //on repond au front que c'est un succès et on retourne l'id du document créé et le nom du fichier
+            
             res.status(201).json({ 
                 message: 'Document créé avec succès !',
                 data: result
@@ -16,21 +15,26 @@ class DocumentController {
             res.status(400).json({ message: 'Erreur interne du serveur' });
         }
     }
-    async getDocuments(req,res) {
+
+    async getDocuments(req, res) {
         try {
-            const documents = await documentService.getAllDocuments(req.user.role, req.user.id);
+            // SÉCURITÉ : On récupère le rôle de l'utilisateur connecté
+            const userRole = req.user ? req.user.role : 'employe'; 
+            
+            // On passe le rôle au service pour filtrer la requête SQL
+            const documents = await documentService.getAllDocuments(userRolereq.user.role, req.user.id);
             res.status(200).json(documents);
         } catch (error) {
             console.error('Erreur lors de la récupération des documents :', error);
             res.status(500).json({ message: 'Erreur interne du serveur' });
         }
     }
+
     async deleteDocument(req, res) {
         try {
-        // Récupère l'ID du document à supprimer depuis les paramètres de l'URL
-        const documentId = req.params.id;
-        await documentService.deleteDocument(documentId);
-        res.status(200).json({ message: 'Document supprimé avec succès' });
+            const documentId = req.params.id;
+            await documentService.deleteDocument(documentId);
+            res.status(200).json({ message: 'Document supprimé avec succès' });
         } catch (error) {
         console.error('Erreur lors de la suppression du document :', error);
         if (error.message === 'Document non trouvé en base de données') {
@@ -46,6 +50,37 @@ class DocumentController {
         } catch (error) {
             console.error('Erreur lors de la consultation :', error);
             res.status(500).json({ message: 'Erreur interne du serveur' });
+        }
+    }
+
+    async updateDocument(req, res) {
+        try {
+            const documentId = req.params.id;
+            const { titre, description, cible_role } = req.body;
+            
+            const role = req.user.role.toLowerCase();
+            
+            if (!['admin', 'rh', 'manager'].includes(role)) {
+                return res.status(403).json({ 
+                    message: "Accès refusé. Seuls les Managers, RH et Admins peuvent modifier un document." 
+                });
+            }
+
+            if (!titre || !cible_role) {
+                return res.status(400).json({ message: "Le titre et la cible sont obligatoires." });
+            }
+
+            const isUpdated = await documentService.updateDocument(documentId, titre, description, cible_role);
+            
+            if (!isUpdated) {
+                return res.status(404).json({ message: "Document introuvable." });
+            }
+
+            res.status(200).json({ message: "Le document a été mis à jour avec succès !" });
+
+        } catch (error) {
+            console.error('Erreur lors de la modification du document :', error);
+            res.status(500).json({ message: "Erreur interne du serveur" });
         }
     }
 }

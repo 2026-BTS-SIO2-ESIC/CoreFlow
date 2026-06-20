@@ -1,0 +1,11 @@
+{
+	"appId": "fr.esic.coreflow",
+	"appName": "coreflow",
+	"webDir": "dist",
+	"server": {
+		"cleartext": true
+	},
+	"android": {
+		"allowMixedContent": true
+	}
+}

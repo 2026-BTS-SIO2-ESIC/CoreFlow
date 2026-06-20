@@ -1,6 +1,10 @@
 <template>
   <div class="admin-container">
     <DashboardSidebar :user="user" :loading="false" @logout="logout" />
+<<<<<<< HEAD
+=======
+    
+>>>>>>> 067806a91735225bdac4d077d1e9d8f83234b31a
 
     <!-- Header avec logo -->
     <div class="header">

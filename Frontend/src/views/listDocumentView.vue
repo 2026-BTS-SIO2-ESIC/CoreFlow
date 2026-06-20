@@ -138,6 +138,53 @@
         </div>
 
       </div>
+     <div v-if="isEditModalOpen" class="modal-overlay" @click.self="closeEditModal">
+        <div class="modal-card">
+          <h2 class="modal-title">Modifier le document</h2>
+          
+          <form @submit.prevent="submitEdit">
+            <div class="form-group">
+  <label>Remplacer le fichier (crée une nouvelle version)</label>
+  <input 
+    type="file" 
+    @change="handleFileChange" 
+    class="custom-input" 
+    accept=".pdf,.doc,.docx,.png,.jpg"
+  />
+</div>
+
+            <div class="form-group">
+              <label>Titre du document</label>
+              <input v-model="documentToEdit.titre" type="text" required class="custom-input" />
+            </div>
+            
+            <div class="form-group">
+              <label>Description</label>
+              <textarea v-model="documentToEdit.description" rows="3" class="custom-input"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label>Visibilité (Cible)</label>
+              <select v-model="documentToEdit.cible_role" class="custom-input">
+                <option value="Tous">Tous les employés</option>
+                <option value="admin">Administrateurs uniquement</option>
+                <option value="rh">Ressources Humaines</option>
+                <option value="manager">Managers</option>
+              </select>
+            </div>
+
+            <div class="modal-actions">
+              <button type="button" @click="closeEditModal" class="btn-cancel">
+                Annuler
+              </button>
+              <button type="submit" class="btn-submit">
+                Enregistrer
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+v
     </main>
   </div>
 </template>
@@ -152,7 +199,6 @@ import { Browser } from '@capacitor/browser';
 import { Share } from '@capacitor/share';
 import DashboardSidebar from '@/components/DashboardSidebar.vue';
 
-const apiBase = import.meta.env.VITE_API_BASE;
 const router = useRouter();
 const user = ref(null);
 const documents = ref([]);
@@ -228,6 +274,26 @@ const processedDocuments = computed(() => {
   });
 });
 
+const nouveauFichier = ref(null);
+const handleFileChange = (event) => {
+  nouveauFichier.value = event.target.files[0];
+};
+
+// Variables pour la modale
+const isEditModalOpen = ref(false);
+const documentToEdit = ref({ id: null, titre: '', description: '', cible_role: 'Tous' });
+
+// La fameuse variable d'environnement de ton équipe !
+const apiBase = import.meta.env.VITE_API_BASE;
+
+const declencherInputFichier = () => inputFichier.value.click();
+const captureFichier = (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    fichierSelectionne.value = file;
+    nomFichier.value = file.name;
+  }
+};
 
 const fetchDocuments = async () => {
   try {
@@ -386,6 +452,76 @@ const logout = () => {
   localStorage.removeItem('user');
   router.push('/login');
 };
+
+onMounted(() => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    router.push('/login');
+    return;
+  }
+
+  const userStr = localStorage.getItem('user');
+  if (userStr) {
+    user.value = JSON.parse(userStr);
+  }
+
+  fetchDocuments();
+});
+// --- FONCTIONS POUR LA MODIFICATION ---
+
+const openEditModal = (doc) => {
+  documentToEdit.value = {
+    id: doc.id,
+    titre: doc.titre,
+    description: doc.description || '',
+    cible_role: doc.cible_role || 'Tous'
+  };
+  isEditModalOpen.value = true;
+};
+
+const closeEditModal = () => {
+  isEditModalOpen.value = false;
+};
+
+const submitEdit = async () => {
+ const submitEdit = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    
+    // On fait juste un PUT avec les données textuelles (Mise à jour classique)
+    const response = await fetch(`${apiBase}/api/documents/${documentToEdit.value.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        titre: documentToEdit.value.titre,
+        description: documentToEdit.value.description,
+        cible_role: documentToEdit.value.cible_role
+      })
+    });
+
+    if (response.ok) {
+      // Mise à jour visuelle du tableau sans recharger la page
+      const index = documents.value.findIndex(d => d.id === documentToEdit.value.id);
+      if (index !== -1) {
+        documents.value[index].titre = documentToEdit.value.titre;
+        documents.value[index].description = documentToEdit.value.description;
+        documents.value[index].cible_role = documentToEdit.value.cible_role;
+      }
+      closeEditModal();
+      alert("Document modifié avec succès !");
+    } else {
+      alert("Erreur lors de la modification du document.");
+    }
+  } catch (error) {
+    console.error("Erreur réseau :", error);
+    alert("Impossible de contacter le serveur.");
+  }
+};
+};
+
 
 onMounted(() => {
   const token = localStorage.getItem('token');

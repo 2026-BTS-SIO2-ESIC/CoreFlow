@@ -2,7 +2,7 @@ const db = require('../config/db');
 
 class DocumentRepository {
     async createDocument(document) {
-        const sql = 'INSERT INTO documents (titre, description, fichier_path, type_fichier,taille,cible_role,auteur_id,service_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+        const sql = 'INSERT INTO documents (titre, description, fichier_path, type_fichier, taille, cible_role, auteur_id, service_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
         const values = [
             document.titre,
             document.description,
@@ -14,8 +14,9 @@ class DocumentRepository {
             document.service_id
         ];
         const [result] = await db.query(sql, values);
-        return result.insertId;// Retourne l'ID du document créé
+        return result.insertId; // Retourne l'ID du document créé
     }
+    
     async findAllDocuments(userRole, userId) {
         const sql = `SELECT
             d.id,
@@ -37,13 +38,15 @@ class DocumentRepository {
            OR d.auteur_id = ?
            OR ? = 'admin'`;
         const [rows] = await db.query(sql, [userRole, userId, userRole]);
-    return rows;
+        return rows;
     }
+    
     async getDocumentById(id) {         
-    const query = 'SELECT * FROM documents WHERE id = ?';         
-    const [rows] = await db.query(query, [id]);         
-    return rows[0]; // Renvoie le document s'il existe, sinon undefined    
+        const query = 'SELECT * FROM documents WHERE id = ?';         
+        const [rows] = await db.query(query, [id]);         
+        return rows[0]; // Renvoie le document s'il existe, sinon undefined    
     }     
+    
     // Supprimer la ligne en BDD
     async deleteDocument(id) {         
         const query = 'DELETE FROM documents WHERE id = ?';         
