@@ -33,10 +33,4 @@ router.get('/my-tickets', ticketController.getMyTickets);
 // GET /api/ticket/:id - Récupérer les détails d'un ticket
 router.get('/:id', ticketController.getTicketDetails);
 
-// PUT /api/ticket/:id/take-charge - Prendre en charge un ticket
-router.put('/:id/take-charge', ticketController.takeCharge);
-
-// PUT /api/ticket/:id/Resolved - Marquer un ticket comme résolu
-router.put('/:id/Resolved', ticketController.isResolved);
-
 module.exports = router;

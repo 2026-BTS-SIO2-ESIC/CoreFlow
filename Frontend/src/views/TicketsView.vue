@@ -7,9 +7,7 @@
     <main class="main-content">
       <header class="content-header">
         <h1>Gestion des tickets</h1>
-        <button class="btn-add-ticket" @click="showModal = true">
-          + Ajouter un ticket
-        </button>
+        <button class="btn-add-ticket" @click="showModal = true">+ Ajouter un ticket</button>
       </header>
 
       <div class="filters">
@@ -25,16 +23,10 @@
 
       <!-- Filtre par rôle -->
       <div class="roleFilter">
-        <button
-          :class="['role-filter-btn', { active: myTickets }]"
-          @click="myTickets = true"
-        >
+        <button :class="['role-filter-btn', { active: myTickets }]" @click="myTickets = true">
           Mes tickets
         </button>
-        <button
-          :class="['role-filter-btn', { active: !myTickets }]"
-          @click="myTickets = false"
-        >
+        <button :class="['role-filter-btn', { active: !myTickets }]" @click="myTickets = false">
           Tous les tickets
         </button>
       </div>
@@ -55,17 +47,13 @@
             <tr v-for="ticket in filteredTickets" :key="ticket.id">
               <td class="id-cell ticket-id" data-label="N°">#{{ ticket.id }}</td>
               <td class="ticket-title" data-label="Titre">{{ ticket.titre }}</td>
-              <td class="ticket-requester" data-label="Demandeur">
-                {{ ticket.prenom }} {{ ticket.nom }}
-              </td>
+              <td class="ticket-requester" data-label="Demandeur">{{ ticket.prenom }} {{ ticket.nom }}</td>
               <td class="ticket-status" data-label="Statut">
                 <span :class="['status-badge', getStatusClass(ticket.statut)]">
                   {{ formatStatus(ticket.statut) }}
                 </span>
               </td>
-              <td class="ticket-updated" data-label="Dernière mise à jour">
-                {{ formatDate(ticket.created_at) }}
-              </td>
+              <td class="ticket-updated" data-label="Dernière mise à jour">{{ formatDate(ticket.created_at) }}</td>
               <td class="actions" data-label="Action">
                 <button @click="showDetails(ticket.id)" class="icon-btn">👁️</button>
               </td>
@@ -129,9 +117,7 @@
             </div>
 
             <div class="modal-actions">
-              <button type="button" @click="showModal = false" class="btn-cancel">
-                Annuler
-              </button>
+              <button type="button" @click="showModal = false" class="btn-cancel">Annuler</button>
               <button type="submit" class="btn-submit">Envoyer le ticket</button>
             </div>
           </form>
@@ -142,11 +128,7 @@
     <!-- Détails du ticket =================================================== -->
 
     <transition name="fade">
-      <div
-        v-if="selectedTicket"
-        class="modal-overlay"
-        @click.self="selectedTicket = null"
-      >
+      <div v-if="selectedTicket" class="modal-overlay" @click.self="selectedTicket = null">
         <div class="modal-content details-modal">
           <div class="modal-header">
             <h2>Ticket #{{ selectedTicket.id }}</h2>
@@ -154,21 +136,9 @@
           </div>
 
           <div class="details-body">
-            <div class="detail-row">
-              <div class="detail-section">
-                <label>Titre</label>
-                <p class="detail-value">{{ selectedTicket.titre }}</p>
-              </div>
-              <div class="detail-btn-PriseEnMain" v-if="selectedTicket.statut == 'ouvert'">
-                <button
-                  v-if="user && ['Informatique', 'rh', 'IT'].includes(user.departement)"
-                  class="btn-take-charge"
-                  @click="priseEnMain"
-                  type="button"
-                >
-                  Prendre en charge
-                </button>
-              </div>
+            <div class="detail-section">
+              <label>Titre</label>
+              <p class="detail-value">{{ selectedTicket.titre }}</p>
             </div>
 
             <div class="detail-row">
@@ -198,13 +168,13 @@
               </p>
               <p>
                 <strong>Créé le :</strong>
-                {{ dayjs(selectedTicket.created_at).format("DD MMMM YYYY à HH:mm") }}
+                {{ dayjs(selectedTicket.created_at).format('DD MMMM YYYY à HH:mm') }}
               </p>
             </div>
           </div>
 
-          <div class="modal-actions" v-if="selectedTicket.statut === 'en_cours'">
-            <button class="solved-btn" @click="markAsResolved">Résolu</button>
+          <div class="modal-actions">
+            <button @click="selectedTicket = null" class="btn-cancel">Fermer</button>
           </div>
         </div>
       </div>
@@ -214,81 +184,77 @@
 
 <script>
 // 1. Importations
-import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
-import Swal from "sweetalert2";
-import DashboardSidebar from "@/components/DashboardSidebar.vue";
-import "dayjs/locale/fr"; // Pour avoir les textes en français
-import { MemoryStick } from "lucide-vue-next";
+import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
+import Swal from 'sweetalert2'
+import DashboardSidebar from '@/components/DashboardSidebar.vue'
+import 'dayjs/locale/fr' // Pour avoir les textes en français
 
 // 2. Configuration du plugin
-dayjs.extend(relativeTime);
-dayjs.locale("fr");
+dayjs.extend(relativeTime)
+dayjs.locale('fr')
 
 export default {
-  name: "TicketsView",
+  name: 'TicketsView',
   components: {
     DashboardSidebar,
   },
   data() {
     return {
       user: null,
-      currentFilter: "Tout",
+      currentFilter: 'Tout',
       showModal: false,
       newTicket: {
-        titre: "",
-        categorie: "Informatique",
-        description: "",
+        titre: '',
+        categorie: 'Informatique',
+        description: '',
       },
       tickets: [],
       selectedTicket: null,
       dayjs: dayjs,
       myTickets: true, // Par défaut, on affiche les tickets de l'utilisateur connecté. Peut être ajusté selon le rôle.
-    };
+    }
   },
   computed: {
     filteredTickets() {
-      if (this.currentFilter === "Tout") return this.tickets;
-      return this.tickets.filter((t) => t.statut === this.currentFilter);
+      if (this.currentFilter === 'Tout') return this.tickets
+      return this.tickets.filter((t) => t.statut === this.currentFilter)
     },
     ticketStats() {
-      const tickets = Array.isArray(this.tickets) ? this.tickets : [];
+      const tickets = Array.isArray(this.tickets) ? this.tickets : []
 
-      const statuses = tickets.map((ticket) => this.normalizeStatus(ticket?.statut));
-      const traites = statuses.filter((status) => ["resolu", "ferme"].includes(status))
-        .length;
-      const enAttente = statuses.filter((status) =>
-        ["ouvert", "en_cours"].includes(status)
-      ).length;
-      const total = statuses.length;
+      const statuses = tickets.map((ticket) => this.normalizeStatus(ticket?.statut))
+      const traites = statuses.filter((status) => ['resolu', 'ferme'].includes(status)).length
+      const enAttente = statuses.filter((status) => ['ouvert', 'en_cours'].includes(status)).length
+      const total = statuses.length
 
-      const note = total > 0 ? ((traites / total) * 5).toFixed(1) : "0.0";
+      const note = total > 0 ? ((traites / total) * 5).toFixed(1) : '0.0'
 
       return {
         traites,
         enAttente,
         note,
-      };
+      }
     },
   },
 
   watch: {
     // Dès que myTickets change, on recharge les données
     myTickets: {
-      handler: "fetchTickets",
+      handler: 'fetchTickets',
     },
   },
 
   async mounted() {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem('token')
     if (!token) {
-      this.$router.push("/login");
-      return;
+      this.$router.push('/login')
+      return
     }
 
-    const userStr = localStorage.getItem("user");
+    const userStr = localStorage.getItem('user')
     if (userStr) {
-      this.user = JSON.parse(userStr);
+      this.user = JSON.parse(userStr)
     }
 
     await this.fetchTickets()
@@ -332,168 +298,162 @@ export default {
   methods: {
     // 1. La méthode fetchTickets mise à jour pour prendre en compte le filtre "Mes tickets" vs "Tous les tickets"
     async fetchTickets() {
-      const userStr = localStorage.getItem("user");
-      const stockedUser = userStr ? JSON.parse(userStr) : null;
-      const role = stockedUser?.role;
+      const userStr = localStorage.getItem('user')
+      const stockedUser = userStr ? JSON.parse(userStr) : null
+      const role = stockedUser?.role
       if (!userStr) {
-        this.$router.push("/login");
-        return;
+        this.$router.push('/login')
+        return
       }
 
       if (this.myTickets) {
         // Afficher les tickets de l'utilisateur connecté
         try {
-          const token = localStorage.getItem("token");
-          const response = await fetch(
-            `${import.meta.env.VITE_API_BASE}/api/ticket/my-tickets`,
-            {
-              method: "GET",
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-
-          const result = await response.json();
-          if (response.ok) {
-            this.tickets = Array.isArray(result.data) ? result.data : [];
-          } else {
-            alert("Impossible de charger vos tickets.");
-          }
-        } catch (err) {
-          console.error("Erreur de chargement des tickets", err);
-        }
-      } else {
-        const API = `${import.meta.env.VITE_API_BASE}/api/ticket/tickets`; // tous les tickets (admin/manager)
-        const API_It = `${import.meta.env.VITE_API_BASE}/api/ticket/itTickets`; // tickets IT
-        const API_Rh = `${import.meta.env.VITE_API_BASE}/api/ticket/rhTickets`; // tickets RH
-        let url = `${import.meta.env.VITE_API_BASE}/api/ticket/my-tickets`; // par défaut, on affiche les tickets de l'utilisateur connecté (pour les rôles autres que admin/manager)
-        if (role === "it") {
-          url = API_It;
-        } else if (role === "rh") {
-          url = API_Rh;
-        } else if (role === "admin" || role === "manager") {
-          url = API; // tous les tickets
-        }
-        try {
-          const token = localStorage.getItem("token");
-          const response = await fetch(url, {
-            method: "GET",
+          const token = localStorage.getItem('token')
+          const response = await fetch(`${import.meta.env.VITE_API_BASE}/api/ticket/my-tickets`, {
+            method: 'GET',
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          });
-          const result = await response.json();
+          })
+
+          const result = await response.json()
           if (response.ok) {
-            this.tickets = Array.isArray(result.data) ? result.data : [];
+            this.tickets = Array.isArray(result.data) ? result.data : []
           } else {
-            alert("Impossible de charger les tickets.");
+            alert('Impossible de charger vos tickets.')
           }
         } catch (err) {
-          console.error("Erreur de chargement des tickets", err);
+          console.error('Erreur de chargement des tickets', err)
+        }
+      } else {
+        const API = `${import.meta.env.VITE_API_BASE}/api/ticket/tickets` // tous les tickets (admin/manager)
+        const API_It = `${import.meta.env.VITE_API_BASE}/api/ticket/itTickets` // tickets IT
+        const API_Rh = `${import.meta.env.VITE_API_BASE}/api/ticket/rhTickets` // tickets RH
+        let url = `${import.meta.env.VITE_API_BASE}/api/ticket/my-tickets` // par défaut, on affiche les tickets de l'utilisateur connecté (pour les rôles autres que admin/manager)
+        if (role === 'it') {
+          url = API_It
+        } else if (role === 'rh') {
+          url = API_Rh
+        } else if (role === 'admin' || role === 'manager') {
+          url = API // tous les tickets
+        }
+        try {
+          const token = localStorage.getItem('token')
+          const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          })
+          const result = await response.json()
+          if (response.ok) {
+            this.tickets = Array.isArray(result.data) ? result.data : []
+          } else {
+            alert('Impossible de charger les tickets.')
+          }
+        } catch (err) {
+          console.error('Erreur de chargement des tickets', err)
         }
       }
     },
     // 3. La fameuse méthode formatDate mise à jour
     formatDate(date) {
-      if (!date) return "À l'instant";
+      if (!date) return "À l'instant"
       // .fromNow() génère le texte relatif (ex: "il y a 5 min")
-      return dayjs(date).fromNow();
+      return dayjs(date).fromNow()
     },
 
     // formateStatus pour afficher des statuts plus lisibles
     formatStatus(status) {
-      if (!status) return "En attente";
+      if (!status) return 'En attente'
 
-      if (typeof status === "object") {
-        status = status.statut || status.value || "";
+      if (typeof status === 'object') {
+        status = status.statut || status.value || ''
       }
 
-      const normalized = this.normalizeStatus(status);
+      const normalized = this.normalizeStatus(status)
 
       const map = {
-        ouvert: "En attente",
-        en_cours: "En cours",
-        resolu: "Résolu",
-        ferme: "Fermé",
-      };
+        ouvert: 'En attente',
+        en_cours: 'En cours',
+        resolu: 'Résolu',
+        ferme: 'Fermé',
+      }
 
-      return map[normalized] || status;
+      return map[normalized] || status
     },
 
     normalizeStatus(status) {
-      return String(status || "ouvert")
+      return String(status || 'ouvert')
         .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/\s+/g, "_");
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, '_')
     },
 
     getStatusClass(status) {
-      const normalized = this.normalizeStatus(status);
+      const normalized = this.normalizeStatus(status)
 
       const classMap = {
-        ouvert: "status-open",
-        en_attente: "status-open",
-        en_cours: "status-progress",
-        resolu: "status-resolved",
-        ferme: "status-closed",
-      };
+        ouvert: 'status-open',
+        en_attente: 'status-open',
+        en_cours: 'status-progress',
+        resolu: 'status-resolved',
+        ferme: 'status-closed',
+      }
 
-      return classMap[normalized] || "status-open";
+      return classMap[normalized] || 'status-open'
     },
 
     showToast(icon, title) {
       Swal.fire({
         toast: true,
-        position: "top-end",
+        position: 'top-end',
         icon,
         title,
         showConfirmButton: false,
         timer: 2500,
         timerProgressBar: true,
-      });
+      })
     },
 
     // Détails du ticket
     async showDetails(id) {
       try {
-        const token = localStorage.getItem("token");
-        const response = await fetch(
-          `${import.meta.env.VITE_API_BASE}/api/ticket/${id}`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const token = localStorage.getItem('token')
+        const response = await fetch(`${import.meta.env.VITE_API_BASE}/api/ticket/${id}`, {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
 
-        const result = await response.json();
+        const result = await response.json()
         if (response.ok) {
-          this.selectedTicket = result.data;
+          this.selectedTicket = result.data
         } else {
-          alert("Impossible de charger les détails du ticket.");
+          alert('Impossible de charger les détails du ticket.')
         }
       } catch (error) {
-        console.error("Erreur détails:", error);
+        console.error('Erreur détails:', error)
       }
     },
 
     async submitTicket() {
       try {
-        const token = localStorage.getItem("token");
-        const userStr = JSON.parse(localStorage.getItem("user"));
+        const token = localStorage.getItem('token')
+        const userStr = JSON.parse(localStorage.getItem('user'))
         const response = await fetch(`${import.meta.env.VITE_API_BASE}/api/ticket`, {
-          method: "POST",
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(this.newTicket),
-        });
+        })
 
-        const result = await response.json();
+        const result = await response.json()
 
         if (response.ok) {
           // AJOUT DYNAMIQUE : On s'assure que les clés correspondent au v-for du tableau
@@ -502,96 +462,36 @@ export default {
             titre: this.newTicket.titre,
             nom: userStr.nom,
             prenom: userStr.prenom,
-            statut: "ouvert",
+            statut: 'ouvert',
             created_at: new Date().toISOString(), // Dayjs formatera cela en "il y a quelques secondes"
-          };
+          }
 
-          this.tickets.unshift(createdTicket);
-          this.showModal = false;
-          this.newTicket = { titre: "", categorie: "Informatique", description: "" };
-          this.showToast("success", "Ticket créé avec succès");
+          this.tickets.unshift(createdTicket)
+          this.showModal = false
+          this.newTicket = { titre: '', categorie: 'Informatique', description: '' }
+          this.showToast('success', 'Ticket créé avec succès')
         } else {
-          this.showToast(
-            "error",
-            result.message || "Erreur lors de la création du ticket"
-          );
+          this.showToast('error', result.message || 'Erreur lors de la création du ticket')
         }
       } catch (error) {
-        console.error("Erreur :", error);
-        this.showToast("error", "Erreur lors de la création du ticket");
+        console.error('Erreur :', error)
+        this.showToast('error', 'Erreur lors de la création du ticket')
       }
     },
     logout() {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      this.$router.push("/login");
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      this.$router.push('/login')
     },
-    async priseEnMain() {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        this.$router.push("/login");
-        return;
-      }
-
-      const userStr = localStorage.getItem("user");
-      if (!userStr) {
-        this.$router.push("/login");
-        return;
-      }
-
-      const user = JSON.parse(userStr);
-      const userId = user.id;
-
-      try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_BASE}/api/ticket/${
-            this.selectedTicket.id
-          }/take-charge`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ assigne_a_id: userId }),
-          }
-        );
-
-        const result = await response.json();
-        if (response.ok) {
-          // Mettre à jour l'état local du ticket
-          this.selectedTicket.assigne_a_id = userId;
-          this.selectedTicket.statut = "en_cours";
-          // Fermer la modale et recharger la liste
-          this.selectedTicket = null;
-          await this.fetchTickets();
-          this.showToast("success", "Vous avez pris en charge ce ticket");
-        } else {
-          this.showToast("error", result.message || "Erreur lors de la prise en charge");
-        }
-      } catch (error) {
-        console.error("Erreur :", error);
-        this.showToast("error", "Erreur lors de la prise en charge");
-      }
-    },
-    async isResolved() {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        this.$router.push("/login");
-        return;
-      }
-    }
-      
   },
-};
+}
 </script>
 
 <style scoped>
-html,
-body {
-  height: auto; /* Permet au document de s'étirer */
+html, body {
+  height: auto;        /* Permet au document de s'étirer */
   min-height: 100%;
-  overflow-x: hidden; /* Évite le scroll horizontal parasite */
+  overflow-x: hidden;  /* Évite le scroll horizontal parasite */
 }
 .container {
   margin: 0;
@@ -603,13 +503,13 @@ body {
   /* ... tes styles existants ... */
 
   .modal-content {
-    padding: 20px; /* Réduire le padding interne pour gagner de la place */
-    margin-top: 20px; /* Evite que la modale colle au haut de l'écran */
+    padding: 20px;      /* Réduire le padding interne pour gagner de la place */
+    margin-top: 20px;   /* Evite que la modale colle au haut de l'écran */
     margin-bottom: 20px;
   }
 
   .description-box {
-    font-size: 13px; /* Un peu plus petit pour le confort */
+    font-size: 13px;    /* Un peu plus petit pour le confort */
     padding: 15px;
   }
 }
@@ -670,7 +570,7 @@ body {
 }
 
 .filter-btn.active::after {
-  content: "";
+  content: '';
   position: absolute;
   bottom: -1px;
   left: 0;
@@ -843,8 +743,8 @@ tr {
   display: flex;
   justify-content: center;
   align-items: flex-start; /* Changé de 'center' à 'flex-start' pour permettre le scroll naturel */
-  padding: 20px; /* Espace de sécurité pour ne pas coller aux bords */
-  overflow-y: auto; /* Active le scroll sur l'overlay si le contenu dépasse */
+  padding: 20px;           /* Espace de sécurité pour ne pas coller aux bords */
+  overflow-y: auto;        /* Active le scroll sur l'overlay si le contenu dépasse */
   z-index: 2000;
 }
 
@@ -855,7 +755,7 @@ tr {
   border-radius: 12px;
   width: 500px;
   max-width: 100%;
-  margin: auto; /* Centre la modale si elle est plus petite que l'écran */
+  margin: auto;            /* Centre la modale si elle est plus petite que l'écran */
   position: relative;
 }
 
@@ -1027,7 +927,7 @@ tr {
   text-transform: uppercase;
 }
 
-/* Ajustement du bouton  pour qu'il soit bien visible */
+/* Ajustement du bouton fermer pour qu'il soit bien visible */
 .close-btn {
   background: none;
   border: none;
@@ -1042,50 +942,6 @@ tr {
   color: #ef4444;
 }
 
-/* Bouton Prendre en charge */
-.detail-btn-PriseEnMain {
-  display: flex;
-  align-items: flex-end;
-  justify-content: flex-end;
-}
-
-.btn-take-charge {
-  background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25);
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-}
-
-.btn-take-charge:hover {
-  background: linear-gradient(135deg, #0f766e 0%, #0d5a54 100%);
-  box-shadow: 0 6px 16px rgba(13, 148, 136, 0.35);
-  transform: translateY(-2px);
-}
-
-.btn-take-charge:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.25);
-}
-
-.solved-btn {
-  background-color: gray;
-  color: white;
-  border-radius: 10px;
-  padding: 10px 20px;
-  cursor: pointer;
-}
-.solved-btn-hover {
-  background-color: #4ade80;
-  transition:all 0.3s ease;
-}
 @media (max-width: 1024px) {
   .main-content {
     width: 100%;
@@ -1105,15 +961,6 @@ tr {
 
   .detail-row {
     grid-template-columns: 1fr;
-  }
-
-  .detail-btn-PriseEnMain {
-    width: 100%;
-    justify-content: stretch;
-  }
-
-  .btn-take-charge {
-    width: 100%;
   }
 
   .roleFilter {
@@ -1217,10 +1064,10 @@ tr {
     display: grid;
     grid-template-columns: 1fr auto;
     grid-template-areas:
-      "id status"
-      "title title"
-      "requester requester"
-      "updated action";
+      'id status'
+      'title title'
+      'requester requester'
+      'updated action';
   }
 
   td {

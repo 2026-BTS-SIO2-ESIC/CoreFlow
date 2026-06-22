@@ -110,20 +110,6 @@ const TicketRepository = {
 
         const [rows] = await pool.query(sql, [idTicket]);
         return rows[0];
-    },
-
-    // 7. Prise en charge du ticket (mise à jour de assigne_a_id et statut)
-    takeCharge: async (ticketId, userId) => {
-        const sql = `UPDATE tickets SET assigne_a_id = ?, statut = 'en_cours', updated_at = NOW() WHERE id = ? AND assigne_a_id IS NULL`;
-        const [result] = await pool.query(sql, [userId, ticketId]);
-        return result.affectedRows > 0; // Retourne true si la mise à jour a réussi
-    },
-
-    // 8. Marquer le ticket comme résolu (mise à jour du statut)
-    isResolved: async (ticketId, userId) => {
-        const sql = 'UPDATE tickets SET statut = "resolu", updated_at = NOW() WHERE id = ? AND assigne_a_id = ?';
-        const [result] = await pool.query(sql, [ticketId, userId]);
-        return result.affectedRows > 0; // Retourne true si la mise à jour a réussi
     }
 };
 

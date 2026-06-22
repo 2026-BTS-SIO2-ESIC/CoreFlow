@@ -71,36 +71,3 @@ exports.getTicketDetails = async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 };
-
-exports.takeCharge = async (req, res) => {
-  try {
-    const ticketId = req.params.id;
-    const userId = req.body.assigne_a_id; // L'ID de l'employé qui prend en charge
-
-    const success = await TicketService.takeChargeTicket(ticketId, userId);
-    if (!success) {
-      return res.status(404).json({ success: false, message: "Ticket non trouvé ou déjà assigné" });
-    }
-
-    res.status(200).json({ success: true, message: "Ticket pris en charge avec succès" });
-  } catch (error) {
-    console.error('Erreur lors de la prise en charge:', error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-};
-
-exports.isResolved = async (req, res) => {
-  try{
-    const ticketId = req.params.id;
-    const userId = req.body.assigne_a_id;
-
-    const success = await TicketService.isResolved(ticketId, userId);
-    if (!success) {
-      return res.status(404).json({ success: false, message: "Ticket non trouvé ou non assigné à cet utilisateur" });
-    }
-    res.status(200).json({ success: true, message: "Ticket marqué comme résolu avec succès" });
-  } catch (error) {
-    console.error('Erreur lors de la résolution du ticket:', error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-}
