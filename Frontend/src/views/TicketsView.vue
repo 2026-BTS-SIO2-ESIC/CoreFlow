@@ -56,7 +56,7 @@
               <td class="id-cell ticket-id" data-label="N°">#{{ ticket.id }}</td>
               <td class="ticket-title" data-label="Titre">{{ ticket.titre }}</td>
               <td class="ticket-requester" data-label="Demandeur">
-                {{ ticket.prenom }} {{ ticket.nom }}
+                {{ ticket.demandeur_prenom }} {{ ticket.demandeur_nom }}
               </td>
               <td class="ticket-status" data-label="Statut">
                 <span :class="['status-badge', getStatusClass(ticket.statut)]">
@@ -159,7 +159,10 @@
                 <label>Titre</label>
                 <p class="detail-value">{{ selectedTicket.titre }}</p>
               </div>
-              <div class="detail-btn-PriseEnMain" v-if="selectedTicket.statut == 'ouvert'">
+              <div
+                class="detail-btn-PriseEnMain"
+                v-if="selectedTicket.statut == 'ouvert'"
+              >
                 <button
                   v-if="user && ['Informatique', 'rh', 'IT'].includes(user.departement)"
                   class="btn-take-charge"
@@ -193,8 +196,8 @@
 
             <div class="detail-section info-footer">
               <p>
-                <strong>Demandeur :</strong> {{ selectedTicket.prenom }}
-                {{ selectedTicket.nom }} ({{ selectedTicket.departement }})
+                <strong>Demandeur :</strong> {{ selectedTicket.demandeur_prenom }}
+                {{ selectedTicket.demandeur_nom }} ({{ selectedTicket.demandeur_departement }})
               </p>
               <p>
                 <strong>Créé le :</strong>
@@ -204,7 +207,7 @@
           </div>
 
           <div class="modal-actions" v-if="selectedTicket.statut === 'en_cours'">
-            <button class="solved-btn" @click="markAsResolved">Résolu</button>
+            <button class="solved-btn" @click="isResolved">Résolu</button>
           </div>
         </div>
       </div>
@@ -291,7 +294,7 @@ export default {
       this.user = JSON.parse(userStr);
     }
 
-    await this.fetchTickets()
+    await this.fetchTickets();
     // const API = '${import.meta.env.VITE_API_BASE}/api/ticket/tickets' // on définit l'URL de l'API pour récupérer les tickets
     // const API_It = '${import.meta.env.VITE_API_BASE}/api/ticket/itTickets' // on définit l'URL de l'API pour récupérer les tickets
     // const API_Rh = '${import.meta.env.VITE_API_BASE}/api/ticket/rhTickets'
@@ -500,8 +503,8 @@ export default {
           const createdTicket = {
             id: result.id,
             titre: this.newTicket.titre,
-            nom: userStr.nom,
-            prenom: userStr.prenom,
+            demandeur_nom: userStr.nom,
+            demandeur_prenom: userStr.prenom,
             statut: "ouvert",
             created_at: new Date().toISOString(), // Dayjs formatera cela en "il y a quelques secondes"
           };
@@ -580,8 +583,48 @@ export default {
         this.$router.push("/login");
         return;
       }
-    }
-      
+
+      const userStr = localStorage.getItem("user");
+      if (!userStr) {
+        this.$router.push("/login");
+        return;
+      }
+
+      const user = JSON.parse(userStr);
+      const userId = user.id;
+
+
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_BASE}/api/ticket/${
+            this.selectedTicket.id
+          }/resolved`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ assigne_a_id: userId }),
+          }
+        );
+
+        const result = await response.json();
+        if (response.ok) {
+          // Mettre à jour l'état local du ticket
+          this.selectedTicket.statut = "resolu";
+          // Fermer la modale et recharger la liste
+          this.selectedTicket = null;
+          await this.fetchTickets();
+          this.showToast("success", "Vous avez résolu ce ticket");
+        } else {
+          this.showToast("error", result.message || "Erreur lors de la procédure");
+        }
+      } catch (error) {
+        console.error("Erreur :", error);
+        this.showToast("error", "Erreur lors de la procédure");
+      }
+    },
   },
 };
 </script>
@@ -1081,10 +1124,12 @@ tr {
   border-radius: 10px;
   padding: 10px 20px;
   cursor: pointer;
+  border: none;
 }
-.solved-btn-hover {
-  background-color: #4ade80;
-  transition:all 0.3s ease;
+.solved-btn:hover {
+  background-color: #25914c;
+  transition: all 1s ease;
+  transform: translateY(-2px);
 }
 @media (max-width: 1024px) {
   .main-content {

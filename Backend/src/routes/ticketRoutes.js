@@ -36,7 +36,7 @@ router.get('/:id', ticketController.getTicketDetails);
 // PUT /api/ticket/:id/take-charge - Prendre en charge un ticket
 router.put('/:id/take-charge', ticketController.takeCharge);
 
-// PUT /api/ticket/:id/Resolved - Marquer un ticket comme résolu
-router.put('/:id/Resolved', ticketController.isResolved);
+// PUT /api/ticket/:id/resolved - Marquer un ticket comme résolu
+router.put('/:id/resolved', ticketController.resolved);
 
 module.exports = router;

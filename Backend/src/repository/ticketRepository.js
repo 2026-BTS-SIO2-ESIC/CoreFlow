@@ -33,9 +33,9 @@ const TicketRepository = {
                 t.assigne_a_id,
                 t.created_at,
                 t.updated_at,
-                u.nom,
-                u.prenom,
-                u.departement
+                u.nom AS demandeur_nom,
+                u.prenom AS demandeur_prenom,
+                u.departement AS demandeur_departement
             FROM tickets t
             JOIN utilisateurs u ON t.demandeur_id = u.id
             ORDER BY t.id ASC`
@@ -54,9 +54,9 @@ const TicketRepository = {
                 t.demandeur_id,
                 t.created_at,
                 t.updated_at,
-                u.nom,
-                u.prenom,
-                u.departement
+                u.nom AS demandeur_nom,
+                u.prenom AS demandeur_prenom,
+                u.departement AS demandeur_departement
             FROM tickets t
             JOIN utilisateurs u ON t.demandeur_id = u.id
             WHERE t.categorie = 'it'
@@ -76,9 +76,9 @@ const TicketRepository = {
                 t.demandeur_id,
                 t.created_at,
                 t.updated_at,
-                u.nom,
-                u.prenom,
-                u.departement
+                u.nom AS demandeur_nom,
+                u.prenom AS demandeur_prenom,
+                u.departement AS demandeur_departement
             FROM tickets t
             JOIN utilisateurs u ON t.demandeur_id = u.id
             WHERE t.categorie = 'rh'
@@ -90,20 +90,37 @@ const TicketRepository = {
     // 5. Récupérer les tickets d'un utilisateur spécifique (Client)
     getByUserId: async (userId) => {
         const sql = `
-            SELECT t.*, u.nom, u.prenom, u.departement
+            SELECT
+                t.id,
+                t.titre,
+                t.description,
+                t.categorie,
+                t.statut,
+                t.priorite,
+                t.demandeur_id,
+                t.assigne_a_id,
+                t.created_at,
+                t.updated_at,
+                d.nom AS demandeur_nom,
+                d.prenom AS demandeur_prenom,
+                d.departement AS demandeur_departement,
+                a.nom AS assigne_nom,
+                a.prenom AS assigne_prenom,
+                a.departement AS assigne_departement
             FROM tickets t
-            JOIN utilisateurs u ON t.demandeur_id = u.id
-            WHERE t.demandeur_id = ?
+            JOIN utilisateurs d ON t.demandeur_id = d.id
+            LEFT JOIN utilisateurs a ON t.assigne_a_id = a.id
+            WHERE t.demandeur_id = ? OR t.assigne_a_id = ?
             ORDER BY t.created_at DESC`;
 
-        const [rows] = await pool.query(sql, [userId]);
+        const [rows] = await pool.query(sql, [userId, userId]);
         return rows;
     },
 
     // 6. Détails d'un ticket précis
     getById: async (idTicket) => {
         const sql = `
-            SELECT t.*, u.nom, u.prenom, u.departement
+            SELECT t.*, u.nom AS demandeur_nom, u.prenom AS demandeur_prenom, u.departement AS demandeur_departement
             FROM tickets t
             JOIN utilisateurs u ON t.demandeur_id = u.id
             WHERE t.id = ?`;

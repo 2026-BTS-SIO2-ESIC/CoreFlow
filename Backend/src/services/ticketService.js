@@ -40,7 +40,7 @@ const TicketService = {
     },
 
     // --- Mark ticket as resolved ---
-    resolveTicket: async (ticketId, userId) => {
+    resolvedTicket: async (ticketId, userId) => {
         return await TicketRepository.isResolved(ticketId, userId);
     },
 };

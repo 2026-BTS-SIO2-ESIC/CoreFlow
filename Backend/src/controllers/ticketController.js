@@ -89,12 +89,12 @@ exports.takeCharge = async (req, res) => {
   }
 };
 
-exports.isResolved = async (req, res) => {
+exports.resolved = async (req, res) => {
   try{
     const ticketId = req.params.id;
-    const userId = req.body.assigne_a_id;
+    const userId = req.user.id; // L'ID de l'employé qui marque le ticket comme résolu
 
-    const success = await TicketService.isResolved(ticketId, userId);
+    const success = await TicketService.resolvedTicket(ticketId, userId);
     if (!success) {
       return res.status(404).json({ success: false, message: "Ticket non trouvé ou non assigné à cet utilisateur" });
     }
