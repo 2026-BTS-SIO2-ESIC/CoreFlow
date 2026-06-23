@@ -4,7 +4,8 @@ class DocumentController {
     async createDocument(req, res) {
         try {
             // ✅ Version propre : une seule déclaration "const result"
-            const result = await documentService.addDocument(req.body, req.file);
+            console.log("TEST CREATION - ID envoyé au service :", req.user.id);
+            const result = await documentService.addDocument(req.body, req.file, req.user.id);
             
             res.status(201).json({ 
                 message: 'Document créé avec succès !',
@@ -19,10 +20,11 @@ class DocumentController {
     async getDocuments(req, res) {
         try {
             // SÉCURITÉ : On récupère le rôle de l'utilisateur connecté
+            console.log("TEST AFFICHAGE - Rôle :", req.user.role, "- ID Utilisateur :", req.user.id);
             const userRole = req.user ? req.user.role : 'employe'; 
             
             // On passe le rôle au service pour filtrer la requête SQL
-            const documents = await documentService.getAllDocuments(userRolereq.user.role, req.user.id);
+            const documents = await documentService.getAllDocuments(req.user.role, req.user.id);
             res.status(200).json(documents);
         } catch (error) {
             console.error('Erreur lors de la récupération des documents :', error);
@@ -53,6 +55,36 @@ class DocumentController {
         }
     }
 
+    async updateDocument(req, res) {
+        try {
+            const documentId = req.params.id;
+            const { titre, description, cible_role } = req.body;
+            
+            const role = req.user.role.toLowerCase();
+            
+            if (!['admin', 'rh', 'manager'].includes(role)) {
+                return res.status(403).json({ 
+                    message: "Accès refusé. Seuls les Managers, RH et Admins peuvent modifier un document." 
+                });
+            }
+
+            if (!titre || !cible_role) {
+                return res.status(400).json({ message: "Le titre et la cible sont obligatoires." });
+            }
+
+            const isUpdated = await documentService.updateDocument(documentId, titre, description, cible_role);
+            
+            if (!isUpdated) {
+                return res.status(404).json({ message: "Document introuvable." });
+            }
+
+            res.status(200).json({ message: "Le document a été mis à jour avec succès !" });
+
+        } catch (error) {
+            console.error('Erreur lors de la modification du document :', error);
+            res.status(500).json({ message: "Erreur interne du serveur" });
+        }
+    }
     async updateDocument(req, res) {
         try {
             const documentId = req.params.id;

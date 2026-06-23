@@ -18,7 +18,9 @@ class DocumentRepository {
     }
     
     async findAllDocuments(userRole, userId) {
-        const sql = `SELECT
+        // 1. On garde tes colonnes complètes (avec la consultation et le département)
+        // et on utilise LEFT JOIN comme ton binôme pour éviter de cacher un doc si l'auteur est supprimé
+        let sql = `SELECT
             d.id,
             d.titre,
             d.description,
@@ -30,34 +32,68 @@ class DocumentRepository {
             d.derniere_consultation,
             u.nom AS auteur_nom,
             u.prenom AS auteur_prenom,
-            u.departement AS service_nom
+            CASE d.service_id
+                WHEN 1 THEN 'Informatique'
+                WHEN 2 THEN 'Ressources Humaines'
+                WHEN 3 THEN 'Commercial'
+                ELSE 'Service inconnu'
+            END AS service_nom
         FROM documents d
-        INNER JOIN utilisateurs u ON d.auteur_id = u.id
-        WHERE d.cible_role = 'Tous' 
-           OR d.cible_role = ? 
-           OR d.auteur_id = ?
-           OR ? = 'admin'`;
-        const [rows] = await db.query(sql, [userRole, userId, userRole]);
+        LEFT JOIN utilisateurs u ON d.auteur_id = u.id
+        WHERE 1=1`; // Le WHERE 1=1 permet d'ajouter facilement des conditions "AND" ensuite
+
+        const params = [];
+        const role = userRole.toLowerCase();
+
+        if (role !== 'admin') {
+            if (role === 'rh') {
+                // Les RH voient les documents publics, les documents RH, ET leurs propres documents
+                sql += ` AND (d.cible_role IN (?, ?, ?) OR d.auteur_id = ?)`;
+                params.push('Tous', 'RH', 'rh', userId);
+            } else if (role === 'manager') {
+                // Les Managers voient les documents publics, les documents Manager, ET leurs propres documents
+                sql += ` AND (d.cible_role IN (?, ?, ?) OR d.auteur_id = ?)`;
+                params.push('Tous', 'Manager', 'manager', userId);
+            } else {
+                // Les employés normaux voient les documents publics ET leurs propres documents
+                sql += ` AND (d.cible_role = ? OR d.auteur_id = ?)`;
+                params.push('Tous', userId);
+            }
+        }
+
+        sql += ` ORDER BY d.created_at DESC`;
+
+        const [rows] = await db.query(sql, params);
         return rows;
     }
-    
-    async getDocumentById(id) {         
-        const query = 'SELECT * FROM documents WHERE id = ?';         
-        const [rows] = await db.query(query, [id]);         
-        return rows[0]; // Renvoie le document s'il existe, sinon undefined    
-    }     
-    
-    // Supprimer la ligne en BDD
-    async deleteDocument(id) {         
-        const query = 'DELETE FROM documents WHERE id = ?';         
-        const [result] = await db.query(query, [id]); 
-        return result.affectedRows; // Renvoie 1 si supprimé, 0 si non trouvé 
+    async getDocumentById(id) {
+        const sql = 'SELECT * FROM documents WHERE id = ?';
+        const [rows] = await db.query(sql, [id]);
+        return rows[0]; // Retourne le document ou undefined
+    }
+
+    async deleteDocument(id) {
+        const sql = 'DELETE FROM documents WHERE id = ?';
+        const [result] = await db.query(sql, [id]);
+        return result.affectedRows > 0;
     }
     async updateLastConsultation(id) {
-    const sql = 'UPDATE documents SET derniere_consultation = NOW() WHERE id = ?';
-    const [result] = await db.query(sql, [id]);
-    return result.affectedRows > 0;
-    }  
+        const sql = 'UPDATE documents SET derniere_consultation = NOW() WHERE id = ?';
+        const [result] = await db.query(sql, [id]);
+        return result.affectedRows > 0;
+    }
+    // Fonction pour mettre à jour un document en BDD
+    async updateDocument(id, titre, description, cible_role) {
+        // La requête SQL : on ajoute "derniere_consultation = NULL" pour réinitialiser la vue
+        const query = `
+            UPDATE documents 
+            SET titre = ?, description = ?, cible_role = ?, derniere_consultation = NULL 
+            WHERE id = ?
+        `;
+        // On exécute la requête
+        const [result] = await db.query(query, [titre, description, cible_role, id]);
+        return result.affectedRows > 0;
+    }
 }
 
 module.exports = new DocumentRepository();

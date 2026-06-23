@@ -61,10 +61,17 @@
               </thead>
               <tbody>
                 <tr v-for="doc in processedDocuments" :key="'desktop-'+doc.id" class="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
-                  <td class="text-gray-900 font-medium font-['Mulish'] text-[14px]" style="padding-top: 24px; padding-bottom: 24px;">{{ doc.titre }}</td>
+                  <td style="padding-top: 24px; padding-bottom: 24px;">
+                    <div class="text-gray-900 font-medium font-['Mulish'] text-[14px]">
+                      {{ doc.titre }}
+                    </div>
+                    <div class="text-gray-500 font-['Mulish'] text-[12px] mt-1">
+                      Par {{ doc.auteur_prenom }} {{ doc.auteur_nom }}
+                    </div>
+                  </td>
                   <td style="padding-top: 24px; padding-bottom: 24px;">
                     <span class="service-badge">
-                      {{ doc.service_nom || 'Général' }}
+                      {{ doc.service_nom }}
                     </span>
                   </td>
                   <td class="text-gray-600 font-['Mulish'] text-[14px]" style="padding-top: 24px; padding-bottom: 24px;">{{ doc.taille_ko }} Ko</td>
@@ -78,6 +85,14 @@
                       
                       <button @click="voir(doc)" class="action-btn" title="Voir">
                         <Eye :size="18" class="text-gray-600" />
+                      </button>
+                     
+                      <button 
+                        v-if="user && ['admin', 'rh', 'manager'].includes(user.role.toLowerCase())"
+                        @click="openEditModal(doc)" 
+                        class="action-btn" 
+                        title="Modifier">
+                        <Pencil :size="18" class="text-blue-600" />
                       </button>
                       
                       <button @click="confirmerSuppression(doc.id)" class="action-btn action-btn-danger" title="Supprimer">
@@ -119,11 +134,17 @@
                     <button @click="telecharger(doc)" class="action-btn">
                       <Download :size="18" class="text-gray-600" />
                     </button>
+                    <button 
+                      v-if="user && ['admin', 'rh', 'manager'].includes(user.role.toLowerCase())"
+                      @click="openEditModal(doc)" 
+                      class="action-btn">
+                      <Pencil :size="18" class="text-blue-600" />
+                    </button>
                   </div>
                 </div>
 
                 <div class="mobile-card-meta">
-                  <span class="service-badge mobile-badge">{{ doc.service_nom || 'Général' }}</span>
+                  <span class="service-badge mobile-badge">{{ doc.service_nom }}</span>
                   <span class="meta-item">• {{ doc.taille_ko }} Ko</span>
                   <span class="meta-item" style="width: 100%;">• Ajouté le {{ doc.date_affichage }}</span>
                   <span class="meta-item" style="width: 100%;">•{{ doc.derniere_consultation_affichage }}</span>
@@ -132,7 +153,7 @@
 
             </div>
           </div>
-          <div v-if="documents.length === 0" class="text-center text-gray-400 italic" style="padding-top: 64px; padding-bottom: 64px;">
+          <div v-if="processedDocuments.length === 0" class="text-center text-gray-400 italic" style="padding-top: 64px; padding-bottom: 64px;">
             Aucun document trouvé.
           </div>
         </div>
@@ -184,7 +205,6 @@
           </form>
         </div>
       </div>
-v
     </main>
   </div>
 </template>
@@ -192,7 +212,7 @@ v
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { Plus, Filter, Download, Eye, Trash2 } from 'lucide-vue-next';
+import { Plus, Filter, Download, Eye, Trash2, Pencil } from 'lucide-vue-next';
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Browser } from '@capacitor/browser';
@@ -223,25 +243,22 @@ const handleSwipe = (id, touchEndX) => {
     swipedDocId.value = null;
   }
 };
-// La liste des services
-const availableServices = ['Informatique', 'Commercial', 'Ressources Humaines', 'IT', 'Général'];
+// La liste des services (sans "IT")
+const availableServices = ['Informatique', 'Commercial', 'Ressources Humaines'];
 
-// La liste des formats pour le menu
-const availableFormats = ['PDF', 'Word', 'Excel', 'PowerPoint', 'Image', 'Texte', 'Autre'];
+// La liste des formats pour le menu (strictement ceux autorisés à l'ajout)
+const availableFormats = ['PDF', 'Word', 'Excel'];
 
-// Le traducteur 
+// Le traducteur allégé
 const getFormatName = (mimeType) => {
-  if (!mimeType) return 'Autre';
+  if (!mimeType) return 'Inconnu';
   
   const mime = mimeType.toLowerCase();
   if (mime.includes('pdf')) return 'PDF';
   if (mime.includes('word') || mime.includes('document')) return 'Word';
   if (mime.includes('excel') || mime.includes('sheet') || mime.includes('csv')) return 'Excel';
-  if (mime.includes('powerpoint') || mime.includes('presentation')) return 'PowerPoint';
-  if (mime.includes('image')) return 'Image';
-  if (mime.includes('text')) return 'Texte';
   
-  return 'Autre';
+  return 'Inconnu';
 };
 
 
@@ -484,11 +501,10 @@ const closeEditModal = () => {
 };
 
 const submitEdit = async () => {
- const submitEdit = async () => {
   try {
     const token = localStorage.getItem('token');
     
-    // On fait juste un PUT avec les données textuelles (Mise à jour classique)
+    // On fait un PUT avec les données textuelles
     const response = await fetch(`${apiBase}/api/documents/${documentToEdit.value.id}`, {
       method: 'PUT',
       headers: {
@@ -503,15 +519,13 @@ const submitEdit = async () => {
     });
 
     if (response.ok) {
-      // Mise à jour visuelle du tableau sans recharger la page
-      const index = documents.value.findIndex(d => d.id === documentToEdit.value.id);
-      if (index !== -1) {
-        documents.value[index].titre = documentToEdit.value.titre;
-        documents.value[index].description = documentToEdit.value.description;
-        documents.value[index].cible_role = documentToEdit.value.cible_role;
-      }
-      closeEditModal();
+      closeEditModal(); // On ferme la fenêtre
       alert("Document modifié avec succès !");
+      
+      // 👇 LA MAGIE EST ICI 👇
+      // On redemande au serveur la liste fraîche (qui contient le "Jamais consulté")
+      fetchDocuments(); 
+      
     } else {
       alert("Erreur lors de la modification du document.");
     }
@@ -519,7 +533,6 @@ const submitEdit = async () => {
     console.error("Erreur réseau :", error);
     alert("Impossible de contacter le serveur.");
   }
-};
 };
 
 
@@ -746,5 +759,71 @@ onMounted(() => {
 /* La classe CSS qui est ajoutée par le Javascript quand on glisse ! */
 .swipeable-content.is-swiped {
   transform: translateX(-100px); /* Décale la carte de 100px vers la gauche */
+}
+/* =========================================
+   MODALE DE MODIFICATION (100% CSS)
+   ========================================= */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 20px;
+}
+
+.modal-card {
+  background-color: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  padding: 40px;
+  width: 100%;
+  max-width: 550px;
+}
+
+.modal-title {
+  color: #111827;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 24px;
+  margin-bottom: 24px;
+}
+
+.form-group {
+  margin-bottom: 24px;
+}
+
+.form-group label {
+  display: block;
+  color: #374151;
+  font-family: 'Mulish', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #F3F4F6;
+}
+
+@media (max-width: 768px) {
+  .modal-overlay { padding: 16px; }
+  .modal-card { padding: 24px 16px; }
+  .modal-title { font-size: 20px; }
+  .modal-actions {
+    flex-direction: column-reverse;
+    gap: 12px;
+  }
+  .btn-cancel, .btn-submit {
+    width: 100%;
+    text-align: center;
+  }
 }
 </style>

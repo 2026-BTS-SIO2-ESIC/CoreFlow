@@ -46,19 +46,19 @@
               <label>Service associé</label>
               <select v-model="service_id" required class="custom-input bg-white">
                 <option value="" disabled>Sélectionnez un service</option>
-                <option value="1">IT</option>
+                <option value="1">Informatique</option>
                 <option value="2">Ressources Humaines</option>
                 <option value="3">Commercial</option>
-                <option value="4">Direction</option>
               </select>
             </div>
 
             <div class="form-group">
               <label>Niveau de confidentialité</label>
               <select v-model="cible_role" class="custom-input bg-white">
-                <option value="Tous">Public</option>
-                <option value="Admin">Admin</option>
-                <option value="RH">RH</option>
+                <option value="Tous">Tous les employés (Public)</option>
+                <option value="admin">Administrateurs uniquement</option>
+                <option value="rh">Ressources Humaines</option>
+                <option value="manager">Managers</option>
               </select>
             </div>
 
@@ -156,10 +156,14 @@ const envoyerDocument = async () => {
   formData.append('fichier', fichierSelectionne.value); 
 
   try {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${import.meta.env.VITE_API_BASE}/api/documents`, {
-      method: 'POST',
-      body: formData
-    });
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`
+  },
+  body: formData
+});
 
     const data = await response.json();
 

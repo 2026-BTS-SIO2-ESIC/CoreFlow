@@ -8,7 +8,7 @@ class DocumentService {
     // ==========================================
     // 📝 AJOUTER UN NOUVEAU DOCUMENT
     // ==========================================
-    async addDocument(textData, fichierData) {
+    async addDocument(textData, fichierData, auteurId) {
         // Vérification de sécurité : on s'assure que Multer a bien capturé un fichier
         if (!fichierData) {
             throw new Error('Aucun fichier reçu');
@@ -22,7 +22,7 @@ class DocumentService {
             fichier_path: fichierData.filename, // Nom unique généré par Multer (ex: 163000_doc.pdf)
             type_fichier: fichierData.mimetype, // Type MIME (ex: application/pdf)
             taille: fichierData.size, // Taille brute en octets
-            auteur_id: textData.auteur_id || 1, 
+            auteur_id: auteurId, 
             service_id: textData.service_id || 1 
         };
         
@@ -36,9 +36,9 @@ class DocumentService {
     // ==========================================
     // 🔍 RÉCUPÉRER TOUS LES DOCUMENTS
     // ==========================================
-    async getAllDocuments(userRole) {
+    async getAllDocuments(userRole, userId) {
         // 1. On récupère la liste brute depuis la base de données (déjà filtrée par rôle)
-        const documents = await documentRepository.getAllDocumentsWithAuthor(userRole);
+        const documents = await documentRepository.findAllDocuments(userRole, userId);
         
         // 2. On formate les données pour mâcher le travail du Frontend (Vue.js)
         return documents.map(doc => ({
