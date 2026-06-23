@@ -14,7 +14,7 @@
 
       <div class="filters">
         <button
-          v-for="f in ['Tout', 'ouvert', 'en_cours', 'resolu', 'ferme']"
+          v-for="f in ['Tout', 'ouvert', 'en_cours', 'resolu']"
           :key="f"
           :class="['filter-btn', { active: currentFilter === f }]"
           @click="currentFilter = f"
@@ -47,7 +47,7 @@
               <th>Titre</th>
               <th>Demandeur</th>
               <th>Statut</th>
-              <th>Dernière mis à jour</th>
+              <th>Dernière mise à jour</th>
               <th>Action</th>
             </tr>
           </thead>
@@ -203,6 +203,7 @@
                 <strong>Créé le :</strong>
                 {{ dayjs(selectedTicket.created_at).format("DD MMMM YYYY à HH:mm") }}
               </p>
+              <button @click="closeTicket" class="btn-close" v-if="user.id === selectedTicket.demandeur_id">Supprimer</button>
             </div>
           </div>
 
@@ -258,7 +259,7 @@ export default {
       const tickets = Array.isArray(this.tickets) ? this.tickets : [];
 
       const statuses = tickets.map((ticket) => this.normalizeStatus(ticket?.statut));
-      const traites = statuses.filter((status) => ["resolu", "ferme"].includes(status))
+      const traites = statuses.filter((status) => ["resolu"].includes(status))
         .length;
       const enAttente = statuses.filter((status) =>
         ["ouvert", "en_cours"].includes(status)
@@ -418,7 +419,6 @@ export default {
         ouvert: "En attente",
         en_cours: "En cours",
         resolu: "Résolu",
-        ferme: "Fermé",
       };
 
       return map[normalized] || status;
@@ -440,7 +440,6 @@ export default {
         en_attente: "status-open",
         en_cours: "status-progress",
         resolu: "status-resolved",
-        ferme: "status-closed",
       };
 
       return classMap[normalized] || "status-open";
@@ -575,6 +574,46 @@ export default {
       } catch (error) {
         console.error("Erreur :", error);
         this.showToast("error", "Erreur lors de la prise en charge");
+      }
+    },
+    async closeTicket() {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        this.$router.push("/login");
+        return;
+      }
+
+      const userStr = localStorage.getItem("user");
+      if (!userStr) {
+        this.$router.push("/login");
+        return;
+      }
+
+      const user = JSON.parse(userStr);
+      const userId = user.id;
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_BASE}/api/ticket/${this.selectedTicket.id}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        const result = await response.json();
+        if (response.ok) {
+          // Retirer localement le ticket et fermer la modale
+          this.tickets = this.tickets.filter((t) => t.id !== this.selectedTicket.id);
+          this.selectedTicket = null;
+          this.showToast("success", result.message || "Ticket supprimé");
+        } else {
+          this.showToast("error", result.message || "Impossible de supprimer le ticket");
+        }
+      } catch (error) {
+        console.error("Erreur :", error);
+        this.showToast("error", "Erreur lors de la suppression du ticket");
       }
     },
     async isResolved() {
@@ -1118,6 +1157,20 @@ tr {
   box-shadow: 0 2px 8px rgba(13, 148, 136, 0.25);
 }
 
+.btn-close {
+  background-color: #ef4444;
+  color: white;
+  border-radius: 10px;
+  padding: 10px 20px;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-close:hover {
+  background-color: #dc2626;
+  transition: all 0.4s ease;
+}
+
 .solved-btn {
   background-color: gray;
   color: white;
@@ -1128,7 +1181,7 @@ tr {
 }
 .solved-btn:hover {
   background-color: #25914c;
-  transition: all 1s ease;
+  transition: all 0.4s ease;
   transform: translateY(-2px);
 }
 @media (max-width: 1024px) {

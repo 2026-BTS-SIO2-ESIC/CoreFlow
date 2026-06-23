@@ -104,3 +104,17 @@ exports.resolved = async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 }
+
+exports.deleteTicket = async (req, res) => {
+  try {
+    const ticketId = req.params.id;
+    const success = await TicketService.deleteTicket(ticketId);
+    if (!success) {
+      return res.status(404).json({ success: false, message: "Ticket non trouvé" });
+    }
+    res.status(200).json({ success: true, message: "Ticket supprimé avec succès" });
+  } catch (error) {
+    console.error('Erreur lors de la suppression du ticket:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+}

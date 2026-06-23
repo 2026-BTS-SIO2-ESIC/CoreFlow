@@ -141,7 +141,14 @@ const TicketRepository = {
         const sql = 'UPDATE tickets SET statut = "resolu", updated_at = NOW() WHERE id = ? AND assigne_a_id = ?';
         const [result] = await pool.query(sql, [ticketId, userId]);
         return result.affectedRows > 0; // Retourne true si la mise à jour a réussi
-    }
+    },
+
+    // 9. Supprimer un ticket
+    DeleteTicket: async (ticketId) => {
+        const sql = 'DELETE FROM tickets WHERE id = ?';
+        const [result] = await pool.query(sql, [ticketId]);
+        return result.affectedRows > 0; // Retourne true si la suppression a réussi
+    },
 };
 
 module.exports = TicketRepository;

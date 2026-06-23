@@ -39,4 +39,7 @@ router.put('/:id/take-charge', ticketController.takeCharge);
 // PUT /api/ticket/:id/resolved - Marquer un ticket comme résolu
 router.put('/:id/resolved', ticketController.resolved);
 
+// DELETE /api/ticket/:id - Supprimer un ticket
+router.delete('/:id', ticketController.deleteTicket);
+
 module.exports = router;

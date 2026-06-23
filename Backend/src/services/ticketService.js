@@ -43,6 +43,10 @@ const TicketService = {
     resolvedTicket: async (ticketId, userId) => {
         return await TicketRepository.isResolved(ticketId, userId);
     },
+    // --- Delete a ticket ---
+    deleteTicket: async (ticketId) => {
+        return await TicketRepository.DeleteTicket(ticketId);
+    }
 };
 
 module.exports = TicketService;
