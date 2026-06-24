@@ -72,7 +72,7 @@ exports.annulerConge = async (req, res) => {
 exports.valider = async (req, res) => {
   try {
     const commentaire = req.body.commentaire || null;
-    await congesService.valider(req.params.id, commentaire)
+    await congesService.valider(req.params.id, commentaire, req.user?.id)
     return res.json({ message: "Congé validé" })
   } catch (error) {
     console.error('Erreur valider :', error.message);
@@ -93,6 +93,20 @@ exports.refuser = async (req, res) => {
     return res.status(error.statusCode || 500).json({
       success: false,
       message: error.message || "Erreur serveur lors du refus du congé"
+    });
+  }
+}
+
+exports.rewardAfter3refus = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    await congesService.rewardAfter3refus(userId)
+    return res.json({ message: "Récompense d'une 1/2 journée appliquée après 3 refus!" })
+  } catch (error) {
+    console.error('Erreur rewardAfter3refus :', error.message);
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Erreur serveur lors de l'application de la récompense après 3 refus"
     });
   }
 }
