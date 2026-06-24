@@ -47,7 +47,7 @@
                 <div class="liste-header">
                     <h2>Mes demandes</h2>
                     <button type="button" class="btn btn-secondary" @click="chargerDemandes">
-                         Rafraîchir
+                        Rafraîchir
                     </button>
                 </div>
 
@@ -139,6 +139,13 @@ import DashboardSidebar from '../components/DashboardSidebar.vue';
 const router = useRouter();
 const user = ref(null);
 
+function getConnectedUserId() {
+    if (!user.value) return null;
+    const rawId = user.value.id ?? user.value.user_id;
+    const parsedId = Number(rawId);
+    return Number.isNaN(parsedId) ? rawId : parsedId;
+}
+
 const demandes = ref([]);
 const loading = ref(false);
 const solde = ref(null);
@@ -146,7 +153,12 @@ const solde = ref(null);
 async function chargerDemandes() {
     loading.value = true;
     try {
-        demandes.value = await getMesConges();
+        const allDemandes = await getMesConges();
+        const connectedUserId = getConnectedUserId();
+
+        demandes.value = connectedUserId == null
+            ? []
+            : allDemandes.filter((d) => Number(d.user_id) === Number(connectedUserId));
     } catch (e) {
         messageType.value = "error";
         message.value = e.message;

@@ -14,13 +14,13 @@
     "format": "prettier --write --experimental-cli src/"
   },
   "dependencies": {
-    "@capacitor/android": "^8.2.0",
-    "@capacitor/cli": "^8.2.0",
-    "@capacitor/core": "^8.2.0",
+    "@capacitor/android": "^8.3.0",
+    "@capacitor/cli": "^8.3.0",
+    "@capacitor/core": "^8.3.0",
     "axios": "^1.13.6",
+    "choco": "^0.2.1",
     "dayjs": "^1.11.20",
     "lucide-vue-next": "^0.576.0",
-    "choco": "^0.2.1",
     "pinia": "^3.0.4",
     "sweetalert2": "^11.26.24",
     "tailwind": "^4.0.0",

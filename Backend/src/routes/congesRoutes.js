@@ -11,5 +11,7 @@ router.put('/:id/annuler', authenticate, congesController.annulerConge);
 router.get('/stats', authenticate, congesController.getStats);
 router.put('/:id/valider', authenticate, congesController.valider);
 router.put('/:id/refuser', authenticate, congesController.refuser);
+router.put('/:id/annuler-validation', authenticate, congesController.annulerValidation);
+router.put('/:id/annuler-refus', authenticate, congesController.annulerRefus);
 
 module.exports = router;

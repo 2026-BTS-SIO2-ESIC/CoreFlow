@@ -71,8 +71,9 @@ exports.annulerConge = async (req, res) => {
 
 exports.valider = async (req, res) => {
   try {
-    await congesService.valider(req.params.id)
-    res.json({ message: "Congé validé" })
+    const commentaire = req.body.commentaire || null;
+    await congesService.valider(req.params.id, commentaire)
+    return res.json({ message: "Congé validé" })
   } catch (error) {
     console.error('Erreur valider :', error.message);
     return res.status(error.statusCode || 500).json({
@@ -84,13 +85,40 @@ exports.valider = async (req, res) => {
 
 exports.refuser = async (req, res) => {
   try {
-    await congesService.refuser(req.params.id)
-    res.json({ message: "Congé refusé" })
+    const commentaire = req.body.commentaire || null;
+    await congesService.refuser(req.params.id, commentaire)
+    return res.json({ message: "Congé refusé" })
   } catch (error) {
     console.error('Erreur refuser :', error.message);
     return res.status(error.statusCode || 500).json({
       success: false,
       message: error.message || "Erreur serveur lors du refus du congé"
+    });
+  }
+}
+
+exports.annulerValidation = async (req, res) => {
+  try {
+    await congesService.annulerValidation(req.params.id)
+    return res.json({ message: "Validation annulée" })
+  } catch (error) {
+    console.error('Erreur annulerValidation :', error.message);
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Erreur serveur lors de l'annulation de la validation"
+    });
+  }
+}
+
+exports.annulerRefus = async (req, res) => {
+  try {
+    await congesService.annulerRefus(req.params.id)
+    return res.json({ message: "Refus annulé" })
+  } catch (error) {
+    console.error('Erreur annulerRefus :', error.message);
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Erreur serveur lors de l'annulation du refus"
     });
   }
 }

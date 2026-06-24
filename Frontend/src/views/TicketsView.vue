@@ -11,12 +11,8 @@
       </header>
 
       <div class="filters">
-        <button
-          v-for="f in ['Tout', 'ouvert', 'en_cours', 'resolu', 'ferme']"
-          :key="f"
-          :class="['filter-btn', { active: currentFilter === f }]"
-          @click="currentFilter = f"
-        >
+        <button v-for="f in ['Tout', 'ouvert', 'en_cours', 'resolu', 'ferme']" :key="f"
+          :class="['filter-btn', { active: currentFilter === f }]" @click="currentFilter = f">
           {{ formatStatus(f) }}
         </button>
       </div>
@@ -93,12 +89,7 @@
           <form @submit.prevent="submitTicket">
             <div class="form-group">
               <label>Titre</label>
-              <input
-                v-model="newTicket.titre"
-                type="text"
-                placeholder="Sujet de votre demande"
-                required
-              />
+              <input v-model="newTicket.titre" type="text" placeholder="Sujet de votre demande" required />
             </div>
 
             <div class="form-group">
@@ -186,8 +177,9 @@
 // 1. Importations
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
-import Swal from 'sweetalert2'
 import DashboardSidebar from '@/components/DashboardSidebar.vue'
+import { apiUrl } from '@/config/api'
+import { showErrorAlert, swalToast } from '@/utils/swal'
 import 'dayjs/locale/fr' // Pour avoir les textes en français
 
 // 2. Configuration du plugin
@@ -258,10 +250,7 @@ export default {
     }
 
     await this.fetchTickets()
-    // const API = '${import.meta.env.VITE_API_BASE}/api/ticket/tickets' // on définit l'URL de l'API pour récupérer les tickets
-    // const API_It = '${import.meta.env.VITE_API_BASE}/api/ticket/itTickets' // on définit l'URL de l'API pour récupérer les tickets
-    // const API_Rh = '${import.meta.env.VITE_API_BASE}/api/ticket/rhTickets'
-    // let url = '${import.meta.env.VITE_API_BASE}/api/tickets/my-tickets'
+    // Endpoints désormais centralisés via src/config/api.js
     // if (role === 'it') {
     //   url = API_It
     // } else if (role === 'rh') {
@@ -278,7 +267,7 @@ export default {
 
     // try {
     //   const token = localStorage.getItem('token')
-    //   //'${import.meta.env.VITE_API_BASE}/api/tickets/my-tickets'
+    //   // URL centralisée via src/config/api.js
     //   const response = await fetch(url, {
     //     method: 'GET',
     //     headers: {
@@ -310,7 +299,7 @@ export default {
         // Afficher les tickets de l'utilisateur connecté
         try {
           const token = localStorage.getItem('token')
-          const response = await fetch(`${import.meta.env.VITE_API_BASE}/api/ticket/my-tickets`, {
+          const response = await fetch(apiUrl('ticket/my-tickets'), {
             method: 'GET',
             headers: {
               Authorization: `Bearer ${token}`,
@@ -321,16 +310,19 @@ export default {
           if (response.ok) {
             this.tickets = Array.isArray(result.data) ? result.data : []
           } else {
-            alert('Impossible de charger vos tickets.')
+            await showErrorAlert({
+              title: 'Chargement impossible',
+              text: 'Impossible de charger vos tickets.',
+            })
           }
         } catch (err) {
           console.error('Erreur de chargement des tickets', err)
         }
       } else {
-        const API = `${import.meta.env.VITE_API_BASE}/api/ticket/tickets` // tous les tickets (admin/manager)
-        const API_It = `${import.meta.env.VITE_API_BASE}/api/ticket/itTickets` // tickets IT
-        const API_Rh = `${import.meta.env.VITE_API_BASE}/api/ticket/rhTickets` // tickets RH
-        let url = `${import.meta.env.VITE_API_BASE}/api/ticket/my-tickets` // par défaut, on affiche les tickets de l'utilisateur connecté (pour les rôles autres que admin/manager)
+        const API = apiUrl('ticket/tickets') // tous les tickets (admin/manager)
+        const API_It = apiUrl('ticket/itTickets') // tickets IT
+        const API_Rh = apiUrl('ticket/rhTickets') // tickets RH
+        let url = apiUrl('ticket/my-tickets')
         if (role === 'it') {
           url = API_It
         } else if (role === 'rh') {
@@ -350,7 +342,10 @@ export default {
           if (response.ok) {
             this.tickets = Array.isArray(result.data) ? result.data : []
           } else {
-            alert('Impossible de charger les tickets.')
+            await showErrorAlert({
+              title: 'Chargement impossible',
+              text: 'Impossible de charger les tickets.',
+            })
           }
         } catch (err) {
           console.error('Erreur de chargement des tickets', err)
@@ -407,14 +402,9 @@ export default {
     },
 
     showToast(icon, title) {
-      Swal.fire({
-        toast: true,
-        position: 'top-end',
+      swalToast.fire({
         icon,
         title,
-        showConfirmButton: false,
-        timer: 2500,
-        timerProgressBar: true,
       })
     },
 
@@ -422,7 +412,7 @@ export default {
     async showDetails(id) {
       try {
         const token = localStorage.getItem('token')
-        const response = await fetch(`${import.meta.env.VITE_API_BASE}/api/ticket/${id}`, {
+        const response = await fetch(apiUrl(`ticket/${id}`), {
           method: 'GET',
           headers: {
             Authorization: `Bearer ${token}`,
@@ -433,7 +423,10 @@ export default {
         if (response.ok) {
           this.selectedTicket = result.data
         } else {
-          alert('Impossible de charger les détails du ticket.')
+          await showErrorAlert({
+            title: 'Détails indisponibles',
+            text: 'Impossible de charger les détails du ticket.',
+          })
         }
       } catch (error) {
         console.error('Erreur détails:', error)
@@ -444,7 +437,7 @@ export default {
       try {
         const token = localStorage.getItem('token')
         const userStr = JSON.parse(localStorage.getItem('user'))
-        const response = await fetch(`${import.meta.env.VITE_API_BASE}/api/ticket`, {
+        const response = await fetch(apiUrl('ticket'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -662,14 +655,17 @@ tr {
   background-color: #fee2e2;
   color: #ef4444;
 }
+
 .status-open {
   background-color: #f3f4f6;
   color: #6b7280;
 }
+
 .status-resolved {
   background-color: #dcfce7;
   color: #22c55e;
 }
+
 .status-progress {
   background-color: #fef3c7;
   color: #d97706;
@@ -740,12 +736,12 @@ tr {
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.5);
+  /* Fond semi-transparent */
   display: flex;
   justify-content: center;
-  align-items: flex-start; /* Changé de 'center' à 'flex-start' pour permettre le scroll naturel */
-  padding: 20px;           /* Espace de sécurité pour ne pas coller aux bords */
-  overflow-y: auto;        /* Active le scroll sur l'overlay si le contenu dépasse */
+  align-items: center;
   z-index: 2000;
+  /* Doit être supérieur à la sidebar */
 }
 
 /* Boîte de la modale */
@@ -841,13 +837,15 @@ tr {
 
 /* État initial (Entrée) */
 .fade-enter-from .modal-content {
-  transform: scale(0.7) translateY(40px); /* Part de plus petit et plus bas */
+  transform: scale(0.7) translateY(40px);
+  /* Part de plus petit et plus bas */
   opacity: 0;
 }
 
 /* État final (Sortie) */
 .fade-leave-to .modal-content {
-  transform: scale(0.9) translateY(-20px); /* Remonte un peu en disparaissant */
+  transform: scale(0.9) translateY(-20px);
+  /* Remonte un peu en disparaissant */
   opacity: 0;
 }
 
@@ -901,7 +899,8 @@ tr {
   border: 1px solid #e5e7eb;
   line-height: 1.6;
   color: #374151;
-  white-space: pre-wrap; /* Préserve les retours à la ligne de l'utilisateur */
+  white-space: pre-wrap;
+  /* Préserve les retours à la ligne de l'utilisateur */
   min-height: 100px;
   font-size: 14px;
 }

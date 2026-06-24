@@ -3,33 +3,18 @@
     <Transition name="modal">
       <div v-if="show" class="modal-overlay">
         <div class="modal-backdrop" aria-hidden="true" @click="$emit('close')" />
-        <div
-          class="modal-box"
-          role="dialog"
-          @click.stop
-          aria-labelledby="detail-modal-title"
-          aria-modal="true"
-        >
+        <div class="modal-box" role="dialog" @click.stop aria-labelledby="detail-modal-title" aria-modal="true">
           <div class="modal-header">
             <div class="header-icon">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </div>
             <h2 id="detail-modal-title">Détails de l'événement</h2>
             <button type="button" class="btn-close" aria-label="Fermer" @click="$emit('close')">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M6 18L18 6M6 6l12 12"
-                />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
@@ -41,12 +26,8 @@
             </div>
             <div v-else-if="error" class="detail-error">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               {{ error }}
             </div>
@@ -64,12 +45,8 @@
               <div class="detail-section">
                 <h4 class="section-title">
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   Horaires
                 </h4>
@@ -77,12 +54,8 @@
                   <div class="detail-item">
                     <span class="item-icon item-icon-start">
                       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </span>
                     <div>
@@ -93,12 +66,8 @@
                   <div class="detail-item">
                     <span class="item-icon item-icon-end">
                       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </span>
                     <div>
@@ -112,18 +81,10 @@
               <div v-if="event.lieu" class="detail-section">
                 <h4 class="section-title">
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                    />
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                   Lieu
                 </h4>
@@ -133,39 +94,25 @@
               <div class="detail-section detail-meta">
                 <div class="meta-item" v-if="event.nb_places_max != null">
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                    />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
-                  <span
-                    >{{ event.nb_places_max }} place{{
-                      event.nb_places_max > 1 ? 's' : ''
+                  <span>{{ event.nb_places_max }} place{{
+                    event.nb_places_max > 1 ? 's' : ''
                     }}
-                    max</span
-                  >
+                    max</span>
                 </div>
                 <div class="meta-item">
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                    />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
                   <span>{{ event.est_obligatoire ? 'Obligatoire' : 'Optionnel' }}</span>
                 </div>
                 <div class="meta-item">
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                    />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                   </svg>
                   <span>{{ event.niveau === '1' ? 'Entreprise' : 'Département' }}</span>
                 </div>
@@ -174,12 +121,8 @@
               <div v-if="canEdit" class="detail-actions">
                 <button type="button" class="btn-edit" @click="startEdit">
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                    />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
                   Modifier
                 </button>
@@ -265,19 +208,9 @@
 
           <div v-if="canDelete" class="modal-footer">
             <button @click="handleDelete" :disabled="deleting" class="btn-delete-full">
-              <svg
-                v-if="!deleting"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                width="20"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                />
+              <svg v-if="!deleting" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
               <span>{{ deleting ? 'Suppression...' : 'Supprimer cet événement' }}</span>
             </button>
@@ -290,6 +223,7 @@
 
 <script>
 import { API_URL } from '../composables/useAuth'
+import { confirmAction, showErrorAlert, showInfoAlert } from '../utils/swal'
 
 const TYPE_LABELS = {
   reunion: 'Réunion',
@@ -408,7 +342,11 @@ export default {
     async handleDelete() {
       if (!this.event?.id || !this.canDelete || this.deleting) return
 
-      const confirmed = window.confirm('Êtes-vous sûr de vouloir supprimer cet événement ?')
+      const confirmed = await confirmAction({
+        title: 'Supprimer cet événement ?',
+        text: 'Cette action est irréversible.',
+        confirmButtonText: 'Oui, supprimer',
+      })
       if (!confirmed) return
 
       this.deleting = true
@@ -436,7 +374,10 @@ export default {
         this.$emit('updated')
         this.$emit('close')
       } catch (e) {
-        alert(e?.message || "Impossible de supprimer l'événement.")
+        await showErrorAlert({
+          title: 'Suppression impossible',
+          text: e?.message || "Impossible de supprimer l'événement.",
+        })
       } finally {
         this.deleting = false
       }
@@ -453,7 +394,10 @@ export default {
       this.updateError = null
     },
     async handleUpdate() {
-      alert("La modification d'événement n'est pas disponible pour le moment.")
+      await showInfoAlert({
+        title: 'Fonction à venir',
+        text: "La modification d'événement n'est pas disponible pour le moment.",
+      })
     },
   },
 }
@@ -469,12 +413,14 @@ export default {
   justify-content: center;
   padding: 1rem;
 }
+
 .modal-backdrop {
   position: absolute;
   inset: 0;
   background: rgba(15, 23, 42, 0.5);
   backdrop-filter: blur(4px);
 }
+
 .modal-box {
   position: relative;
   width: 100%;
@@ -495,6 +441,7 @@ export default {
   border-radius: 16px 16px 0 0;
   color: #fff;
 }
+
 .header-icon {
   width: 2.5rem;
   height: 2.5rem;
@@ -504,10 +451,12 @@ export default {
   background: rgba(255, 255, 255, 0.2);
   border-radius: 10px;
 }
+
 .header-icon svg {
   width: 1.35rem;
   height: 1.35rem;
 }
+
 .modal-header h2 {
   margin: 0;
   flex: 1;
@@ -515,6 +464,7 @@ export default {
   font-weight: 600;
   color: #fff;
 }
+
 .btn-close {
   width: 2rem;
   height: 2rem;
@@ -529,9 +479,11 @@ export default {
   justify-content: center;
   transition: background 0.2s ease;
 }
+
 .btn-close:hover {
   background: rgba(255, 255, 255, 0.35);
 }
+
 .btn-close svg {
   width: 1.125rem;
   height: 1.125rem;
@@ -550,6 +502,7 @@ export default {
   color: #64748b;
   font-size: 0.9375rem;
 }
+
 .spinner {
   width: 2.5rem;
   height: 2.5rem;
@@ -558,6 +511,7 @@ export default {
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -575,6 +529,7 @@ export default {
   border-radius: 12px;
   font-size: 0.9375rem;
 }
+
 .detail-error svg {
   width: 1.5rem;
   height: 1.5rem;
@@ -594,6 +549,7 @@ export default {
   gap: 0.5rem 0.75rem;
   margin-bottom: 0.25rem;
 }
+
 .detail-type-badge {
   padding: 0.25rem 0.6rem;
   font-size: 0.6875rem;
@@ -604,6 +560,7 @@ export default {
   background: #ccfbf1;
   border-radius: 6px;
 }
+
 .detail-title {
   width: 100%;
   margin: 0;
@@ -612,6 +569,7 @@ export default {
   color: #0f172a;
   line-height: 1.3;
 }
+
 .detail-badge {
   display: inline-flex;
   align-items: center;
@@ -620,18 +578,22 @@ export default {
   font-weight: 600;
   border-radius: 8px;
 }
+
 .badge-planifie {
   background: #e0f2fe;
   color: #0369a1;
 }
+
 .badge-en_cours {
   background: #fef3c7;
   color: #b45309;
 }
+
 .badge-termine {
   background: #f1f5f9;
   color: #475569;
 }
+
 .badge-annule {
   background: #fee2e2;
   color: #b91c1c;
@@ -654,6 +616,7 @@ export default {
   border-radius: 12px;
   border: 1px solid #e2e8f0;
 }
+
 .section-title {
   display: flex;
   align-items: center;
@@ -665,6 +628,7 @@ export default {
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
+
 .section-title svg {
   width: 1rem;
   height: 1rem;
@@ -676,12 +640,14 @@ export default {
   flex-direction: column;
   gap: 0.5rem;
 }
+
 .detail-item {
   display: flex;
   align-items: flex-start;
   gap: 0.75rem;
   padding: 0.5rem 0;
 }
+
 .item-icon {
   width: 2rem;
   height: 2rem;
@@ -691,28 +657,34 @@ export default {
   border-radius: 8px;
   flex-shrink: 0;
 }
+
 .item-icon svg {
   width: 1rem;
   height: 1rem;
 }
+
 .item-icon-start {
   background: #ccfbf1;
   color: #0d9488;
 }
+
 .item-icon-end {
   background: #e0f2fe;
   color: #0284c7;
 }
+
 .detail-item div {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
 }
+
 .item-label {
   font-size: 0.75rem;
   font-weight: 500;
   color: #94a3b8;
 }
+
 .item-value {
   font-size: 0.9375rem;
   font-weight: 500;
@@ -731,6 +703,7 @@ export default {
   gap: 0.75rem 1.25rem;
   padding: 1rem 1.25rem;
 }
+
 .meta-item {
   display: flex;
   align-items: center;
@@ -738,6 +711,7 @@ export default {
   font-size: 0.875rem;
   color: #475569;
 }
+
 .meta-item svg {
   width: 1.125rem;
   height: 1.125rem;
@@ -749,6 +723,7 @@ export default {
   padding-top: 1rem;
   border-top: 1px solid #e2e8f0;
 }
+
 .btn-edit {
   display: inline-flex;
   align-items: center;
@@ -765,10 +740,12 @@ export default {
     background 0.2s,
     color 0.2s;
 }
+
 .btn-edit:hover {
   background: #99f6e4;
   color: #0f766e;
 }
+
 .btn-edit svg {
   width: 1rem;
   height: 1rem;
@@ -777,9 +754,11 @@ export default {
 .detail-edit-form {
   padding: 1rem 0;
 }
+
 .detail-edit-form .form-section {
   margin-bottom: 1rem;
 }
+
 .detail-edit-form label {
   display: block;
   font-size: 0.8125rem;
@@ -787,6 +766,7 @@ export default {
   color: #475569;
   margin-bottom: 0.35rem;
 }
+
 .detail-edit-form input,
 .detail-edit-form select,
 .detail-edit-form textarea {
@@ -797,15 +777,18 @@ export default {
   border-radius: 8px;
   background: #fff;
 }
+
 .detail-edit-form textarea {
   resize: vertical;
   min-height: 4rem;
 }
+
 .detail-edit-form .form-grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
 }
+
 .detail-edit-form .form-error {
   color: #b91c1c;
   font-size: 0.875rem;
@@ -814,6 +797,7 @@ export default {
   background: #fef2f2;
   border-radius: 8px;
 }
+
 .detail-edit-form .form-actions {
   display: flex;
   gap: 0.75rem;
@@ -821,6 +805,7 @@ export default {
   padding-top: 1rem;
   border-top: 1px solid #e2e8f0;
 }
+
 .detail-edit-form .form-actions button {
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
@@ -829,22 +814,27 @@ export default {
   cursor: pointer;
   transition: background 0.2s;
 }
+
 .detail-edit-form .form-actions button[type='button'] {
   background: #f1f5f9;
   color: #475569;
   border: 1px solid #e2e8f0;
 }
+
 .detail-edit-form .form-actions button[type='button']:hover {
   background: #e2e8f0;
 }
+
 .detail-edit-form .form-actions button[type='submit'] {
   background: #0d9488;
   color: #fff;
   border: none;
 }
+
 .detail-edit-form .form-actions button[type='submit']:hover:not(:disabled) {
   background: #0f766e;
 }
+
 .detail-edit-form .form-actions button[type='submit']:disabled {
   opacity: 0.7;
   cursor: not-allowed;
@@ -854,14 +844,17 @@ export default {
 .modal-leave-active {
   transition: opacity 0.25s ease;
 }
+
 .modal-enter-from,
 .modal-leave-to {
   opacity: 0;
 }
+
 .modal-enter-active .modal-box,
 .modal-leave-active .modal-box {
   transition: transform 0.25s ease;
 }
+
 .modal-enter-from .modal-box,
 .modal-leave-to .modal-box {
   transform: scale(0.95) translateY(8px);
@@ -872,7 +865,8 @@ export default {
 .modal-footer {
   margin-top: 2rem;
   padding-top: 1.5rem;
-  border-top: 1px solid #e2e8f0; /* Même couleur que le séparateur des sections */
+  border-top: 1px solid #e2e8f0;
+  /* Même couleur que le séparateur des sections */
   display: flex;
   justify-content: center;
 }
@@ -887,11 +881,13 @@ export default {
 
   /* On réutilise les couleurs de ton design pour le hover de close */
   background: #fff;
-  color: #dc2626; /* Rouge clair pour le texte */
+  color: #dc2626;
+  /* Rouge clair pour le texte */
 
   /* On réutilise tes styles de bordures existants */
   border: 1px solid #fecaca;
-  border-radius: 12px; /* Même arrondi que tes sections detail-section */
+  border-radius: 12px;
+  /* Même arrondi que tes sections detail-section */
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -904,7 +900,8 @@ export default {
   /* On s'assure que le rouge ne jure pas avec ton vert émeraude */
   background: #fef2f2;
   border-color: #dc2626;
-  color: #b91c1c; /* Rouge plus foncé au hover */
+  color: #b91c1c;
+  /* Rouge plus foncé au hover */
   transform: translateY(-1px);
 }
 
