@@ -56,6 +56,7 @@
             <li>RH : rh@coreflow.fr / Rh_1234</li>
             <li>Manager : manager@coreflow.fr / Manager_1234</li>
             <li>Employé : employe@coreflow.fr / Employe_1234</li>
+            <li>Employé : test@gmail.com / testtest</li>
           </ul>
         </div>
       </div>
